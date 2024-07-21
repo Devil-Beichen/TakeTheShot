@@ -8,6 +8,7 @@
 
 ---@type WBP_ServerRoom_C
 local M = UnLua.Class()
+local Screen = require("Screen")
 
 --function M:Initialize(Initializer)
 --end
@@ -16,10 +17,10 @@ local M = UnLua.Class()
 --end
 
 function M:Construct()
+    self:SetRoomName()
+    self:SetNumberRoom()
+    self:SetRoomDelay()
     self:ButtonBinding()
-    self.NameRoom:SetText(self:GetServerRoomName())
-    self.NumberRoom:SetText(self:GetNumberRoom())
-    self.RoomDelay:SetText(self:GetRoomDelay())
 end
 
 --function M:Tick(MyGeometry, InDeltaTime)
@@ -32,9 +33,11 @@ end
 
 --- 加入游戏
 function M:OnClicked_JoinRoom()
+    Screen.Print("尝试加入游戏")
     self:DestroySession()
     local JoinSessionCallback = UE.UJoinSessionCallbackProxy.JoinSession(self, self:GetOwningPlayer(), self.SearchResult)
     JoinSessionCallback.OnSuccess:Add(self, self.JoinGameSuccess)
+    JoinSessionCallback.OnFailure:Add(self, self.JoinGameFailure)
     JoinSessionCallback:Activate()
 end
 
@@ -45,21 +48,15 @@ function M:JoinGameSuccess()
     UE.UWidgetBlueprintLibrary.SetInputMode_GameOnly(self:GetOwningPlayer(), false)
 end
 
+--- 加入游戏失败
+function M:JoinGameFailure()
+end
+
 --- 删除会话
 function M:DestroySession()
-    local SessionCallback = UE.UDestroySessionCallbackProxy.DestroySession(self, self:GetOwningPlayer())
+    UE.UDestroySessionCallbackProxy.DestroySession(self, self:GetOwningPlayer())
     --SessionCallback.OnSuccess:Add(self, self.fun)
     --SessionCallback.OnFailure:Add(self, self.fun)
-end
-
---- 获取房间人数
-function M:GetNumberRoom()
-    return UE.UFindSessionsCallbackProxy.GetCurrentPlayers(self.SearchResult) .. "/" .. UE.UFindSessionsCallbackProxy.GetMaxPlayers(self.SearchResult)
-end
-
---- 获取房间延迟
-function M:GetRoomDelay()
-    return UE.UFindSessionsCallbackProxy.GetPingInMs(self.SearchResult) .. "ms"
 end
 
 return M
