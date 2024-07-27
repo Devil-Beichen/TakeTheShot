@@ -9,14 +9,53 @@
 ---@type BP_BlasterCharacter_C
 local M = UnLua.Class()
 
+--- 增强输入系统
+local EnhancedInput = UE.UEnhancedInputLocalPlayerSubsystem
+
+-- 增强输入绑定操作
+local BindAction = UnLua.EnhancedInput.BindAction
+
+--[[ 按键的状态
+  Triggered              发生在Tick后持续
+  Started                发生按下
+  Ongoing                长时间按下
+  Canceled               取消按下
+  Completed              按键完成]]
+
+--- 移动动作的地址
+local IA_Move = "/Game/Input/Actions/IA_Move.IA_Move"
+--- 绑定移动操作输入持续按下响应
+BindAction(M, IA_Move, "Triggered", function(self, ActionValue)
+    self:Move_Triggered(ActionValue)
+end)
+
+--- 跳跃动作的地址
+local IA_Jump = "/Game/Input/Actions/IA_Jump.IA_Jump"
+--- 绑定跳跃操作输入按下响应
+BindAction(M, IA_Jump, "Started", function(self, ActionValue)
+    self:Jump_Started(ActionValue)
+end)
+--- 绑定跳跃操作输入按下完成响应
+BindAction(M, IA_Jump, "Completed", function(self, ActionValue)
+    self:Jump_Completed(ActionValue)
+end)
+
+--- 观看动作地址
+local IA_Look = "/Game/Input/Actions/IA_Look.IA_Look"
+--- 绑定观看操作输入持续按下响应
+BindAction(M, IA_Look, "Triggered", function(self, ActionValue)
+    self:Look_Triggered(ActionValue)
+end)
+
 -- function M:Initialize(Initializer)
 -- end
 
 -- function M:UserConstructionScript()
 -- end
 
--- function M:ReceiveBeginPlay()
--- end
+function M:ReceiveBeginPlay()
+    self:AddMappingContext()
+end
 
 -- function M:ReceiveEndPlay()
 -- end
@@ -32,5 +71,81 @@ local M = UnLua.Class()
 
 -- function M:ReceiveActorEndOverlap(OtherActor)
 -- end
+
+-- 添加映射上下文到增强输入系统
+function M:AddMappingContext()
+    -- 获取玩家控制器
+    local PlayerController = self:GetController():Cast(UE.APlayerController)
+    -- 检查玩家控制器是否存在
+    if PlayerController then
+        -- 获取增强输入系统
+        EnhancedInput = UE.USubsystemBlueprintLibrary.GetLocalPlayerSubSystemFromPlayerController(PlayerController, UE.UEnhancedInputLocalPlayerSubsystem)
+        -- 检查增强输入系统是否存在
+        if EnhancedInput then
+            -- 添加默认映射上下文
+            EnhancedInput:AddMappingContext(self.IMC_Default, 0, nil)
+        end
+    end
+end
+
+
+--- 移动持续按下
+-- 当移动触发时执行的操作
+-- 此函数用于处理角色的移动输入，基于给定的动作值来调整角色的朝向和移动
+------@param ActionValue FInputActionValue
+function M:Move_Triggered(ActionValue)
+    -- 检查是否有控制器，如果没有则不执行任何操作
+    if not self:GetController() then
+        return
+    end
+
+    -- 创建一个FRotator对象，用于确定角色的朝向
+    -- 通过使用控制旋转的Yaw值来设置旋转，忽略Pitch和Roll
+    local Rotation = UE.FRotator(0, self:GetControlRotation().Yaw, 0)
+
+    -- 根据角色的朝向前向添加移动输入
+    -- 参数包括向前向量、动作值的X分量和是否锁定输入
+    self:AddMovementInput(Rotation:GetForwardVector(), ActionValue.X, true)
+    -- 根据角色的朝向右向添加移动输入
+    -- 参数包括向右向量、动作值的Y分量和是否锁定输入
+    self:AddMovementInput(Rotation:GetRightVector(), ActionValue.Y, true)
+end
+
+--- 跳跃按下
+------@param ActionValue FInputActionValue
+function M:Jump_Started(ActionValue)
+
+    if not self:GetController() then
+        return
+    end
+
+    self:Jump()
+end
+
+--- 跳跃完成
+------@param ActionValue FInputActionValue
+function M:Jump_Completed(ActionValue)
+
+    if not self:GetController() then
+        return
+    end
+
+    self:StopJumping()
+end
+
+--- 观看动作持续按下
+-- 当查看操作被触发时调用此函数
+---@param ActionValue FInputActionValue 一个包含X和Y轴值的表，用于指定查看的方向
+function M:Look_Triggered(ActionValue)
+    -- 检查是否获取到了控制器，如果没有，则退出函数
+    if not self:GetController() then
+        return
+    end
+
+    -- 添加控制器的yaw输入，用于左右查看
+    self:AddControllerYawInput(ActionValue.X)
+    -- 添加控制器的pitch输入，用于上下查看
+    self:AddControllerPitchInput(ActionValue.Y)
+end
 
 return M

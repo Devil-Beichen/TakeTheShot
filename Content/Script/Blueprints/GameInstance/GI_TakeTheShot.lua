@@ -6,7 +6,7 @@
 -- @DATE ${date} ${time}
 --
 
-require("UnLuaDebug")
+--require("UnLuaDebug")
 
 ---@type GI_TakeTheShot_C
 local M = UnLua.Class()
