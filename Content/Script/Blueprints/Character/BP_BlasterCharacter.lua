@@ -47,6 +47,13 @@ BindAction(M, IA_Look, "Triggered", function(self, ActionValue)
     self:Look_Triggered(ActionValue)
 end)
 
+--- 蹲下动作地址
+local IA_Crouch = "/Game/Input/Actions/IA_Crouch.IA_Crouch"
+--- 绑定蹲下操作输入按下响应
+BindAction(M, IA_Crouch, "Started", function(self, ActionValue)
+    self:Crouch_Started(ActionValue)
+end)
+
 -- function M:Initialize(Initializer)
 -- end
 
@@ -98,7 +105,7 @@ function M:Move_Triggered(ActionValue)
     if not self:GetController() then
         return
     end
-
+    
     -- 创建一个FRotator对象，用于确定角色的朝向
     -- 通过使用控制旋转的Yaw值来设置旋转，忽略Pitch和Roll
     local Rotation = UE.FRotator(0, self:GetControlRotation().Yaw, 0)
@@ -115,22 +122,34 @@ end
 ------@param ActionValue FInputActionValue
 function M:Jump_Started(ActionValue)
 
+    -- 检查是否具有控制器，如果没有，则不执行任何动作并退出当前函数
     if not self:GetController() then
         return
     end
-
+    
+    -- 调用Jump方法，使对象跳跃
     self:Jump()
+    -- 打印当前对象的速度信息
+    print(self:GetVelocity())
 end
 
 --- 跳跃完成
 ------@param ActionValue FInputActionValue
 function M:Jump_Completed(ActionValue)
 
+    -- 检查是否有控制器，如果没有，则不执行任何操作并退出函数
     if not self:GetController() then
         return
     end
-
-    self:StopJumping()
+    
+    -- 根据角色的蹲伏状态，执行相应的动作：取消蹲伏或停止跳跃
+    if self.bIsCrouched then
+        -- 如果角色正在蹲伏，则取消蹲伏状态
+        self:UnCrouch()
+    else
+        -- 如果角色不在蹲伏状态，则停止跳跃动作
+        self:StopJumping()
+    end
 end
 
 --- 观看动作持续按下
@@ -146,6 +165,22 @@ function M:Look_Triggered(ActionValue)
     self:AddControllerYawInput(ActionValue.X)
     -- 添加控制器的pitch输入，用于上下查看
     self:AddControllerPitchInput(ActionValue.Y)
+end
+
+--- 蹲下按下
+-- 当蹲下操作被触发时调用此函数
+---@param ActionValue FInputActionValue
+function M:Crouch_Started(ActionValue)
+    -- 根据角色当前的状态决定是取消下蹲还是开始下蹲
+    if self.bIsCrouched then
+        -- 如果角色当前是下蹲状态，则取消下蹲
+        self:UnCrouch()
+    else
+        -- 如果角色当前不是下蹲状态，并且不在下落状态，则开始下蹲
+        if self.CharacterMovement:IsFalling()  == false then
+            self:Crouch()
+        end
+    end
 end
 
 return M

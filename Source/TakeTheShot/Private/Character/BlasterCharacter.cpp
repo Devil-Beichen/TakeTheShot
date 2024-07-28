@@ -4,6 +4,7 @@
 #include "Character//BlasterCharacter.h"
 
 #include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
 ABlasterCharacter::ABlasterCharacter()
@@ -28,6 +29,9 @@ ABlasterCharacter::ABlasterCharacter()
 	FollowCamera->SetupAttachment(CameraBoom);
 	// 关闭跟随摄像机的棋子控制旋转功能
 	FollowCamera->bUsePawnControlRotation = false;
+
+	// 允许角色蹲伏
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 }
 
 void ABlasterCharacter::BeginPlay()
