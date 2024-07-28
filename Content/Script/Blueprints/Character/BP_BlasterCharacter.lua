@@ -9,6 +9,8 @@
 ---@type BP_BlasterCharacter_C
 local M = UnLua.Class()
 
+local Screen = require("Screen")
+
 --- 增强输入系统
 local EnhancedInput = UE.UEnhancedInputLocalPlayerSubsystem
 
@@ -60,9 +62,12 @@ end)
 -- function M:UserConstructionScript()
 -- end
 
-function M:ReceiveBeginPlay()
-    self:AddMappingContext()
-end
+--function M:ReceiveBeginPlay()
+--    -- self:BindInput()
+--    -- print("哈哈")
+--    -- UE.UKismetSystemLibrary.K2_SetTimerDelegate({ self, self.AddMappingContext, 0.1 })
+--    -- self:AddMappingContext()
+--end
 
 -- function M:ReceiveEndPlay()
 -- end
@@ -79,10 +84,19 @@ end
 -- function M:ReceiveActorEndOverlap(OtherActor)
 -- end
 
+-- function M:ReceivePossessed(NewController)
+-- end
+
+--- 绑定输入
+--function M:BindInput()
+--    -- self:AddMappingContext()
+--    print("哈哈")
+--end
+
 -- 添加映射上下文到增强输入系统
 function M:AddMappingContext()
     -- 获取玩家控制器
-    local PlayerController = self:GetController():Cast(UE.APlayerController)
+    local PlayerController = self.Controller:Cast(UE.APlayerController)
     -- 检查玩家控制器是否存在
     if PlayerController then
         -- 获取增强输入系统
@@ -91,6 +105,7 @@ function M:AddMappingContext()
         if EnhancedInput then
             -- 添加默认映射上下文
             EnhancedInput:AddMappingContext(self.IMC_Default, 0, nil)
+            Screen.Print(self:GetName() .. "绑定成功！！！")
         end
     end
 end
@@ -105,7 +120,7 @@ function M:Move_Triggered(ActionValue)
     if not self:GetController() then
         return
     end
-    
+
     -- 创建一个FRotator对象，用于确定角色的朝向
     -- 通过使用控制旋转的Yaw值来设置旋转，忽略Pitch和Roll
     local Rotation = UE.FRotator(0, self:GetControlRotation().Yaw, 0)
@@ -126,11 +141,11 @@ function M:Jump_Started(ActionValue)
     if not self:GetController() then
         return
     end
-    
+
     -- 调用Jump方法，使对象跳跃
     self:Jump()
     -- 打印当前对象的速度信息
-    print(self:GetVelocity())
+    -- print(self:GetVelocity())
 end
 
 --- 跳跃完成
@@ -141,7 +156,7 @@ function M:Jump_Completed(ActionValue)
     if not self:GetController() then
         return
     end
-    
+
     -- 根据角色的蹲伏状态，执行相应的动作：取消蹲伏或停止跳跃
     if self.bIsCrouched then
         -- 如果角色正在蹲伏，则取消蹲伏状态
@@ -177,7 +192,7 @@ function M:Crouch_Started(ActionValue)
         self:UnCrouch()
     else
         -- 如果角色当前不是下蹲状态，并且不在下落状态，则开始下蹲
-        if self.CharacterMovement:IsFalling()  == false then
+        if self.CharacterMovement:IsFalling() == false then
             self:Crouch()
         end
     end

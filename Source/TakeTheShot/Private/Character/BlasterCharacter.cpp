@@ -3,9 +3,11 @@
 
 #include "Character//BlasterCharacter.h"
 
+#include "EnhancedInputSubsystems.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -37,6 +39,8 @@ ABlasterCharacter::ABlasterCharacter()
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// BindInput();
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -47,4 +51,21 @@ void ABlasterCharacter::Tick(float DeltaTime)
 void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+void ABlasterCharacter::BindInput_Implementation()
+{
+	// 尝试将控制器转换为玩家控制器对象
+	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	{
+		// 尝试从本地玩家获取增强输入子系统
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			// 为默认映射上下文添加一个映射上下文
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Subsystem: %s"), *Subsystem->GetName()));
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("%s,绑定成功"), *GetName()));
+		}
+	}
 }
