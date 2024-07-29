@@ -24,7 +24,7 @@ local BindAction = UnLua.EnhancedInput.BindAction
   Canceled               取消按下
   Completed              按键完成]]
 
---- 移动动作的地址
+--[[--- 移动动作的地址
 local IA_Move = "/Game/Input/Actions/IA_Move.IA_Move"
 --- 绑定移动操作输入持续按下响应
 BindAction(M, IA_Move, "Triggered", function(self, ActionValue)
@@ -54,7 +54,7 @@ local IA_Crouch = "/Game/Input/Actions/IA_Crouch.IA_Crouch"
 --- 绑定蹲下操作输入按下响应
 BindAction(M, IA_Crouch, "Started", function(self, ActionValue)
     self:Crouch_Started(ActionValue)
-end)
+end)]]
 
 -- function M:Initialize(Initializer)
 -- end
@@ -142,8 +142,15 @@ function M:Jump_Started(ActionValue)
         return
     end
 
-    -- 调用Jump方法，使对象跳跃
-    self:Jump()
+    -- 根据角色的蹲伏状态，执行相应的动作：取消蹲伏或停止跳跃
+    if self.bIsCrouched then
+        -- 如果角色正在蹲伏，则取消蹲伏状态
+        self:UnCrouch()
+    else
+        -- 调用Jump方法，使对象跳跃
+        self:Jump()
+    end
+
     -- 打印当前对象的速度信息
     -- print(self:GetVelocity())
 end
@@ -157,14 +164,7 @@ function M:Jump_Completed(ActionValue)
         return
     end
 
-    -- 根据角色的蹲伏状态，执行相应的动作：取消蹲伏或停止跳跃
-    if self.bIsCrouched then
-        -- 如果角色正在蹲伏，则取消蹲伏状态
-        self:UnCrouch()
-    else
-        -- 如果角色不在蹲伏状态，则停止跳跃动作
-        self:StopJumping()
-    end
+    self:StopJumping()
 end
 
 --- 观看动作持续按下
