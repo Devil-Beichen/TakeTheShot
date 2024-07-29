@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputActionValue.h"
 #include "GameFramework/Character.h"
 #include "BlasterCharacter.generated.h"
 
@@ -130,6 +131,15 @@ public:
 	 * @return 返回一个UCameraComponent类型的指针，指向跟随相机组件。
 	 */
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+#pragma endregion
+
+#pragma region UMG相关
+
+private:
+	// 在头顶上的UMG组件
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
+	class UWidgetComponent* OverheadWidget = nullptr;
 
 #pragma endregion
 };

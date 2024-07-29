@@ -14,6 +14,7 @@ public class TakeTheShot : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"InputCore",
+			"UMG",
 			"EnhancedInput"
 		});
 

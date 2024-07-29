@@ -6,6 +6,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Camera/CameraComponent.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
@@ -34,6 +35,9 @@ ABlasterCharacter::ABlasterCharacter()
 
 	// 允许角色蹲伏
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+
+	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverlayWidget"));
+	OverheadWidget->SetupAttachment(RootComponent);
 }
 
 void ABlasterCharacter::BeginPlay()

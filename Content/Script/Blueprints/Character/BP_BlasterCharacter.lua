@@ -62,12 +62,9 @@ end)]]
 -- function M:UserConstructionScript()
 -- end
 
---function M:ReceiveBeginPlay()
---    -- self:BindInput()
---    -- print("哈哈")
---    -- UE.UKismetSystemLibrary.K2_SetTimerDelegate({ self, self.AddMappingContext, 0.1 })
---    -- self:AddMappingContext()
---end
+function M:ReceiveBeginPlay()
+    self:AddOverheadWidget()
+end
 
 -- function M:ReceiveEndPlay()
 -- end
@@ -86,6 +83,25 @@ end)]]
 
 -- function M:ReceivePossessed(NewController)
 -- end
+
+-- 添加一个头顶信息小部件
+-- 该函数用于在游戏界面中添加一个显示玩家网络角色的头顶信息小部件
+function M:AddOverheadWidget()
+    -- 加载头顶信息小部件的蓝图类
+    local WBP_Oh_WidgetClass = UE.UClass.Load("/Game/Blueprints/HUD/WBP_OverheadWidget.WBP_OverheadWidget_C")
+
+    -- 获取OverheadWidget类，用于后续创建和操作头顶信息小部件
+    local OverheadWidget = UE.UOverheadWidget
+
+    -- 尝试从当前对象的头顶信息小部件属性中获取小部件实例，并将其类型转换为之前加载的蓝图类
+    OverheadWidget = self.OverheadWidget:GetUserWidgetObject():Cast(WBP_Oh_WidgetClass)
+
+    -- 如果成功获取到头顶信息小部件，则显示玩家的网络角色信息
+    if OverheadWidget then
+        OverheadWidget:ShowPlayerNetRole(self)
+    end
+end
+
 
 --- 绑定输入
 --function M:BindInput()
