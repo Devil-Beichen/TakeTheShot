@@ -1,0 +1,22 @@
+﻿// 外扩描边
+#if SCENE_TEXTURES_DISABLED
+return 0;
+#endif
+
+float Offset_R = SceneTexelSize.r * Thickness;
+float Offset_G = SceneTexelSize.g * Thickness;
+
+float TL = GetScreenSpaceData(ViewportUVToBufferUV(ScreenPosition + float2(-Offset_R, -Offset_G)), false).GBuffer.CustomStencil.r;
+float TM = GetScreenSpaceData(ViewportUVToBufferUV(ScreenPosition + float2(0, -Offset_G)), false).GBuffer.CustomStencil.r;
+float TR = GetScreenSpaceData(ViewportUVToBufferUV(ScreenPosition + float2(Offset_R, -Offset_G)), false).GBuffer.CustomStencil.r;
+float ML = GetScreenSpaceData(ViewportUVToBufferUV(ScreenPosition + float2(-Offset_R, 0)), false).GBuffer.CustomStencil.r;
+float MR = GetScreenSpaceData(ViewportUVToBufferUV(ScreenPosition + float2(Offset_R, 0)), false).GBuffer.CustomStencil.r;
+float BL = GetScreenSpaceData(ViewportUVToBufferUV(ScreenPosition + float2(-Offset_R, Offset_G)), false).GBuffer.CustomStencil.r;
+float BM = GetScreenSpaceData(ViewportUVToBufferUV(ScreenPosition + float2(0, Offset_G)), false).GBuffer.CustomStencil.r;
+float BR = GetScreenSpaceData(ViewportUVToBufferUV(ScreenPosition + float2(Offset_R, Offset_G)), false).GBuffer.CustomStencil.r;
+return max(TL, max(TM, max(TR, max(ML, max(MR, max(BL, max(BM, BR ) ) ) ) ) ) );
+
+
+
+
+
