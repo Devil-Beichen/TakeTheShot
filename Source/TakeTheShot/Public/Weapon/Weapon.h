@@ -32,6 +32,16 @@ public:
 	AWeapon();
 	virtual void Tick(float DeltaTime) override;
 
+	/**
+	 * 设置是否激活PickupWidget。
+	 * 
+	 * 本函数用于控制PickupWidget的激活状态。当参数bActive为true时，表示激活PickupWidget；
+	 * 当参数为false时，表示关闭PickupWidget。此设置可能用于控制在某些情况下是否显示或启用PickupWidget。
+	 * 
+	 * @param bShowWidget 指示PickupWidget是否应被激活的布尔值。true表示激活，false表示关闭。
+	 */
+	void SetPickupWidget(const bool bShowWidget) const;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -64,11 +74,10 @@ protected:
 	 */
 	UFUNCTION()
 	virtual void OnSphereEndOverlap(
-	    UPrimitiveComponent* OverlappedComponent,
-	    AActor* OtherActor,
-	    UPrimitiveComponent* OtherComp,
-	    int32 OtherBodyIndex);
-
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex);
 
 private:
 	// 武器模型组件，用于可视化展示武器

@@ -142,4 +142,34 @@ private:
 	class UWidgetComponent* OverheadWidget = nullptr;
 
 #pragma endregion
+
+#pragma  region 角色武器相关
+
+private:
+	/**
+	 * 定义一个AWeapon类的指针成员变量，用于存储当前重叠的武器对象
+	 * 通过ReplicatedUsing属性指定复制时使用OnRep_OverlappingWeapon函数进行处理
+	 */
+	UPROPERTY(ReplicatedUsing="OnRep_OverlappingWeapon")
+	class AWeapon* OverlappingWeapon = nullptr;
+
+	/**
+	 * 当玩家与武器重叠时的处理函数
+	 * 
+	 * 该函数在玩家与武器重叠时被调用，用于处理相关的逻辑
+	 * 
+	 */
+	UFUNCTION()
+	void OnRep_OverlappingWeapon(const AWeapon* LastWeapon) const;
+
+public:
+	/**
+	 * 设置当前重叠的武器对象
+	 * 
+	 * 此函数用于在角色或其他游戏实体中设置当前重叠的武器对象它用于处理武器拾取或重叠检测的逻辑
+	 * 
+	 * @param Weapon 要设置的重叠武器对象指针，可以为nullptr
+	 */
+	void SetOverlappingWeapon(AWeapon* Weapon);
+#pragma  endregion
 };

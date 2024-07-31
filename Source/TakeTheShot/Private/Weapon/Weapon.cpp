@@ -78,11 +78,7 @@ void AWeapon::BeginPlay()
 		AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);
 	}
 
-	if (PickupWidget)
-	{
-		// 设置PickupWidget的初始可见性为false，即隐藏
-		PickupWidget->SetVisibility(false);
-	}
+	SetPickupWidget(false);
 }
 
 void AWeapon::Tick(float DeltaTime)
@@ -90,18 +86,26 @@ void AWeapon::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+void AWeapon::SetPickupWidget(const bool bShowWidget) const
+{
+	if (PickupWidget)
+	{
+		PickupWidget->SetVisibility(bShowWidget);
+	}
+}
+
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (const ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor); PickupWidget)
+	if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor); PickupWidget)
 	{
-		PickupWidget->SetVisibility(true);
+		BlasterCharacter->SetOverlappingWeapon(this);
 	}
 }
 
 void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (const ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor); PickupWidget)
+	if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor); PickupWidget)
 	{
-		PickupWidget->SetVisibility(false);
+		BlasterCharacter->SetOverlappingWeapon(nullptr);
 	}
 }
