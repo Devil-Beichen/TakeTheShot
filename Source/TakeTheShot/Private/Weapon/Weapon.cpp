@@ -88,9 +88,14 @@ void AWeapon::Tick(float DeltaTime)
 
 void AWeapon::SetPickupWidget(const bool bShowWidget) const
 {
+	// 根据传入的参数bShowWidget来设置物品获取提示的可见性和武器模型的自定义深度渲染状态
+	// 这里主要处理的是UI提示和渲染效果的开关，以便在不同的游戏情境下提供更合适的视觉反馈
 	if (PickupWidget)
 	{
-		PickupWidget->SetVisibility(bShowWidget);
+	    // 设置物品获取提示的可见性
+	    PickupWidget->SetVisibility(bShowWidget);
+	    // 根据物品获取提示的可见性状态，设置武器模型的自定义深度渲染
+	    WeaponMesh->SetRenderCustomDepth(bShowWidget);
 	}
 }
 
