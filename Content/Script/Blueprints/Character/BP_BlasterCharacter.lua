@@ -63,7 +63,7 @@ end)]]
 -- end
 
 function M:ReceiveBeginPlay()
-    self:AddOverheadWidget()
+   -- self:AddOverheadWidget()
 end
 
 -- function M:ReceiveEndPlay()

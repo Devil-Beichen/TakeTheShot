@@ -35,6 +35,41 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	/**
+	 * 当角色的碰撞球体与另一个演员的碰撞体发生重叠时，此函数将被调用。
+	 * 
+	 * @param OverlappedComponent 角色的碰撞球体组件，表示触发重叠的组件。
+	 * @param OtherActor 发生重叠的另一个演员。
+	 * @param OtherComp 另一个演员的碰撞组件。
+	 * @param OtherBodyIndex 另一个碰撞体的索引。
+	 * @param bFromSweep 如果重叠是由于扫动检测引起的，则此参数为true；否则为false。
+	 * @param SweepResult 扫动检测的结果，包含重叠的详细信息。
+	 */
+	UFUNCTION()
+	virtual void OnSphereOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult);
+
+	/**
+	 * 当球体组件结束与其他组件重叠时触发的事件
+	 * 
+	 * @param OverlappedComponent 触发重叠事件的球体组件
+	 * @param OtherActor 结束重叠的另一个演员（Actor）
+	 * @param OtherComp 结束重叠的另一个演员的组件
+	 * @param OtherBodyIndex 结束重叠的另一个身体（如果适用）的索引
+	 */
+	UFUNCTION()
+	virtual void OnSphereEndOverlap(
+	    UPrimitiveComponent* OverlappedComponent,
+	    AActor* OtherActor,
+	    UPrimitiveComponent* OtherComp,
+	    int32 OtherBodyIndex);
+
+
 private:
 	// 武器模型组件，用于可视化展示武器
 	// 类型为USkeletalMeshComponent，允许在任何地方可见
@@ -50,6 +85,10 @@ private:
 	// 取值自EWeaponState枚举，初始状态为EWS_Initial
 	UPROPERTY(VisibleAnywhere)
 	EWeaponState WeaponState = EWeaponState::EWS_Initial;
+
+	// 武器拾取组件，用于显示武器的拾取提示
+	UPROPERTY(VisibleAnywhere, Category="Weapon Properties")
+	class UWidgetComponent* PickupWidget = nullptr;
 
 public:
 };

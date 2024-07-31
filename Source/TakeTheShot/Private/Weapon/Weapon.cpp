@@ -2,7 +2,10 @@
 
 
 #include "Weapon/Weapon.h"
+
+#include "Character/BlasterCharacter.h"
 #include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
 
 
 AWeapon::AWeapon()
@@ -13,10 +16,6 @@ AWeapon::AWeapon()
 	// 创建默认子对象USkeletalMeshComponent，用于表示武器的网格组件
 	// 使用文本"WeaponMesh"作为名称，以便在编辑器中识别
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
-
-	// 将WeaponMesh设置为根组件的附件
-	// 这样做可以使WeaponMesh随着根组件一起移动和旋转
-	WeaponMesh->SetupAttachment(RootComponent);
 
 	// 设置根组件为WeaponMesh
 	// 这一步是将WeaponMesh作为刚体的主要组件，用于物理交互
@@ -49,6 +48,11 @@ AWeapon::AWeapon()
 	// 禁止AreaSphere的碰撞检测
 	// 与WeaponMesh相同，AreaSphere不会产生碰撞效果
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 创建默认子对象UWidgetComponent，用于表示武器的武器拾取组件
+	PickupWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupWidget"));
+	// 附加到根组件上
+	PickupWidget->SetupAttachment(RootComponent);
 }
 
 void AWeapon::BeginPlay()
@@ -66,11 +70,38 @@ void AWeapon::BeginPlay()
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		// 对于Pawn类型的对象，设置碰撞响应为重叠，即不产生碰撞效果
 		AreaSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+
+		// 添加一个事件监听器，当AreaSphere与Pawn类型对象发生重叠时，调用OnSphereOverlap函数
+		// OnSphereOverlap函数用于处理武器的拾取逻辑
+		AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSphereOverlap);
+
+		AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);
 	}
 
+	if (PickupWidget)
+	{
+		// 设置PickupWidget的初始可见性为false，即隐藏
+		PickupWidget->SetVisibility(false);
+	}
 }
 
 void AWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (const ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor); PickupWidget)
+	{
+		PickupWidget->SetVisibility(true);
+	}
+}
+
+void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (const ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor); PickupWidget)
+	{
+		PickupWidget->SetVisibility(false);
+	}
 }
