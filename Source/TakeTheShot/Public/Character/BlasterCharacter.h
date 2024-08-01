@@ -179,8 +179,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UCombatComponent* Combat = nullptr;
 
-	// 服务器端可靠地处理装备按钮按下事件
-	// 该函数通过可靠的消息传输在服务器上触发，确保玩家角色能够正确地进行装备操作
+	/*  服务器端可靠地处理装备按钮按下事件
+	*	该函数通过可靠的消息传输在服务器上触发，确保玩家角色能够正确地进行装备操作
+	*/
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
 
