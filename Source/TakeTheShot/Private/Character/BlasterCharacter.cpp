@@ -5,6 +5,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "BlasterComponents/CombatComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -38,8 +39,15 @@ ABlasterCharacter::ABlasterCharacter()
 	// 允许角色蹲伏
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 
+	// 创建并初始化一个默认的Widget组件，用于显示头顶信息
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverlayWidget"));
+	// 将新创建的Widget组件附加到根组件上
 	OverheadWidget->SetupAttachment(RootComponent);
+
+	// 创建并初始化一个战斗组件，用于处理战斗相关逻辑
+	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
+	// 设置战斗组件为复制，使其在服务器和客户端之间同步
+	Combat->SetIsReplicated(true);
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -65,12 +73,27 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
+		// 绑定跳跃动作的开始事件
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ABlasterCharacter::Jump_Started);
+		// 绑定跳跃动作的完成事件
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ABlasterCharacter::Jump_Completed);
+		// 绑定蹲下动作的开始事件
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ABlasterCharacter::Crouch_Started);
-
+		// 绑定装备动作的开始事件
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ABlasterCharacter::Equip_Started);
+		// 绑定移动动作的触发事件
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Move);
+		// 绑定查看动作的触发事件
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Look);
+	}
+}
+
+void ABlasterCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	if (Combat)
+	{
+		Combat->Character = this;
 	}
 }
 
@@ -183,6 +206,14 @@ void ABlasterCharacter::Crouch_Started()
 	{
 		// 当角色不处于下落状态时，调用Crouch函数来开始蹲伏
 		Crouch();
+	}
+}
+
+void ABlasterCharacter::Equip_Started()
+{
+	if (Combat)
+	{
+		Combat->EquipWeapon(OverlappingWeapon);
 	}
 }
 

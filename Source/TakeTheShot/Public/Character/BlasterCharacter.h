@@ -25,6 +25,7 @@ public:
 	ABlasterCharacter();
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void PostInitializeComponents() override;
 
 	// 添加默认映射上下文
 	UFUNCTION()
@@ -58,6 +59,10 @@ protected:
 	// 定义用于蹲下操作的输入动作，允许在编辑器中任何地方进行编辑和绑定，类别为Input，允许私有访问
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* CrouchAction;
+
+	// 定义用于装备操作的输入动作，允许在编辑器中任何地方进行编辑和绑定，类别为Input，允许私有访问
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* EquipAction;
 
 	// 增强输入子系统
 	UPROPERTY()
@@ -97,6 +102,12 @@ protected:
 	UFUNCTION()
 	void Crouch_Started();
 
+	/**
+	 * 拾取武器按下动作
+	 */
+	UFUNCTION()
+	void Equip_Started();
+
 
 #pragma endregion
 
@@ -110,6 +121,12 @@ private:
 	// 相机
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UCameraComponent> FollowCamera;
+
+	/**		使用VisibleAnywhere宏声明一个全局可见的属性
+	*		这里声明了一个指向CombatComponent的指针，用于管理游戏中的战斗相关逻辑
+	*/
+	UPROPERTY(VisibleAnywhere)
+	class UCombatComponent* Combat = nullptr;
 
 public:
 	/**

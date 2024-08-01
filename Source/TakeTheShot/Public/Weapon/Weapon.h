@@ -100,4 +100,6 @@ private:
 	class UWidgetComponent* PickupWidget = nullptr;
 
 public:
+	// 设置武器状态
+	FORCEINLINE void SetWeaponState(const EWeaponState State) { WeaponState = State; }
 };
