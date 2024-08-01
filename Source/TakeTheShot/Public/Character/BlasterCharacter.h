@@ -122,12 +122,6 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UCameraComponent> FollowCamera;
 
-	/**		使用VisibleAnywhere宏声明一个全局可见的属性
-	*		这里声明了一个指向CombatComponent的指针，用于管理游戏中的战斗相关逻辑
-	*/
-	UPROPERTY(VisibleAnywhere)
-	class UCombatComponent* Combat = nullptr;
-
 public:
 	/**
 	 * 获取相机Boom组件。
@@ -178,6 +172,17 @@ private:
 	 */
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(const AWeapon* LastWeapon) const;
+
+	/**	使用VisibleAnywhere宏声明一个全局可见的属性
+	*	这里声明了一个指向CombatComponent的指针，用于管理游戏中的战斗相关逻辑
+	*/
+	UPROPERTY(VisibleAnywhere)
+	class UCombatComponent* Combat = nullptr;
+
+	// 服务器端可靠地处理装备按钮按下事件
+	// 该函数通过可靠的消息传输在服务器上触发，确保玩家角色能够正确地进行装备操作
+	UFUNCTION(Server, Reliable)
+	void ServerEquipButtonPressed();
 
 public:
 	/**

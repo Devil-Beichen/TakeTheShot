@@ -6,6 +6,7 @@
 #include "Character/BlasterCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Net/UnrealNetwork.h"
 
 
 AWeapon::AWeapon()
@@ -78,7 +79,7 @@ void AWeapon::BeginPlay()
 		AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);
 	}
 
-	SetPickupWidget(false);
+	ShowPickupWidget(false);
 }
 
 void AWeapon::Tick(float DeltaTime)
@@ -86,16 +87,52 @@ void AWeapon::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AWeapon::SetPickupWidget(const bool bShowWidget) const
+void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AWeapon, WeaponState);
+}
+
+void AWeapon::SetWeaponState(const EWeaponState State)
+{
+	WeaponState = State;
+
+	switch (WeaponState)
+	{
+	case EWeaponState::EWS_Equipped:
+		// 隐藏武器的拾取提示，因为已经装备完毕
+		ShowPickupWidget(false);
+		// 将武器的碰撞检查关闭（只在服务器调用）
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		break;
+	}
+}
+
+// 当武器状态发生变化时调用的函数
+void AWeapon::OnRep_WeaponState()
+{
+	// 根据武器状态执行不同的操作
+	switch (WeaponState)
+	{
+	case EWeaponState::EWS_Equipped: // 当武器状态为装备中
+		// 隐藏拾取小部件，因为武器已经被装备
+		ShowPickupWidget(false);
+		break;
+	}
+}
+
+
+void AWeapon::ShowPickupWidget(const bool bShowWidget) const
 {
 	// 根据传入的参数bShowWidget来设置物品获取提示的可见性和武器模型的自定义深度渲染状态
 	// 这里主要处理的是UI提示和渲染效果的开关，以便在不同的游戏情境下提供更合适的视觉反馈
 	if (PickupWidget)
 	{
-	    // 设置物品获取提示的可见性
-	    PickupWidget->SetVisibility(bShowWidget);
-	    // 根据物品获取提示的可见性状态，设置武器模型的自定义深度渲染
-	    WeaponMesh->SetRenderCustomDepth(bShowWidget);
+		// 设置物品获取提示的可见性
+		PickupWidget->SetVisibility(bShowWidget);
+		// 根据物品获取提示的可见性状态，设置武器模型的自定义深度渲染
+		WeaponMesh->SetRenderCustomDepth(bShowWidget);
 	}
 }
 

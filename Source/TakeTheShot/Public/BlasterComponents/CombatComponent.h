@@ -22,6 +22,7 @@ public:
 	 */
 	friend class ABlasterCharacter;
 
+	// 拾取武器的函数 只在服务器上面执行
 	UFUNCTION()
 	void EquipWeapon(AWeapon* WeaponToEquip);
 

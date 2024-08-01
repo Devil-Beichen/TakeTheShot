@@ -211,21 +211,33 @@ void ABlasterCharacter::Crouch_Started()
 
 void ABlasterCharacter::Equip_Started()
 {
+	if (Combat && HasAuthority())
+	{
+		Combat->EquipWeapon(OverlappingWeapon);
+	}
+	else
+	{
+		ServerEquipButtonPressed();
+	}
+}
+
+#pragma endregion
+
+void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
+{
 	if (Combat)
 	{
 		Combat->EquipWeapon(OverlappingWeapon);
 	}
 }
 
-#pragma endregion
-
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
 	// 如果存在重叠的武器对象
-	if (OverlappingWeapon)
+	if (Weapon == nullptr)
 	{
 		// 隐藏重叠武器的拾取提示 widget
-		OverlappingWeapon->SetPickupWidget(false);
+		OverlappingWeapon->ShowPickupWidget(false);
 	}
 
 	// 将当前武器对象赋值给重叠武器变量
@@ -238,7 +250,7 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 		if (OverlappingWeapon)
 		{
 			// 显示重叠武器的拾取提示 widget
-			OverlappingWeapon->SetPickupWidget(true);
+			OverlappingWeapon->ShowPickupWidget(true);
 		}
 	}
 }
@@ -248,12 +260,12 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(const AWeapon* LastWeapon) const
 	// 如果上一个被触及的武器（LastWeapon）存在，则将其拾取提示设置为false，表示隐藏拾取提示
 	if (LastWeapon)
 	{
-		LastWeapon->SetPickupWidget(false);
+		LastWeapon->ShowPickupWidget(false);
 	}
 
 	// 如果当前有武器重叠（OverlappingWeapon），则将重叠武器的拾取提示设置为true，表示显示拾取提示
 	if (OverlappingWeapon)
 	{
-		OverlappingWeapon->SetPickupWidget(true);
+		OverlappingWeapon->ShowPickupWidget(true);
 	}
 }

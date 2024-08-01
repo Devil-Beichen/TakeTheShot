@@ -32,6 +32,8 @@ public:
 	AWeapon();
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	/**
 	 * 设置是否激活PickupWidget。
 	 * 
@@ -40,7 +42,7 @@ public:
 	 * 
 	 * @param bShowWidget 指示PickupWidget是否应被激活的布尔值。true表示激活，false表示关闭。
 	 */
-	void SetPickupWidget(const bool bShowWidget) const;
+	void ShowPickupWidget(const bool bShowWidget) const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -92,8 +94,12 @@ private:
 
 	// 武器状态变量，用于表示武器的当前状态
 	// 取值自EWeaponState枚举，初始状态为EWS_Initial
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(ReplicatedUsing="OnRep_WeaponState", VisibleAnywhere, Category="Weapon Properties")
 	EWeaponState WeaponState = EWeaponState::EWS_Initial;
+
+	// 当武器状态发生变化时回调函数 只会在客户端执行
+	UFUNCTION()
+	void OnRep_WeaponState();
 
 	// 武器拾取组件，用于显示武器的拾取提示
 	UPROPERTY(VisibleAnywhere, Category="Weapon Properties")
@@ -101,5 +107,8 @@ private:
 
 public:
 	// 设置武器状态
-	FORCEINLINE void SetWeaponState(const EWeaponState State) { WeaponState = State; }
+	void SetWeaponState(const EWeaponState State);
+
+	// 获取球形组件
+	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 };
