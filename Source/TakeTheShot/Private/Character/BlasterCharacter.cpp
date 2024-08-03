@@ -59,7 +59,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	RunSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	AddDefaultMappingContext();
 }
 
@@ -81,6 +81,8 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ABlasterCharacter::Crouch_Started);
 		// 绑定装备动作的开始事件
 		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ABlasterCharacter::Equip_Started);
+		// 绑定慢速动作的开始事件
+		EnhancedInputComponent->BindAction(SlowAction, ETriggerEvent::Started, this, &ABlasterCharacter::Slow_Started);
 		// 绑定移动动作的触发事件
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Move);
 		// 绑定查看动作的触发事件
@@ -209,6 +211,49 @@ void ABlasterCharacter::Crouch_Started()
 	}
 }
 
+/* 当角色开始减速时调用此函数
+如果客户端没有控制权，则请求服务器开始减速
+如果有控制权，则直接通知所有客户端开始减速*/
+void ABlasterCharacter::Slow_Started()
+{
+	if (!HasAuthority())
+	{
+		ServerSlowStarted();
+	}
+	else
+	{
+		MulticastSlowStarted();
+	}
+}
+
+/* 服务器端开始减速的实现
+该函数将通知所有客户端开始减速 */
+void ABlasterCharacter::ServerSlowStarted_Implementation()
+{
+	MulticastSlowStarted();
+}
+
+/*多播开始减速的实现
+检查角色是否处于蹲伏或下落状态，如果是，则不执行减速
+如果角色不在慢走状态，则切换到慢走状态，降低移动速度
+否则，切换回正常跑步状态，恢复移动速度*/
+void ABlasterCharacter::MulticastSlowStarted_Implementation()
+{
+	if (bIsCrouched || GetCharacterMovement()->IsFalling()) return;
+
+	if (bIsSlowWalk == false)
+	{
+		bIsSlowWalk = true;
+		GetCharacterMovement()->MaxWalkSpeed = SlowWalkSpeed;
+	}
+	else
+	{
+		bIsSlowWalk = false;
+		GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+	}
+}
+
+
 void ABlasterCharacter::Equip_Started()
 {
 	if (!Combat) return;
@@ -266,4 +311,9 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(const AWeapon* LastWeapon) const
 	{
 		OverlappingWeapon->ShowPickupWidget(true);
 	}
+}
+
+bool ABlasterCharacter::IsWeaponEquipped() const
+{
+	return (Combat && Combat->EquippedWeapon);
 }

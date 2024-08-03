@@ -42,27 +42,31 @@ protected:
 
 	//输入映射
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputMappingContext* DefaultMappingContext;
+	UInputMappingContext* DefaultMappingContext = nullptr;
 
 	// 定义用于跳跃操作的输入动作，允许在编辑器中任何地方进行编辑和绑定，类别为Input，允许私有访问
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* JumpAction;
+	UInputAction* JumpAction = nullptr;
 
 	// 定义用于移动操作的输入动作，允许在编辑器中任何地方进行编辑和绑定，类别为Input，允许私有访问
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* MoveAction;
+	UInputAction* MoveAction = nullptr;
 
 	// 定义用于查看操作的输入动作，允许在编辑器中任何地方进行编辑和绑定，类别为Input，允许私有访问
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* LookAction;
+	UInputAction* LookAction = nullptr;
 
 	// 定义用于蹲下操作的输入动作，允许在编辑器中任何地方进行编辑和绑定，类别为Input，允许私有访问
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* CrouchAction;
+	UInputAction* CrouchAction = nullptr;
 
 	// 定义用于装备操作的输入动作，允许在编辑器中任何地方进行编辑和绑定，类别为Input，允许私有访问
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* EquipAction;
+	UInputAction* EquipAction = nullptr;
+
+	// 定义一个UInputAction类型的动作，用于处理减速操作
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* SlowAction = nullptr;
 
 	// 增强输入子系统
 	UPROPERTY()
@@ -101,6 +105,22 @@ protected:
 	 */
 	UFUNCTION()
 	void Crouch_Started();
+
+	/**
+	 *  按下慢走按钮
+	 */
+	UFUNCTION()
+	void Slow_Started();
+
+	/**
+	 *  服务器端处理慢走按钮松开事件
+	 */
+	UFUNCTION(Server, Reliable)
+	void ServerSlowStarted();
+
+	// 多播处理慢走按钮按下事件
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastSlowStarted();
 
 	/**
 	 * 拾取武器按下动作
@@ -157,6 +177,17 @@ private:
 #pragma  region 角色武器相关
 
 private:
+	// 玩家是否处于慢速状态
+	UPROPERTY()
+	bool bIsSlowWalk = false;
+
+	// 慢走速度
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Move, meta=(AllowPrivateAccess = "true"))
+	float SlowWalkSpeed = 100.f;
+
+	// 跑步速度
+	float RunSpeed = 350.f;
+
 	/**
 	 * 定义一个AWeapon类的指针成员变量，用于存储当前重叠的武器对象
 	 * 通过ReplicatedUsing属性指定复制时使用OnRep_OverlappingWeapon函数进行处理
@@ -194,5 +225,14 @@ public:
 	 * @param Weapon 要设置的重叠武器对象指针，可以为nullptr
 	 */
 	void SetOverlappingWeapon(AWeapon* Weapon);
+
+	/**
+	 * 检查角色是否正在装备武器
+	 * 
+	 * 该函数用于检查角色是否正在装备武器，返回一个布尔值表示是否装备了武器
+	 * 
+	 * @return 如果角色正在装备武器，则返回true，否则返回false
+	 */
+	bool IsWeaponEquipped() const;
 #pragma  endregion
 };
