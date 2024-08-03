@@ -35,7 +35,7 @@ private:
 	ABlasterCharacter* Character = nullptr;
 
 	// 定义一个指向当前装备武器的指针，用于在角色中引用和操作武器实例
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	AWeapon* EquippedWeapon = nullptr;
 
 public:

@@ -39,4 +39,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	// 检查BlasterCharacter当前的加速度大小，如果大于0，则表示正在加速
 	bIsAccelerating = BlasterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f;
+
+	// 检查BlasterCharacter是否装备了武器
+	bWeaponEquipped = BlasterCharacter->IsWeaponEquipped();
 }

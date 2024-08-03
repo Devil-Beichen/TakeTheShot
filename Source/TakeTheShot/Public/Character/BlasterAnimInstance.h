@@ -34,18 +34,22 @@ public:
 
 private:
 	// 角色的引用
-	UPROPERTY(BlueprintReadOnly, Category="Character",meta=(AllowPrivateAccess=true))
+	UPROPERTY(BlueprintReadOnly, Category="Character", meta=(AllowPrivateAccess=true))
 	TObjectPtr<class ABlasterCharacter> BlasterCharacter;
 
 	// 角色的移动速度
-	UPROPERTY(BlueprintReadOnly, Category="Movement",meta=(AllowPrivateAccess=true))
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	float Speed;
 
 	// 角色是否在空中
-	UPROPERTY(BlueprintReadOnly, Category="Movement",meta=(AllowPrivateAccess=true))
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	bool bIsInAir;
 
 	// 角色是否在加速
-	UPROPERTY(BlueprintReadOnly, Category="Movement",meta=(AllowPrivateAccess=true))
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	bool bIsAccelerating;
+
+	// 角色是否装备武器
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	bool bWeaponEquipped;
 };

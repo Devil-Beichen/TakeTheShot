@@ -1,8 +1,8 @@
 ﻿#include "BlasterComponents/CombatComponent.h"
 
 #include "Character/BlasterCharacter.h"
-#include "Components/SphereComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Net/UnrealNetwork.h"
 #include "Weapon/Weapon.h"
 
 
@@ -23,6 +23,17 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
+// 获取此组件的生命周期内需要复制的属性列表
+void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	// 调用基类方法以获取基类的生命周期复制属性
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// 指定EquippedWeapon属性需要在服务器和客户端之间同步复制
+	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
+}
+
+// 将武器装备到角色的右手
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	// 检查角色和待装备的武器是否为空，如果为空则不执行任何操作
