@@ -35,7 +35,7 @@ public:
 private:
 	// 角色的引用
 	UPROPERTY(BlueprintReadOnly, Category="Character", meta=(AllowPrivateAccess=true))
-	TObjectPtr<class ABlasterCharacter> BlasterCharacter;
+	TObjectPtr<class ABlasterCharacter> BlasterCharacter = nullptr;
 
 	// 角色的移动速度
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
@@ -52,4 +52,8 @@ private:
 	// 角色是否装备武器
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	bool bWeaponEquipped;
+
+	// 角色是否瞄准
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	bool bAiming;
 };

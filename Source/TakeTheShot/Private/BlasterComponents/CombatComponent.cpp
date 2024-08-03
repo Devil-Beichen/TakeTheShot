@@ -17,7 +17,6 @@ void UCombatComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -31,6 +30,8 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	// 指定EquippedWeapon属性需要在服务器和客户端之间同步复制
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
+	// 指定Aiming属性需要在服务器和客户端之间同步复制
+	DOREPLIFETIME(UCombatComponent, bAiming);
 }
 
 // 将武器装备到角色的右手
@@ -51,4 +52,19 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	// 设置武器的所有者为角色
 	EquippedWeapon->SetOwner(Character);
+}
+
+// 设置瞄准状态的函数
+// @param bIsAiming：布尔值，表示是否处于瞄准状态
+void UCombatComponent::SetAiming(const bool bIsAiming)
+{
+	bAiming = bIsAiming;
+	ServerSetAiming(bIsAiming);
+}
+
+// 服务器端设置瞄准状态的函数，用于同步客户端和服务器端的状态
+// @param bIsAiming：布尔值，表示是否处于瞄准状态
+void UCombatComponent::ServerSetAiming_Implementation(const bool bIsAiming)
+{
+	bAiming = bIsAiming;
 }

@@ -29,6 +29,13 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	// 设置瞄准状态
+	void SetAiming(const bool bIsAiming);
+
+	// 服务器端设置瞄准状态
+	UFUNCTION(Server, Reliable)
+	void ServerSetAiming(const bool bIsAiming);
+
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
 	UPROPERTY()
@@ -37,6 +44,10 @@ private:
 	// 定义一个指向当前装备武器的指针，用于在角色中引用和操作武器实例
 	UPROPERTY(Replicated)
 	AWeapon* EquippedWeapon = nullptr;
+
+	// 定义一个布尔变量，用于指示角色是否正在瞄准
+	UPROPERTY(Replicated)
+	bool bAiming = false;
 
 public:
 };

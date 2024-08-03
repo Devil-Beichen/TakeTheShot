@@ -73,10 +73,10 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// 绑定跳跃动作的开始事件
+		// 绑定跳跃动作的开始事件 绑定跳跃动作的触发事件和完成事件
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ABlasterCharacter::Jump_Started);
-		// 绑定跳跃动作的完成事件
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ABlasterCharacter::Jump_Completed);
+
 		// 绑定蹲下动作的开始事件
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ABlasterCharacter::Crouch_Started);
 		// 绑定装备动作的开始事件
@@ -87,6 +87,10 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Move);
 		// 绑定查看动作的触发事件
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Look);
+
+		/*绑定瞄准动作的触发事件和完成事件*/
+		EnhancedInputComponent->BindAction(AimingAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Aiming_Triggered);
+		EnhancedInputComponent->BindAction(AimingAction, ETriggerEvent::Completed, this, &ABlasterCharacter::Aiming_Completed);
 	}
 }
 
@@ -253,7 +257,7 @@ void ABlasterCharacter::MulticastSlowStarted_Implementation()
 	}
 }
 
-
+// 拾取装备按钮开始函数，当按下装备按钮时被调用
 void ABlasterCharacter::Equip_Started()
 {
 	if (!Combat) return;
@@ -268,7 +272,6 @@ void ABlasterCharacter::Equip_Started()
 	}
 }
 
-#pragma endregion
 
 void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 {
@@ -277,6 +280,25 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 		Combat->EquipWeapon(OverlappingWeapon);
 	}
 }
+
+void ABlasterCharacter::Aiming_Triggered()
+{
+	if (Combat)
+	{
+		Combat->SetAiming(true);
+	}
+}
+
+void ABlasterCharacter::Aiming_Completed()
+{
+	if (Combat)
+	{
+		Combat->SetAiming(false);
+	}
+}
+
+#pragma endregion
+
 
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
@@ -316,4 +338,9 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(const AWeapon* LastWeapon) const
 bool ABlasterCharacter::IsWeaponEquipped() const
 {
 	return (Combat && Combat->EquippedWeapon);
+}
+
+bool ABlasterCharacter::IsAiming() const
+{
+	return (Combat && Combat->bAiming);
 }

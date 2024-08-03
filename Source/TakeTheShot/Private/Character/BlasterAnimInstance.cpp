@@ -42,4 +42,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	// 检查BlasterCharacter是否装备了武器
 	bWeaponEquipped = BlasterCharacter->IsWeaponEquipped();
+
+	// 检查BlasterCharacter是否正在瞄准
+	bAiming = BlasterCharacter->IsAiming();
 }

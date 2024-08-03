@@ -68,6 +68,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* SlowAction = nullptr;
 
+	// 定义一个UInputAction类型的动作，用于处理瞄准操作
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* AimingAction = nullptr;
+
 	// 增强输入子系统
 	UPROPERTY()
 	UEnhancedInputLocalPlayerSubsystem* EnhancedSubsystem = nullptr;
@@ -127,6 +131,16 @@ protected:
 	 */
 	UFUNCTION()
 	void Equip_Started();
+
+	// 瞄准持续按下事件
+	UFUNCTION()
+	void Aiming_Triggered();
+
+	/**
+	 * 瞄准持续松开事件
+	 */
+	UFUNCTION()
+	void Aiming_Completed();
 
 
 #pragma endregion
@@ -234,5 +248,8 @@ public:
 	 * @return 如果角色正在装备武器，则返回true，否则返回false
 	 */
 	bool IsWeaponEquipped() const;
+
+	// 检查角色是否正在瞄准
+	bool IsAiming() const;
 #pragma  endregion
 };
