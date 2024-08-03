@@ -190,7 +190,7 @@ private:
 
 #pragma  region 角色武器相关
 
-private:
+public:
 	// 玩家是否处于慢速状态
 	UPROPERTY()
 	bool bIsSlowWalk = false;
@@ -202,6 +202,7 @@ private:
 	// 跑步速度
 	float RunSpeed = 350.f;
 
+private:
 	/**
 	 * 定义一个AWeapon类的指针成员变量，用于存储当前重叠的武器对象
 	 * 通过ReplicatedUsing属性指定复制时使用OnRep_OverlappingWeapon函数进行处理

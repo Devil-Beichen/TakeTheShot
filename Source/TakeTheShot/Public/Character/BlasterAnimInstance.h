@@ -56,4 +56,21 @@ private:
 	// 角色是否瞄准
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	bool bAiming;
+
+	// YawOffset 表示在偏航方向上的偏移量。
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	float YawOffset;
+
+	// Lean 表示倾斜角度。
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	float Lean;
+
+	// 存储角色上一帧的旋转信息，用于计算旋转速度或进行插值等操作。
+	FRotator CharacterRotationLastFrame;
+	
+	// 存储当前角色的旋转信息，表示角色当前的方向。
+	FRotator CharacterRotation;
+
+	// DeltaRotation 表示角色在当前帧与上一帧之间的旋转差值。
+	FRotator DeltaRotation;
 };

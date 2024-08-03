@@ -5,6 +5,7 @@
 
 #include "Character/BlasterCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 void UBlasterAnimInstance::NativeInitializeAnimation()
 {
@@ -45,4 +46,30 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	// 检查BlasterCharacter是否正在瞄准
 	bAiming = BlasterCharacter->IsAiming();
+
+	// 获取角色的基础瞄准旋转
+	const FRotator AinRotation = BlasterCharacter->GetBaseAimRotation();
+	// 根据角色的移动方向创建旋转
+	const FRotator MovementRotation = UKismetMathLibrary::MakeRotFromX(BlasterCharacter->GetVelocity());
+
+	// 计算并获取移动旋转与目标旋转之间的规范化旋转差值
+	const FRotator DeltaRot = UKismetMathLibrary::NormalizedDeltaRotator(MovementRotation, AinRotation);
+
+	// 使用平滑插值更新DeltaRotation，使其平滑地朝着计算出的DeltaRot旋转，插值速率为6.f
+	DeltaRotation = FMath::RInterpTo(DeltaRotation, DeltaRot, DeltaSeconds, 6.f);
+
+	// 将旋转增量的偏航角赋值给YawOffset变量
+	YawOffset = DeltaRotation.Yaw;
+
+	// 在这一帧中更新角色的旋转状态
+	CharacterRotationLastFrame = CharacterRotation;
+	CharacterRotation = BlasterCharacter->GetActorRotation();
+	// 计算角色旋转的变化量
+	const FRotator Delta = UKismetMathLibrary::NormalizedDeltaRotator(CharacterRotation, CharacterRotationLastFrame);
+	// 计算目标倾斜角度
+	const float Target = Delta.Yaw / DeltaSeconds;
+	// 平滑地 interpolate 到目标倾斜角度
+	const float Interp = UKismetMathLibrary::FInterpTo(Lean, Target, DeltaSeconds, 6.f);
+	// 限制倾斜角度在合理范围内
+	Lean = FMath::Clamp(Interp, -90.f, 90.f);
 }

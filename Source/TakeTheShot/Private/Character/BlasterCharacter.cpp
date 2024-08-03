@@ -230,17 +230,14 @@ void ABlasterCharacter::Slow_Started()
 	}
 }
 
-/* 服务器端开始减速的实现
-该函数将通知所有客户端开始减速 */
+// 该函数被服务器调用，以确保所有客户端都能正确地接收到减速状态并作出相应调整。
 void ABlasterCharacter::ServerSlowStarted_Implementation()
 {
+	// 设置角色的速度，这是实现加速减速效果的关键步骤。
 	MulticastSlowStarted();
 }
 
-/*多播开始减速的实现
-检查角色是否处于蹲伏或下落状态，如果是，则不执行减速
-如果角色不在慢走状态，则切换到慢走状态，降低移动速度
-否则，切换回正常跑步状态，恢复移动速度*/
+// 多播设置速度的函数，用于在客户端上设置角色的速度。
 void ABlasterCharacter::MulticastSlowStarted_Implementation()
 {
 	if (bIsCrouched || GetCharacterMovement()->IsFalling()) return;

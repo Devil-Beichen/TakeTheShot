@@ -32,9 +32,16 @@ protected:
 	// 设置瞄准状态
 	void SetAiming(const bool bIsAiming);
 
+	// 设置瞄准速度
+	void SetAimingSpeed() const;
+
 	// 服务器端设置瞄准状态
 	UFUNCTION(Server, Reliable)
 	void ServerSetAiming(const bool bIsAiming);
+
+	// 当装备的武器发生变化时调用此函数
+	UFUNCTION()
+	void OnRep_EquippedWeapon() const;
 
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
@@ -42,7 +49,7 @@ private:
 	ABlasterCharacter* Character = nullptr;
 
 	// 定义一个指向当前装备武器的指针，用于在角色中引用和操作武器实例
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing="OnRep_EquippedWeapon")
 	AWeapon* EquippedWeapon = nullptr;
 
 	// 定义一个布尔变量，用于指示角色是否正在瞄准
