@@ -117,7 +117,7 @@ protected:
 	void Slow_Started();
 
 	/**
-	 *  服务器端处理慢走按钮松开事件
+	 *  服务器端处理慢走按下事件
 	 */
 	UFUNCTION(Server, Reliable)
 	void ServerSlowStarted();

@@ -81,28 +81,33 @@ void UCombatComponent::SetAiming(const bool bIsAiming)
 {
 	// 更新当前是否处于瞄准状态
 	bAiming = bIsAiming;
-	
-	// 设置瞄准速度，根据当前的瞄准状态调整
-	SetAimingSpeed();
-	
+
+	if (Character->HasAuthority())
+	{
+		// 设置瞄准速度，根据当前的瞄准状态调整
+		MulticastSetAimingSpeed();
+	}
 	// 向服务器请求设置瞄准状态，确保服务器和客户端状态同步
 	ServerSetAiming(bIsAiming);
-
 }
 
-void UCombatComponent::SetAimingSpeed() const
+void UCombatComponent::MulticastSetAimingSpeed_Implementation() const
 {
-    // 根据是否瞄准状态调整角色移动速度
-    if (bAiming)
-    {
-        // 如果正在瞄准，将角色的最大移动速度设置为慢走速度
-        Character->GetCharacterMovement()->MaxWalkSpeed = Character->SlowWalkSpeed;
-    }
-    else
-    {
-        // 如果未在瞄准状态，将角色的最大移动速度设置为跑步速度
-        Character->GetCharacterMovement()->MaxWalkSpeed = Character->RunSpeed;
-    }
+	// 根据是否瞄准状态调整角色移动速度
+	if (bAiming)
+	{
+		// 如果正在瞄准，将角色的最大移动速度设置为慢走速度
+		Character->GetCharacterMovement()->MaxWalkSpeed = Character->SlowWalkSpeed;
+
+		Character->bIsSlowWalk = true;
+	}
+	else
+	{
+		// 如果未在瞄准状态，将角色的最大移动速度设置为跑步速度
+		Character->GetCharacterMovement()->MaxWalkSpeed = Character->RunSpeed;
+
+		Character->bIsSlowWalk = false;
+	}
 }
 
 // 服务器端设置瞄准状态的函数，用于同步客户端和服务器端的状态
@@ -110,5 +115,5 @@ void UCombatComponent::SetAimingSpeed() const
 void UCombatComponent::ServerSetAiming_Implementation(const bool bIsAiming)
 {
 	bAiming = bIsAiming;
-	SetAimingSpeed();
+	MulticastSetAimingSpeed();
 }

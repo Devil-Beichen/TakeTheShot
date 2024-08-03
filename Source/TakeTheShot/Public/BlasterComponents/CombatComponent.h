@@ -32,8 +32,9 @@ protected:
 	// 设置瞄准状态
 	void SetAiming(const bool bIsAiming);
 
-	// 设置瞄准速度
-	void SetAimingSpeed() const;
+	// 多播设置瞄准速度
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastSetAimingSpeed() const;
 
 	// 服务器端设置瞄准状态
 	UFUNCTION(Server, Reliable)

@@ -7,6 +7,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "BlasterComponents/CombatComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -38,6 +39,9 @@ ABlasterCharacter::ABlasterCharacter()
 
 	// 允许角色蹲伏
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	// 关闭与相机的碰撞
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
 	// 创建并初始化一个默认的Widget组件，用于显示头顶信息
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverlayWidget"));
@@ -280,7 +284,7 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 
 void ABlasterCharacter::Aiming_Triggered()
 {
-	if (Combat)
+	if (Combat && Combat->EquippedWeapon)
 	{
 		Combat->SetAiming(true);
 	}
