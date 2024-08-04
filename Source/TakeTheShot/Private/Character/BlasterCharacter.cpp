@@ -56,6 +56,11 @@ ABlasterCharacter::ABlasterCharacter()
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
 	// 设置战斗组件为复制，使其在服务器和客户端之间同步
 	Combat->SetIsReplicated(true);
+
+	// 定义网络更新频率，用于控制数据同步的速率
+	NetUpdateFrequency = 66.f;
+	// 定义最小网络更新频率，确保在任何情况下更新频率都不会低于此值
+	MinNetUpdateFrequency = 33.f;
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
