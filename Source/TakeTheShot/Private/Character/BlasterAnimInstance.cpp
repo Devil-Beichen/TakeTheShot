@@ -50,6 +50,9 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// 检查BlasterCharacter是否正在瞄准
 	bAiming = BlasterCharacter->IsAiming();
 
+	// 获取BlasterCharacter的转弯状态
+	TurningInPlace = BlasterCharacter->GetTurningInPlace();
+
 	// 获取角色的基础瞄准旋转
 	const FRotator AinRotation = BlasterCharacter->GetBaseAimRotation();
 	// 根据角色的移动方向创建旋转
@@ -79,20 +82,20 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	AO_Pitch = BlasterCharacter->GetAO_Pitch();
 
 	// 检查是否装备了武器，且武器对象和其网格模型以及BlasterCharacter（一种角色类型）的网格模型都有效
-		if (bWeaponEquipped && EquippedWeapon && EquippedWeapon->GetWeaponMesh() && BlasterCharacter->GetMesh())
-		{
-			// 获取左手法套的位置和旋转信息
-			LeftHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
-			
-			// 准备存储转换后的左手位置和旋转变量
-			FVector OutPosition;
-			FRotator OutRotation;
-			
-			// 将左手的网格空间位置转换到骨架空间中
-			BlasterCharacter->GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutPosition, OutRotation);
-			
-			// 更新左手的位置和旋转
-			LeftHandTransform.SetLocation(OutPosition);
-			LeftHandTransform.SetRotation(FQuat(OutRotation));
-		}
+	if (bWeaponEquipped && EquippedWeapon && EquippedWeapon->GetWeaponMesh() && BlasterCharacter->GetMesh())
+	{
+		// 获取左手法套的位置和旋转信息
+		LeftHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
+
+		// 准备存储转换后的左手位置和旋转变量
+		FVector OutPosition;
+		FRotator OutRotation;
+
+		// 将左手的网格空间位置转换到骨架空间中
+		BlasterCharacter->GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutPosition, OutRotation);
+
+		// 更新左手的位置和旋转
+		LeftHandTransform.SetLocation(OutPosition);
+		LeftHandTransform.SetRotation(FQuat(OutRotation));
+	}
 }

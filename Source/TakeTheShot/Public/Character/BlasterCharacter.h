@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
 #include "GameFramework/Character.h"
+#include "Types/TurningInPlace.h"
 #include "BlasterCharacter.generated.h"
 
 class UInputMappingContext;
@@ -251,6 +252,11 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastSetYaw(const float Yaw);
 
+	// 存储角色的转向状态，表示角色的转向状态。
+	ETurningInPlace TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+	// 原地转向函数
+	void TurnInPlace(const float DeltaTime);
+
 public:
 	/**
 	 * 设置当前重叠的武器对象
@@ -283,4 +289,7 @@ public:
 
 	// 获取当前的武器对象
 	AWeapon* GetEquippedWeapon() const;
+
+	// 获取当前的角色的转向状态
+	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 };

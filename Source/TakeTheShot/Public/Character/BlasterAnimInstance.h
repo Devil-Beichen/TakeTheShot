@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "Types/TurningInPlace.h"
 #include "BlasterAnimInstance.generated.h"
 
 /**	爆破角色的基类
@@ -89,4 +90,8 @@ private:
 	// 存储角色的左手变换信息，表示角色的左手在当前帧的位置和旋转信息。
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	FTransform LeftHandTransform;
+
+	// 存储角色的转向状态，表示角色是否正在转弯。
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	ETurningInPlace TurningInPlace;
 };
