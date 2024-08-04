@@ -72,4 +72,6 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	const float Interp = UKismetMathLibrary::FInterpTo(Lean, Target, DeltaSeconds, 6.f);
 	// 限制倾斜角度在合理范围内
 	Lean = FMath::Clamp(Interp, -90.f, 90.f);
+	AO_Yaw = BlasterCharacter->GetAO_Yaw();
+	AO_Pitch = BlasterCharacter->GetAO_Pitch();
 }

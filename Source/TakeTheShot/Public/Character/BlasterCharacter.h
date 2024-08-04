@@ -38,6 +38,12 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	/**	瞄准偏移
+	 * 
+	 * @param DeltaTime 帧时间
+	 */
+	void AimOffset(const float DeltaTime);
+
 #pragma region 按键输入相关
 
 	//输入映射
@@ -231,6 +237,15 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
 
+	// 存储角色的左右角偏移量，表示角色在左右的偏移量。
+	float AO_Yaw;
+
+	// 存储角色的上下角偏移量，表示角色在上下的偏移量。
+	float AO_Pitch;
+
+	// 存储角色的初始瞄准角度，表示角色的初始瞄准角度。
+	FRotator StartingAimRotation;
+
 public:
 	/**
 	 * 设置当前重叠的武器对象
@@ -253,4 +268,11 @@ public:
 	// 检查角色是否正在瞄准
 	bool IsAiming() const;
 #pragma  endregion
+
+public:
+	// 获取AO_Yaw的值
+	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
+
+	// 获取AO_Pitch的值
+	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
 };
