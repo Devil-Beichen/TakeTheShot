@@ -247,13 +247,9 @@ private:
 	// 存储角色的初始瞄准角度，表示角色的初始瞄准角度。
 	FRotator StartingAimRotation;
 
-	// 服务器处理AO_Yaw的函数
-	UFUNCTION(Server, Reliable)
-	void ServerSetYawAndPitch(const float Yaw);
-
 	// 多播处理AO_Yaw的函数
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastSetYawAndPitch(const float Yaw);
+	void MulticastSetYaw(const float Yaw);
 
 public:
 	/**
@@ -284,4 +280,7 @@ public:
 
 	// 获取AO_Pitch的值
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
+
+	// 获取当前的武器对象
+	AWeapon* GetEquippedWeapon() const;
 };

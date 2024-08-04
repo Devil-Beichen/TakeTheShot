@@ -82,6 +82,8 @@ void ABlasterCharacter::AimOffset(const float DeltaTime)
 	const float Speed = Velocity.Size();
 	const bool bIsInAir = GetCharacterMovement()->IsFalling();
 
+	float TempYaw = 0.f;
+
 	// 如果速度为0且角色不在空中，则执行以下操作
 	if (Speed == 0.f && !bIsInAir)
 	{
@@ -92,7 +94,7 @@ void ABlasterCharacter::AimOffset(const float DeltaTime)
 		const FRotator CurrentAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		// 计算当前瞄准旋转与初始瞄准旋转之间的差值
 		const FRotator DeltaRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
-		AO_Yaw = FMath::FInterpTo(AO_Yaw, DeltaRotation.Yaw, DeltaTime, 10.f);
+		TempYaw = FMath::FInterpTo(AO_Yaw, DeltaRotation.Yaw, DeltaTime, 20.f);
 	}
 	if (Speed > 0.f || bIsInAir) // 如果速度大于0或角色在空中，则执行以下操作
 	{
@@ -101,19 +103,12 @@ void ABlasterCharacter::AimOffset(const float DeltaTime)
 
 		// 获取角色的初始瞄准旋转
 		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
-		AO_Yaw = 0.f;
+		TempYaw = 0.f;
 	}
 
-	// 根据当前对象是否拥有权威来决定如何更新偏航角和俯仰角
 	if (HasAuthority())
 	{
-		// 如果当前客户端是权威服务器，向所有客户端广播更新后的偏航角和俯仰角
-		MulticastSetYawAndPitch(AO_Yaw);
-	}
-	else
-	{
-		// 如果当前客户端不是权威服务器，则请求服务器更新偏航角和俯仰角
-		ServerSetYawAndPitch(AO_Yaw);
+		MulticastSetYaw(TempYaw);
 	}
 
 	// 获取基础瞄准旋转的俯仰角
@@ -128,21 +123,10 @@ void ABlasterCharacter::AimOffset(const float DeltaTime)
 	}
 }
 
-// 服务器端设置AO_Yaw角度
-//
-// @param Yaw - 新的偏航角值
-void ABlasterCharacter::ServerSetYawAndPitch_Implementation(const float Yaw)
-{
-	// 调用多播函数来同步更新AO_Yaw角度，确保所有客户端一致
-	MulticastSetYawAndPitch(Yaw);
-}
-
 // 多播设置AO_Yaw角度，用于同步服务器与客户端的角度值
-//
 // @param Yaw - 新的偏航角值
-void ABlasterCharacter::MulticastSetYawAndPitch_Implementation(const float Yaw)
+void ABlasterCharacter::MulticastSetYaw_Implementation(const float Yaw)
 {
-	// 直接更新AO_Yaw的值，以确保与传入参数一致
 	AO_Yaw = Yaw;
 }
 
@@ -423,4 +407,10 @@ bool ABlasterCharacter::IsWeaponEquipped() const
 bool ABlasterCharacter::IsAiming() const
 {
 	return (Combat && Combat->bAiming);
+}
+
+AWeapon* ABlasterCharacter::GetEquippedWeapon() const
+{
+	if (Combat == nullptr) return nullptr;
+	return Combat->EquippedWeapon;
 }

@@ -111,4 +111,7 @@ public:
 
 	// 获取球形组件
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
+
+	// 获取武器模型组件
+	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 };

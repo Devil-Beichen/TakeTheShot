@@ -53,6 +53,10 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	bool bWeaponEquipped;
 
+	// 角色装备的武器
+	UPROPERTY()
+	class AWeapon* EquippedWeapon = nullptr;
+
 	// 角色是否瞄准
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	bool bAiming;
@@ -81,4 +85,8 @@ private:
 	// 存储角色的上下角偏移量，表示角色在上下的偏移量。
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	float AO_Pitch;
+
+	// 存储角色的左手变换信息，表示角色的左手在当前帧的位置和旋转信息。
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	FTransform LeftHandTransform;
 };

@@ -6,6 +6,7 @@
 #include "Character/BlasterCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Weapon/Weapon.h"
 
 void UBlasterAnimInstance::NativeInitializeAnimation()
 {
@@ -44,6 +45,8 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// 检查BlasterCharacter是否装备了武器
 	bWeaponEquipped = BlasterCharacter->IsWeaponEquipped();
 
+	EquippedWeapon = BlasterCharacter->GetEquippedWeapon();
+
 	// 检查BlasterCharacter是否正在瞄准
 	bAiming = BlasterCharacter->IsAiming();
 
@@ -74,4 +77,22 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Lean = FMath::Clamp(Interp, -90.f, 90.f);
 	AO_Yaw = BlasterCharacter->GetAO_Yaw();
 	AO_Pitch = BlasterCharacter->GetAO_Pitch();
+
+	// 检查是否装备了武器，且武器对象和其网格模型以及BlasterCharacter（一种角色类型）的网格模型都有效
+		if (bWeaponEquipped && EquippedWeapon && EquippedWeapon->GetWeaponMesh() && BlasterCharacter->GetMesh())
+		{
+			// 获取左手法套的位置和旋转信息
+			LeftHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
+			
+			// 准备存储转换后的左手位置和旋转变量
+			FVector OutPosition;
+			FRotator OutRotation;
+			
+			// 将左手的网格空间位置转换到骨架空间中
+			BlasterCharacter->GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutPosition, OutRotation);
+			
+			// 更新左手的位置和旋转
+			LeftHandTransform.SetLocation(OutPosition);
+			LeftHandTransform.SetRotation(FQuat(OutRotation));
+		}
 }
