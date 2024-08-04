@@ -49,6 +49,9 @@ ABlasterCharacter::ABlasterCharacter()
 	// 将新创建的Widget组件附加到根组件上
 	OverheadWidget->SetupAttachment(RootComponent);
 
+	// 启用角色移动时的自动朝向功能
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+
 	// 创建并初始化一个战斗组件，用于处理战斗相关逻辑
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
 	// 设置战斗组件为复制，使其在服务器和客户端之间同步
@@ -81,21 +84,32 @@ void ABlasterCharacter::AimOffset(const float DeltaTime)
 	// 如果速度为0且角色不在空中，则执行以下操作
 	if (Speed == 0.f && !bIsInAir)
 	{
+		// 禁用控制器yaw旋转，因为我们将使用输入直接控制yaw
+		bUseControllerRotationYaw = false;
+		
 		// 当前的瞄准旋转
 		const FRotator CurrentAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		// 计算当前瞄准旋转与初始瞄准旋转之间的差值
 		const FRotator DeltaRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
-		AO_Yaw = DeltaRotation.Yaw;
-		bUseControllerRotationYaw = false;
+		AO_Yaw = FMath::FInterpTo(AO_Yaw, DeltaRotation.Yaw, DeltaTime, 25.f);
 	}
 	if (Speed > 0.f || bIsInAir) // 如果速度大于0或角色在空中，则执行以下操作
 	{
+		// 启用控制器的yaw旋转，这通常用于第一人称视角角色，以使角色的朝向与控制器的输入相匹配。
+		bUseControllerRotationYaw = true;
+		
 		// 获取角色的初始瞄准旋转
 		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		AO_Yaw = 0.f;
-		bUseControllerRotationYaw = true;
 	}
 	AO_Pitch = GetBaseAimRotation().Pitch;
+	if (AO_Pitch > 90.f && !IsLocallyControlled())
+	{
+		// 映射Pitch [270,360]到[-90,0]
+		const FVector2d InRange(270.f, 360.f);
+		const FVector2d OutRange(-90.f, 0.f);
+		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
+	}
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
