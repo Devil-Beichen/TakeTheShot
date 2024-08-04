@@ -62,7 +62,6 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
-	DOREPLIFETIME(ABlasterCharacter, AO_Yaw);
 }
 
 void ABlasterCharacter::BeginPlay()
@@ -367,19 +366,23 @@ void ABlasterCharacter::AimOffset(const float DeltaTime)
 	const float Speed = Velocity.Size();
 	const bool bIsInAir = GetCharacterMovement()->IsFalling();
 
-	float TempYaw = 0.f;
-
 	// 如果速度为0且角色不在空中，则执行以下操作
 	if (Speed == 0.f && !bIsInAir)
 	{
 		// 禁用控制器yaw旋转，因为我们将使用输入直接控制yaw
-		bUseControllerRotationYaw = false;
+		bUseControllerRotationYaw = true;
 
 		// 当前的瞄准旋转
 		const FRotator CurrentAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		// 计算当前瞄准旋转与初始瞄准旋转之间的差值
 		const FRotator DeltaRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
-		TempYaw = FMath::FInterpTo(AO_Yaw, DeltaRotation.Yaw, DeltaTime, 20.f);
+		AO_Yaw = FMath::FInterpTo(AO_Yaw, DeltaRotation.Yaw, DeltaTime, 20.f);
+
+		if (TurningInPlace == ETurningInPlace::ETIP_NotTurning)
+		{
+			InterpAO_Yaw = AO_Yaw;
+		}
+
 		TurnInPlace(DeltaTime);
 	}
 	if (Speed > 0.f || bIsInAir) // 如果速度大于0或角色在空中，则执行以下操作
@@ -389,14 +392,9 @@ void ABlasterCharacter::AimOffset(const float DeltaTime)
 
 		// 获取角色的初始瞄准旋转
 		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
-		TempYaw = 0.f;
+		AO_Yaw = 0.f;
 
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
-	}
-
-	if (HasAuthority())
-	{
-		MulticastSetYaw(TempYaw);
 	}
 
 	// 获取基础瞄准旋转的俯仰角
@@ -411,21 +409,37 @@ void ABlasterCharacter::AimOffset(const float DeltaTime)
 	}
 }
 
-// 多播设置AO_Yaw角度，用于同步服务器与客户端的角度值
-// @param Yaw - 新的偏航角值
-void ABlasterCharacter::MulticastSetYaw_Implementation(const float Yaw)
-{
-	AO_Yaw = Yaw;
-}
-
+/**
+ * 在原地转动角色。
+ * 该函数根据Delta Time参数来控制角色在原地的转动行为。
+ * 它通过判断角色的偏航角（AO_Yaw）来确定角色是向左转、向右转还是停止转动。
+ * 
+ * @param DeltaTime 两次调用之间的时间间隔，用于平滑转动动画。
+ */
 void ABlasterCharacter::TurnInPlace(const float DeltaTime)
 {
+	// 判断是否向右转动
 	if (AO_Yaw > 90.f)
 	{
 		TurningInPlace = ETurningInPlace::ETIP_Right;
 	}
+	// 判断是否向左转动
 	else if (AO_Yaw < -90.f)
 	{
 		TurningInPlace = ETurningInPlace::ETIP_Left;
+	}
+	// 如果角色处于转动状态（不是未转动状态）
+	if (TurningInPlace != ETurningInPlace::ETIP_NotTurning)
+	{
+		// 平滑地将InterpAO_Yaw插值到0，以实现转动效果
+		InterpAO_Yaw = FMath::FInterpTo(InterpAO_Yaw, 0.f, DeltaTime, 4.f);
+		// 更新AO_Yaw以反映转动
+		AO_Yaw = InterpAO_Yaw;
+		// 当接近正向时，停止转动并重置起始瞄准旋转
+		if (FMath::Abs(AO_Yaw) < 15.f)
+		{
+			TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+			StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		}
 	}
 }

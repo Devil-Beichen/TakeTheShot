@@ -239,18 +239,15 @@ private:
 	void ServerEquipButtonPressed();
 
 	// 存储角色的左右角偏移量，表示角色在左右的偏移量。
-	UPROPERTY(Replicated)
 	float AO_Yaw;
+	// 左右偏移角度的插值目标值
+	float InterpAO_Yaw;
 
 	// 存储角色的上下角偏移量，表示角色在上下的偏移量。
 	float AO_Pitch;
 
 	// 存储角色的初始瞄准角度，表示角色的初始瞄准角度。
 	FRotator StartingAimRotation;
-
-	// 多播处理AO_Yaw的函数
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastSetYaw(const float Yaw);
 
 	// 存储角色的转向状态，表示角色的转向状态。
 	ETurningInPlace TurningInPlace = ETurningInPlace::ETIP_NotTurning;
