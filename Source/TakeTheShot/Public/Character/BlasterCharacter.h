@@ -238,6 +238,7 @@ private:
 	void ServerEquipButtonPressed();
 
 	// 存储角色的左右角偏移量，表示角色在左右的偏移量。
+	UPROPERTY(Replicated)
 	float AO_Yaw;
 
 	// 存储角色的上下角偏移量，表示角色在上下的偏移量。
@@ -245,6 +246,14 @@ private:
 
 	// 存储角色的初始瞄准角度，表示角色的初始瞄准角度。
 	FRotator StartingAimRotation;
+
+	// 服务器处理AO_Yaw的函数
+	UFUNCTION(Server, Reliable)
+	void ServerSetYawAndPitch(const float Yaw);
+
+	// 多播处理AO_Yaw的函数
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastSetYawAndPitch(const float Yaw);
 
 public:
 	/**

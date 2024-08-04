@@ -62,6 +62,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(ABlasterCharacter, AO_Yaw);
 }
 
 void ABlasterCharacter::BeginPlay()
@@ -86,30 +87,63 @@ void ABlasterCharacter::AimOffset(const float DeltaTime)
 	{
 		// 禁用控制器yaw旋转，因为我们将使用输入直接控制yaw
 		bUseControllerRotationYaw = false;
-		
+
 		// 当前的瞄准旋转
 		const FRotator CurrentAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		// 计算当前瞄准旋转与初始瞄准旋转之间的差值
 		const FRotator DeltaRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
-		AO_Yaw = FMath::FInterpTo(AO_Yaw, DeltaRotation.Yaw, DeltaTime, 25.f);
+		AO_Yaw = FMath::FInterpTo(AO_Yaw, DeltaRotation.Yaw, DeltaTime, 10.f);
 	}
 	if (Speed > 0.f || bIsInAir) // 如果速度大于0或角色在空中，则执行以下操作
 	{
 		// 启用控制器的yaw旋转，这通常用于第一人称视角角色，以使角色的朝向与控制器的输入相匹配。
 		bUseControllerRotationYaw = true;
-		
+
 		// 获取角色的初始瞄准旋转
 		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		AO_Yaw = 0.f;
 	}
+
+	// 根据当前对象是否拥有权威来决定如何更新偏航角和俯仰角
+	if (HasAuthority())
+	{
+		// 如果当前客户端是权威服务器，向所有客户端广播更新后的偏航角和俯仰角
+		MulticastSetYawAndPitch(AO_Yaw);
+	}
+	else
+	{
+		// 如果当前客户端不是权威服务器，则请求服务器更新偏航角和俯仰角
+		ServerSetYawAndPitch(AO_Yaw);
+	}
+
+	// 获取基础瞄准旋转的俯仰角
 	AO_Pitch = GetBaseAimRotation().Pitch;
+	// 如果俯仰角大于90度且当前对象不是本地控制的
 	if (AO_Pitch > 90.f && !IsLocallyControlled())
 	{
-		// 映射Pitch [270,360]到[-90,0]
+		// 将Pitch角从[270,360]映射到[-90,0]
 		const FVector2d InRange(270.f, 360.f);
 		const FVector2d OutRange(-90.f, 0.f);
 		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
 	}
+}
+
+// 服务器端设置AO_Yaw角度
+//
+// @param Yaw - 新的偏航角值
+void ABlasterCharacter::ServerSetYawAndPitch_Implementation(const float Yaw)
+{
+	// 调用多播函数来同步更新AO_Yaw角度，确保所有客户端一致
+	MulticastSetYawAndPitch(Yaw);
+}
+
+// 多播设置AO_Yaw角度，用于同步服务器与客户端的角度值
+//
+// @param Yaw - 新的偏航角值
+void ABlasterCharacter::MulticastSetYawAndPitch_Implementation(const float Yaw)
+{
+	// 直接更新AO_Yaw的值，以确保与传入参数一致
+	AO_Yaw = Yaw;
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -320,7 +354,6 @@ void ABlasterCharacter::Equip_Started()
 	}
 }
 
-
 void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 {
 	if (Combat)
@@ -346,7 +379,6 @@ void ABlasterCharacter::Aiming_Completed()
 }
 
 #pragma endregion
-
 
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
