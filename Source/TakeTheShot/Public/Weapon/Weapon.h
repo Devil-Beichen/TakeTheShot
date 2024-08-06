@@ -20,6 +20,8 @@ enum class EWeaponState :uint8
 	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
+class UAnimationAsset;
+
 /**	武器基类
  * 
  */
@@ -43,6 +45,9 @@ public:
 	 * @param bShowWidget 指示PickupWidget是否应被激活的布尔值。true表示激活，false表示关闭。
 	 */
 	void ShowPickupWidget(const bool bShowWidget) const;
+
+	// 射击
+	void Fire() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -104,6 +109,10 @@ private:
 	// 武器拾取组件，用于显示武器的拾取提示
 	UPROPERTY(VisibleAnywhere, Category="Weapon Properties")
 	class UWidgetComponent* PickupWidget = nullptr;
+
+	// 武器射击动画
+	UPROPERTY(EditAnywhere, Category="Weapon Properties")
+	UAnimationAsset* FireAnimation = nullptr;
 
 public:
 	// 设置武器状态

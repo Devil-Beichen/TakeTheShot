@@ -103,7 +103,7 @@ void AWeapon::SetWeaponState(const EWeaponState State)
 	case EWeaponState::EWS_Equipped:
 		// 隐藏武器的拾取提示，因为已经装备完毕
 		ShowPickupWidget(false);
-		// 将武器的碰撞检查关闭（只在服务器调用）
+	// 将武器的碰撞检查关闭（只在服务器调用）
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		break;
 	}
@@ -133,6 +133,14 @@ void AWeapon::ShowPickupWidget(const bool bShowWidget) const
 		PickupWidget->SetVisibility(bShowWidget);
 		// 根据物品获取提示的可见性状态，设置武器模型的自定义深度渲染
 		WeaponMesh->SetRenderCustomDepth(bShowWidget);
+	}
+}
+
+void AWeapon::Fire() const
+{
+	if (FireAnimation)
+	{
+		WeaponMesh->PlayAnimation(FireAnimation, false);
 	}
 }
 
