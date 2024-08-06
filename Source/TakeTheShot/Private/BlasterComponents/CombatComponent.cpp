@@ -12,17 +12,6 @@ UCombatComponent::UCombatComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-
-void UCombatComponent::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
-void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
 // 获取此组件的生命周期内需要复制的属性列表
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -33,6 +22,16 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	// 指定Aiming属性需要在服务器和客户端之间同步复制
 	DOREPLIFETIME(UCombatComponent, bAiming);
+}
+
+void UCombatComponent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 // 将武器装备到角色的右手
@@ -75,17 +74,47 @@ void UCombatComponent::OnRep_EquippedWeapon() const
 	}
 }
 
+// 当开火按钮被按下时，处理相关逻辑
 void UCombatComponent::FireButtonPressed(const bool bPressed)
 {
-	bFireButtonPressed = bPressed;
-	if (EquippedWeapon == nullptr) return;
+    // 记录开火按钮的按下状态
+    bFireButtonPressed = bPressed;
+    
+    // 如果没有装备武器，则不执行任何操作
+    if (EquippedWeapon == nullptr) return;
 
-	if (Character && bFireButtonPressed)
-	{
-		Character->PlayFireMontage(bPressed);
-		EquippedWeapon->Fire();
-	}
+    // 如果开火按钮被按下
+    if (bFireButtonPressed)
+    {
+        // 调用服务器端开火函数
+        ServerFire();
+    }
 }
+
+// 服务器端开火处理，用于同步所有客户端的开火动作
+void UCombatComponent::ServerFire_Implementation() const
+{
+    // 调用多播开火函数，实现所有客户端的同时开火效果
+    MulticastFire();
+}
+
+// 多播开火实现，用于实际播放角色开火动画和执行武器开火逻辑
+void UCombatComponent::MulticastFire_Implementation() const
+{
+    // 如果没有装备武器，则不执行任何操作
+    if (EquippedWeapon == nullptr) return;
+    
+    // 如果角色存在
+    if (Character)
+    {
+        // 播放角色开火动画，参数bAiming表示是否瞄准状态
+        Character->PlayFireMontage(bAiming);
+        
+        // 调用装备武器的开火函数，实现实际开火逻辑
+        EquippedWeapon->Fire();
+    }
+}
+
 
 // 设置瞄准状态的函数
 // @param bIsAiming：布尔值，表示是否处于瞄准状态

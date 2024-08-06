@@ -51,6 +51,14 @@ protected:
 	*/
 	void FireButtonPressed(const bool bPressed);
 
+	// 服务器端开火
+	UFUNCTION(Server, Reliable)
+	void ServerFire() const;
+
+	// 多播开火
+	UFUNCTION(NetMulticast,Reliable)
+	void MulticastFire() const;
+
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
 	UPROPERTY()
