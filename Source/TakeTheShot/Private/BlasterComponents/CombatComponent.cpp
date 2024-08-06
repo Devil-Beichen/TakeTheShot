@@ -75,6 +75,15 @@ void UCombatComponent::OnRep_EquippedWeapon() const
 	}
 }
 
+void UCombatComponent::FireButtonPressed(const bool bPressed)
+{
+	bFireButtonPressed = bPressed;
+	if (Character && bFireButtonPressed)
+	{
+		Character->PlayFireMontage(bPressed);
+	}
+}
+
 // 设置瞄准状态的函数
 // @param bIsAiming：布尔值，表示是否处于瞄准状态
 void UCombatComponent::SetAiming(const bool bIsAiming)

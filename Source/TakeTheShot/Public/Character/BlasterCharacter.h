@@ -11,6 +11,7 @@
 class UInputMappingContext;
 class UEnhancedInputLocalPlayerSubsystem;
 class UInputAction;
+class UAnimMontage;
 
 
 /*	爆破角色的基类
@@ -35,6 +36,12 @@ public:
 	// 移除映射上下文
 	UFUNCTION()
 	void RemoveMappingContext() const;
+
+	/**	播放射击蒙太奇
+	 * 
+	 * @param bAiming 瞄准
+	 */
+	void PlayFireMontage(const bool bAiming) const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -78,6 +85,10 @@ protected:
 	// 定义一个UInputAction类型的动作，用于处理瞄准操作
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* AimingAction = nullptr;
+
+	// 定义一个UInputAction类型的动作，用于处理射击操作
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* FireAction = nullptr;
 
 	// 增强输入子系统
 	UPROPERTY()
@@ -148,6 +159,18 @@ protected:
 	 */
 	UFUNCTION()
 	void Aiming_Completed();
+
+	/**
+	 * 射击按下动作
+	 */
+	UFUNCTION()
+	void Fire_Started();
+
+	/**
+	 * 射击松开动作
+	 */
+	UFUNCTION()
+	void Fire_Completed();
 
 
 #pragma endregion
@@ -253,6 +276,10 @@ private:
 	ETurningInPlace TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	// 原地转向函数
 	void TurnInPlace(const float DeltaTime);
+
+	// 角色的射击 Montage 动画
+	UPROPERTY(EditDefaultsOnly, Category=Combat)
+	UAnimMontage* FireWeaponMontage = nullptr;
 
 public:
 	/**

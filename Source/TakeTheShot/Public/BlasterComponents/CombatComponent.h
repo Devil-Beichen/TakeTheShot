@@ -44,6 +44,13 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon() const;
 
+	/**
+	* 处理发射按钮按下事件
+	* 当发射按钮被按下或松开时，调用本函数通知对象
+	* @param bPressed 指示按钮是否被按下当按钮被按下时，bPressed为true；当按钮被松开时，bPressed为false
+	*/
+	void FireButtonPressed(const bool bPressed);
+
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
 	UPROPERTY()
@@ -56,6 +63,9 @@ private:
 	// 定义一个布尔变量，用于指示角色是否正在瞄准
 	UPROPERTY(Replicated)
 	bool bAiming = false;
+
+	// 角色是否正在发射
+	bool bFireButtonPressed = false;
 
 public:
 };

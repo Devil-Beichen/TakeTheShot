@@ -106,6 +106,10 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		/*绑定瞄准动作的触发事件和完成事件*/
 		EnhancedInputComponent->BindAction(AimingAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Aiming_Triggered);
 		EnhancedInputComponent->BindAction(AimingAction, ETriggerEvent::Completed, this, &ABlasterCharacter::Aiming_Completed);
+
+		// 绑定射击动作的触发事件
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ABlasterCharacter::Fire_Started);
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &ABlasterCharacter::Fire_Completed);
 	}
 }
 
@@ -149,6 +153,21 @@ void ABlasterCharacter::RemoveMappingContext() const
 	{
 		// 从增强子系统中移除默认映射上下文
 		EnhancedSubsystem->RemoveMappingContext((DefaultMappingContext));
+	}
+}
+
+void ABlasterCharacter::PlayFireMontage(const bool bAiming) const
+{
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
+
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		if (FireWeaponMontage)
+		{
+			AnimInstance->Montage_Play(FireWeaponMontage);
+			const FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+			AnimInstance->Montage_JumpToSection(SectionName);
+		}
 	}
 }
 
@@ -305,6 +324,22 @@ void ABlasterCharacter::Aiming_Completed()
 	if (Combat)
 	{
 		Combat->SetAiming(false);
+	}
+}
+
+void ABlasterCharacter::Fire_Started()
+{
+	if (Combat)
+	{
+		Combat->FireButtonPressed(true);
+	}
+}
+
+void ABlasterCharacter::Fire_Completed()
+{
+	if (Combat)
+	{
+		Combat->FireButtonPressed(false);
 	}
 }
 
