@@ -3,13 +3,14 @@
 #include "Character/BlasterCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Weapon/Weapon.h"
 
 
 UCombatComponent::UCombatComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
 }
 
 // 获取此组件的生命周期内需要复制的属性列表
@@ -32,6 +33,9 @@ void UCombatComponent::BeginPlay()
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	FHitResult HitResult;
+	TraceUnderCrosshairs(HitResult);
 }
 
 // 将武器装备到角色的右手
@@ -77,44 +81,102 @@ void UCombatComponent::OnRep_EquippedWeapon() const
 // 当开火按钮被按下时，处理相关逻辑
 void UCombatComponent::FireButtonPressed(const bool bPressed)
 {
-    // 记录开火按钮的按下状态
-    bFireButtonPressed = bPressed;
-    
-    // 如果没有装备武器，则不执行任何操作
-    if (EquippedWeapon == nullptr) return;
+	// 记录开火按钮的按下状态
+	bFireButtonPressed = bPressed;
 
-    // 如果开火按钮被按下
-    if (bFireButtonPressed)
-    {
-        // 调用服务器端开火函数
-        ServerFire();
-    }
+	// 如果没有装备武器，则不执行任何操作
+	if (EquippedWeapon == nullptr) return;
+
+	// 如果开火按钮被按下
+	if (bFireButtonPressed)
+	{
+		// 调用服务器端开火函数
+		ServerFire();
+	}
 }
 
 // 服务器端开火处理，用于同步所有客户端的开火动作
 void UCombatComponent::ServerFire_Implementation() const
 {
-    // 调用多播开火函数，实现所有客户端的同时开火效果
-    MulticastFire();
+	// 调用多播开火函数，实现所有客户端的同时开火效果
+	MulticastFire();
 }
 
 // 多播开火实现，用于实际播放角色开火动画和执行武器开火逻辑
 void UCombatComponent::MulticastFire_Implementation() const
 {
-    // 如果没有装备武器，则不执行任何操作
-    if (EquippedWeapon == nullptr) return;
-    
-    // 如果角色存在
-    if (Character)
-    {
-        // 播放角色开火动画，参数bAiming表示是否瞄准状态
-        Character->PlayFireMontage(bAiming);
-        
-        // 调用装备武器的开火函数，实现实际开火逻辑
-        EquippedWeapon->Fire();
-    }
+	// 如果没有装备武器，则不执行任何操作
+	if (EquippedWeapon == nullptr) return;
+
+	// 如果角色存在
+	if (Character)
+	{
+		// 播放角色开火动画，参数bAiming表示是否瞄准状态
+		Character->PlayFireMontage(bAiming);
+
+		// 调用装备武器的开火函数，实现实际开火逻辑
+		EquippedWeapon->Fire();
+	}
 }
 
+void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult) const
+{
+	// 定义视口大小变量
+	FVector2d ViewportSize;
+	// 检查引擎和游戏视口是否有效
+	if (GEngine && GEngine->GameViewport)
+	{
+		// 获取游戏视口大小
+		GEngine->GameViewport->GetViewportSize(ViewportSize);
+	}
+
+	// 计算并获取游戏视口的中心位置
+	const FVector2d CrosshairLocation(FVector2d(ViewportSize.X / 2.f, ViewportSize.Y / 2.f));
+
+	// 定义世界坐标变量，用于存储视口中心位置的世界坐标和方向
+	FVector CrosshairWorldPosition, CrosshairWorldDirection;
+
+	// 将屏幕坐标转换为世界坐标
+	const bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
+		UGameplayStatics::GetPlayerController(this, 0),
+		CrosshairLocation,
+		CrosshairWorldPosition,
+		CrosshairWorldDirection);
+
+	// 如果转换成功
+	if (bScreenToWorld)
+	{
+		// 定义射线起点
+		const FVector Start = CrosshairWorldPosition;
+		// 定义射线终点，通过方向和长度计算
+		const FVector End = CrosshairWorldPosition + CrosshairWorldDirection * TRACE_LENGTH;
+
+		// 执行单次线迹追踪
+		GetWorld()->LineTraceSingleByChannel(
+			TraceHitResult,
+			Start,
+			End,
+			ECollisionChannel::ECC_Visibility
+		);
+
+		// 如果没有命中任何物体
+		if (!TraceHitResult.bBlockingHit)
+		{
+			// 将射线终点设置为撞击点
+			TraceHitResult.ImpactPoint = End;
+		}
+		else
+		{
+			// 在命中位置绘制一个红色的调试球体
+			DrawDebugSphere(
+				GetWorld(),
+				TraceHitResult.ImpactPoint,
+				12.f,
+				12,
+				FColor::Red);
+		}
+	}
+}
 
 // 设置瞄准状态的函数
 // @param bIsAiming：布尔值，表示是否处于瞄准状态
