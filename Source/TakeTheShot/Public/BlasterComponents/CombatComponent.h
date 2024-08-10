@@ -4,6 +4,9 @@
 #include "Components/ActorComponent.h"
 #include "CombatComponent.generated.h"
 
+// 追踪长度
+#define TRACE_LENGTH 80000.f
+
 class ABlasterCharacter;
 class AWeapon;
 
@@ -56,8 +59,18 @@ protected:
 	void ServerFire() const;
 
 	// 多播开火
-	UFUNCTION(NetMulticast,Reliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void MulticastFire() const;
+
+	/**
+	 * 根据十字准星的位置进行光线追踪，并更新命中结果。
+	 * 
+	 * 该函数主要用于游戏或其他需要光线追踪的场景中，通过十字准星的位置向场景发射一条光线，
+	 * 检测是否击中场景中的物体，并将击中结果存储在传入的命中结果变量中。
+	 * 
+	 * @param TraceHitResult 一个引用类型的FHitResult对象，用于存储光线追踪的命中结果，包括命中的位置、法线、被命中的物体等信息。
+	 */
+	void TraceUnderCrosshairs(FHitResult& TraceHitResult) const;
 
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
