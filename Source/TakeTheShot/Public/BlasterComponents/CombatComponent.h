@@ -70,7 +70,7 @@ protected:
 	 * 
 	 * @param TraceHitResult 一个引用类型的FHitResult对象，用于存储光线追踪的命中结果，包括命中的位置、法线、被命中的物体等信息。
 	 */
-	void TraceUnderCrosshairs(FHitResult& TraceHitResult) const;
+	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
 
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
@@ -87,6 +87,9 @@ private:
 
 	// 角色是否正在发射
 	bool bFireButtonPressed = false;
+
+	// 命中目标的位置
+	FVector HitTargetLocation;
 
 public:
 };

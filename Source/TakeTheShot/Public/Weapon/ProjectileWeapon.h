@@ -17,9 +17,13 @@ class TAKETHESHOT_API AProjectileWeapon : public AWeapon
 public:
 	AProjectileWeapon();
 
+	virtual void Fire(const FVector& HitTarget) const override;
+
 protected:
 	virtual void BeginPlay() override;
-
-public:
-	virtual void Tick(float DeltaTime) override;
+	
+private:
+	// 子弹类
+	UPROPERTY(EditDefaultsOnly, Category = "Projectile")
+	TSubclassOf<class AProjectile> ProjectileClass;
 };

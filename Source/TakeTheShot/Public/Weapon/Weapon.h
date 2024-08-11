@@ -46,8 +46,14 @@ public:
 	 */
 	void ShowPickupWidget(const bool bShowWidget) const;
 
-	// 射击
-	void Fire() const;
+	/**
+	 * 向指定的目标位置发射火球	是可以重写的。
+	 * 
+	 * 本函数实现了一个向目标位置发射火球的攻击动作，是常量成员函数
+	 * 
+	 * @param HitTarget 目标位置的向量表示，类型为FVector
+	 */
+	virtual void Fire(const FVector& HitTarget) const;
 
 protected:
 	virtual void BeginPlay() override;

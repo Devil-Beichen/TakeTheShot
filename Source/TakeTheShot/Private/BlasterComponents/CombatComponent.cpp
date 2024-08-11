@@ -115,11 +115,12 @@ void UCombatComponent::MulticastFire_Implementation() const
 		Character->PlayFireMontage(bAiming);
 
 		// 调用装备武器的开火函数，实现实际开火逻辑
-		EquippedWeapon->Fire();
+		EquippedWeapon->Fire(HitTargetLocation);
 	}
 }
 
-void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult) const
+// 在玩家的十字准星下进行线迹追踪，以检测是否击中了目标
+void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 {
 	// 定义视口大小变量
 	FVector2d ViewportSize;
@@ -164,9 +165,12 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult) const
 		{
 			// 将射线终点设置为撞击点
 			TraceHitResult.ImpactPoint = End;
+			HitTargetLocation = End;
 		}
 		else
 		{
+			HitTargetLocation = TraceHitResult.ImpactPoint;
+
 			// 在命中位置绘制一个红色的调试球体
 			DrawDebugSphere(
 				GetWorld(),
@@ -177,6 +181,7 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult) const
 		}
 	}
 }
+
 
 // 设置瞄准状态的函数
 // @param bIsAiming：布尔值，表示是否处于瞄准状态
