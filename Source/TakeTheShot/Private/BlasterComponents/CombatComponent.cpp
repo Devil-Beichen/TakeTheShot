@@ -33,9 +33,6 @@ void UCombatComponent::BeginPlay()
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	FHitResult HitResult;
-	TraceUnderCrosshairs(HitResult);
 }
 
 // 将武器装备到角色的右手
@@ -90,20 +87,22 @@ void UCombatComponent::FireButtonPressed(const bool bPressed)
 	// 如果开火按钮被按下
 	if (bFireButtonPressed)
 	{
+		FHitResult HitResult;
+		TraceUnderCrosshairs(HitResult);
 		// 调用服务器端开火函数
-		ServerFire();
+		ServerFire(HitResult.ImpactPoint);
 	}
 }
 
 // 服务器端开火处理，用于同步所有客户端的开火动作
-void UCombatComponent::ServerFire_Implementation() const
+void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget) const
 {
 	// 调用多播开火函数，实现所有客户端的同时开火效果
-	MulticastFire();
+	MulticastFire(TraceHitTarget);
 }
 
 // 多播开火实现，用于实际播放角色开火动画和执行武器开火逻辑
-void UCombatComponent::MulticastFire_Implementation() const
+void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget) const
 {
 	// 如果没有装备武器，则不执行任何操作
 	if (EquippedWeapon == nullptr) return;
@@ -115,7 +114,7 @@ void UCombatComponent::MulticastFire_Implementation() const
 		Character->PlayFireMontage(bAiming);
 
 		// 调用装备武器的开火函数，实现实际开火逻辑
-		EquippedWeapon->Fire(HitTargetLocation);
+		EquippedWeapon->Fire(TraceHitTarget);
 	}
 }
 
@@ -165,19 +164,16 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 		{
 			// 将射线终点设置为撞击点
 			TraceHitResult.ImpactPoint = End;
-			HitTargetLocation = End;
 		}
 		else
 		{
-			HitTargetLocation = TraceHitResult.ImpactPoint;
-
 			// 在命中位置绘制一个红色的调试球体
-			DrawDebugSphere(
+			/*DrawDebugSphere(
 				GetWorld(),
 				TraceHitResult.ImpactPoint,
 				12.f,
 				12,
-				FColor::Red);
+				FColor::Red);*/
 		}
 	}
 }

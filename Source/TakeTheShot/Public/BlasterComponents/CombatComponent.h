@@ -54,14 +54,25 @@ protected:
 	*/
 	void FireButtonPressed(const bool bPressed);
 
-	// 服务器端开火
+	/**
+	 * 服务器端发射函数
+	 * 该函数通过网络可靠地发送一个射击动作，指定射击的目标点
+	 * 
+	 * @param TraceHitTarget 射击射中目标的位置，以网络量化向量表示
+	 *                        该参数通过网络传输，确保在服务器和客户端之间同步射击目标
+	 */
 	UFUNCTION(Server, Reliable)
-	void ServerFire() const;
-
-	// 多播开火
+	void ServerFire(const FVector_NetQuantize& TraceHitTarget) const;
+	
+	/**
+	 * 网络多播函数，用于可靠地发送射击指令
+	 * 该函数通过网络将射击目标的位置通知给所有订阅此事件的客户端
+	 * 
+	 * @param TraceHitTarget 射击命中的目标位置，使用FVector_NetQuantize格式来优化网络传输
+	 */
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastFire() const;
-
+	void MulticastFire(const FVector_NetQuantize& TraceHitTarget) const;
+	
 	/**
 	 * 根据十字准星的位置进行光线追踪，并更新命中结果。
 	 * 
@@ -87,9 +98,6 @@ private:
 
 	// 角色是否正在发射
 	bool bFireButtonPressed = false;
-
-	// 命中目标的位置
-	FVector HitTargetLocation;
 
 public:
 };
