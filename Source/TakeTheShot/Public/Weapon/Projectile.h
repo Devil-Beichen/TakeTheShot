@@ -23,6 +23,10 @@ private:
 	UPROPERTY(EditAnywhere, Category="Projectile")
 	class UBoxComponent* CollisionBox;
 
+	// 抛射体组件
+	UPROPERTY(VisibleAnywhere, Category="Projectile")
+	class UProjectileMovementComponent* ProjectileMovementComponent;
+
 public:
 	virtual void Tick(float DeltaTime) override;
 };

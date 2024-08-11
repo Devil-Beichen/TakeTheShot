@@ -1,6 +1,7 @@
 ﻿#include "Weapon/Projectile.h"
 
 #include "Components/BoxComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 
 AProjectile::AProjectile()
@@ -20,6 +21,12 @@ AProjectile::AProjectile()
 	CollisionBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	// 对静态世界对象通道的响应设置为阻挡，使得碰撞体与静态环境的碰撞有效
 	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+
+	// 创建一个默认的移动组件，用于控制物体的移动和方向
+	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
+
+	// 启用移动组件的旋转跟随速度，使得物体的朝向与移动方向一致
+	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 }
 
 void AProjectile::BeginPlay()
