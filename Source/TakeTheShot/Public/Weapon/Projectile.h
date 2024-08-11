@@ -27,6 +27,13 @@ private:
 	UPROPERTY(VisibleAnywhere, Category="Projectile")
 	class UProjectileMovementComponent* ProjectileMovementComponent;
 
+	// 粒子特效
+	UPROPERTY(EditAnywhere, Category="Projectile")
+	class UParticleSystem* Tracer;
+
+	// 粒子特效组件
+	class UParticleSystemComponent* TracerComponent;
+
 public:
 	virtual void Tick(float DeltaTime) override;
 };

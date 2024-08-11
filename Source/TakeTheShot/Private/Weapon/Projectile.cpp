@@ -2,11 +2,17 @@
 
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
 
 
 AProjectile::AProjectile()
 {
 	PrimaryActorTick.bCanEverTick = false;
+
+	// 启用网络复制，使得在多机环境下可以正确同步状态
+	bReplicates = true;
+
 	// 创建一个默认的盒子碰撞体，用于检测和处理碰撞事件
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
 	// 将创建的碰撞盒设置为根组件，意味着它将成为其他所有组件的父级
@@ -32,6 +38,18 @@ AProjectile::AProjectile()
 void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (Tracer)
+	{
+		TracerComponent = UGameplayStatics::SpawnEmitterAttached(
+			Tracer,
+			CollisionBox,
+			FName(),
+			GetActorLocation(),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition
+		);
+	}
 }
 
 void AProjectile::Tick(float DeltaTime)
