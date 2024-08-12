@@ -6,7 +6,10 @@
 #include "Character/BlasterCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Engine/SkeletalMeshSocket.h"
 #include "Net/UnrealNetwork.h"
+#include "Weapon/Casing.h"
+#include "Weapon/Projectile.h"
 
 
 AWeapon::AWeapon()
@@ -141,6 +144,22 @@ void AWeapon::Fire(const FVector& HitTarget) const
 	if (FireAnimation)
 	{
 		WeaponMesh->PlayAnimation(FireAnimation, false);
+	}
+	if (CasingClass)
+	{
+		// 尝试获取武器模型上的“AmmoEject”插槽
+		if (const USkeletalMeshSocket* AmmoEjectSocket = WeaponMesh->GetSocketByName(FName("AmmoEject")))
+		{
+			// 获取插槽的转换矩阵
+			const FTransform SocketTransform = AmmoEjectSocket->GetSocketTransform(GetWeaponMesh());
+
+			// 获取当前世界
+			if (UWorld* World = GetWorld())
+			{
+				// 在世界中生成一个子弹壳Actor
+				World->SpawnActor<ACasing>(CasingClass, SocketTransform.GetLocation(), SocketTransform.GetRotation().Rotator());
+			}
+		}
 	}
 }
 

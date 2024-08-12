@@ -120,6 +120,10 @@ private:
 	UPROPERTY(EditAnywhere, Category="Weapon Properties")
 	UAnimationAsset* FireAnimation = nullptr;
 
+	// 子弹壳类
+	UPROPERTY(EditDefaultsOnly, Category="Weapon Properties")
+	TSubclassOf<class ACasing> CasingClass;
+
 public:
 	// 设置武器状态
 	void SetWeaponState(const EWeaponState State);
