@@ -11,8 +11,10 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "HUD/BlasterHUD.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "PlayerController/BlasterPlayerController.h"
 #include "Weapon/Weapon.h"
 
 ABlasterCharacter::ABlasterCharacter()
@@ -119,6 +121,8 @@ void ABlasterCharacter::PostInitializeComponents()
 	if (Combat)
 	{
 		Combat->Character = this;
+		/*Combat->Controller = Cast<ABlasterPlayerController>(Controller);
+		Combat->HUD = Cast<ABlasterHUD>(Combat->Controller->GetHUD());*/
 	}
 }
 

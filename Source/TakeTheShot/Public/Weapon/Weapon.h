@@ -21,6 +21,7 @@ enum class EWeaponState :uint8
 };
 
 class UAnimationAsset;
+class UTexture2D;
 
 /**	武器基类
  * 
@@ -54,6 +55,30 @@ public:
 	 * @param HitTarget 目标位置的向量表示，类型为FVector
 	 */
 	virtual void Fire(const FVector& HitTarget) const;
+
+	/**
+ *	武器准星的纹理资源
+ */
+
+	// 准星中心
+	UPROPERTY(EditDefaultsOnly, Category="Crosshairs")
+	UTexture2D* CrosshairsCenter;
+
+	// 准星左
+	UPROPERTY(EditDefaultsOnly, Category="Crosshairs")
+	UTexture2D* CrosshairsLeft;
+
+	// 准星右
+	UPROPERTY(EditDefaultsOnly, Category="Crosshairs")
+	UTexture2D* CrosshairsRight;
+
+	// 准星上
+	UPROPERTY(EditDefaultsOnly, Category="Crosshairs")
+	UTexture2D* CrosshairsTop;
+
+	// 准星下
+	UPROPERTY(EditDefaultsOnly, Category="Crosshairs")
+	UTexture2D* CrosshairsBottom;
 
 protected:
 	virtual void BeginPlay() override;
