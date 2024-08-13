@@ -52,6 +52,17 @@ private:
 	// HUD的资源包
 	FHUDPackage HUDPackage;
 
+	/**
+	 * 绘制十字准星
+	 *
+	 * 本函数用于在屏幕上绘制一个带有纹理的十字准星，准星的位置和颜色可以通过参数进行定制。
+	 * 
+	 * @param Texture 十字准星的纹理图片，用于定义十字准星的外观。
+	 * @param ViewportCenter 视口中心点的坐标，用于确定十字准星的位置。
+	 * @param Spread 十字准星的扩展距离，用于调整十字准星的大小和形状。
+	 * @param CrosshairColor 十字准星的颜色，用于定制十字准星的颜色外观。
+	 */
+	void DrawCrosshairs(UTexture2D* Texture, const FVector2D& ViewportCenter/*, FVector2D Spread, FLinearColor CrosshairColor*/);
 public:
 	// 设置HUD的资源包
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }

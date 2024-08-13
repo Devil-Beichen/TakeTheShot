@@ -24,7 +24,7 @@ private:
 
 	// 弹壳的射出力
 	UPROPERTY(EditDefaultsOnly, Category="Shell")
-	float ShellEjectionImpulse = 10.f;
+	float ShellEjectionImpulse = 5.f;
 
 	// 弹壳落地的音效
 	UPROPERTY(EditDefaultsOnly, Category="Shell")
