@@ -80,6 +80,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Crosshairs")
 	UTexture2D* CrosshairsBottom;
 
+	/**
+	 *	瞄准时放大视野
+	 */
+
+	// 瞄准时放大视野
+	UPROPERTY(EditDefaultsOnly)
+	float ZoomedFOV = 30.f;
+
+	// 瞄准时放大视野的插值速度
+	UPROPERTY(EditDefaultsOnly)
+	float ZoomInterpSpeed = 20.f;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -158,4 +170,9 @@ public:
 
 	// 获取武器模型组件
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
+
+	// 获取瞄准时放大视野
+	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
+	// 获取瞄准时放大视野的插值速度
+	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
 };

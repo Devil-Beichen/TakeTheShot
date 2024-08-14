@@ -1,5 +1,6 @@
 ﻿#include "BlasterComponents/CombatComponent.h"
 
+#include "Camera/CameraComponent.h"
 #include "Character/BlasterCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -30,19 +31,33 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (Character)
+	{
+		DefaultFOV = Character->GetFollowCamera()->FieldOfView;
+		CurrentFOV = DefaultFOV;
+	}
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	SetHUDCrosshairs(DeltaTime);
-
+	// 如果Character对象存在，并且当前玩家控制该角色
 	if (Character && Character->IsLocallyControlled())
 	{
-		FHitResult HitResult;
-		TraceUnderCrosshairs(HitResult);
-		HitTarget = HitResult.ImpactPoint;
+	    // 设置HUD十字准星
+	    SetHUDCrosshairs(DeltaTime);
+	
+	    // 初始化命中结果变量
+	    FHitResult HitResult;
+	    // 在十字准星位置进行射线检测，寻找命中对象
+	    TraceUnderCrosshairs(HitResult);
+	    // 记录命中点
+	    HitTarget = HitResult.ImpactPoint;
+	
+	    // 平滑过渡视野（FOV），以增强游戏体验
+	    InterpFOV(DeltaTime);
 	}
 }
 
@@ -252,6 +267,33 @@ void UCombatComponent::SetHUDCrosshairs(const float DeltaTime)
 		}
 	}
 }
+
+// 用于处理视场角（FOV）的插值变化
+void UCombatComponent::InterpFOV(float DeltaTime)
+{
+    // 检查是否已经装备了武器，如果没有装备则直接返回
+    if (EquippedWeapon == nullptr) return;
+
+    // 根据是否处于瞄准状态，来决定插值的目标FOV和插值速度
+    if (bAiming)
+    {
+        // 当处于瞄准状态时，FOV插值到装备武器的缩放FOV
+        CurrentFOV = FMath::FInterpTo(CurrentFOV, EquippedWeapon->GetZoomedFOV(), DeltaTime, EquippedWeapon->GetZoomInterpSpeed());
+    }
+    else
+    {
+        // 不处于瞄准状态时，FOV插值回到默认FOV
+        CurrentFOV = FMath::FInterpTo(CurrentFOV, DefaultFOV, DeltaTime, ZoomInterpSpeed);
+    }
+
+    // 如果Character存在且有跟随相机，则更新相机的FOV
+    if (Character && Character->GetFollowCamera())
+    {
+        // 设置相机的FOV为当前计算得到的FOV
+        Character->GetFollowCamera()->SetFieldOfView(CurrentFOV);
+    }
+}
+
 
 // 设置瞄准状态的函数
 // @param bIsAiming：布尔值，表示是否处于瞄准状态

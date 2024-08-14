@@ -128,7 +128,28 @@ private:
 	// 在空中准星速度
 	float CrosshairInAirFactor = 0.f;
 
-	FVector HitTarget; // 测试用的
-	
+	FVector HitTarget; // 命中点
+
+	/**
+	 *  瞄准的视角(FOV)
+	 */
+
+	// 不在瞄准的时候，默认的FOV
+	float DefaultFOV = 0.f;
+
+	// 瞄准时放大视野
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+	float ZoomedFOV = 30.f;
+
+	// 当前FOV
+	float CurrentFOV = 0.f;
+
+	// 瞄准时放大视野的插值速度
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+	float ZoomInterpSpeed = 20.f;
+
+	// 用于处理视场角（FOV）的插值变化
+	void InterpFOV(float DeltaTime);
+
 public:
 };
