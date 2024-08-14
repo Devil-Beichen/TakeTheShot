@@ -15,30 +15,32 @@ void ABlasterHUD::DrawHUD()
 		GEngine->GameViewport->GetViewportSize(ViewportSize);
 		const FVector2D ViewportCenter(ViewportSize.X / 2.f, ViewportSize.Y / 2.f);
 
+		float SpreadScaled = CrosshairSpreadMax * HUDPackage.CrosshairSpread;
+
 		if (HUDPackage.CrosshairsCenter)
 		{
-			DrawCrosshairs(HUDPackage.CrosshairsCenter, ViewportCenter/*, FVector2d(0.f, 0.f), FLinearColor::White*/);
+			DrawCrosshairs(HUDPackage.CrosshairsCenter, ViewportCenter, FVector2d(0.f, 0.f), FLinearColor::White);
 		}
 		if (HUDPackage.CrosshairsLeft)
 		{
-			DrawCrosshairs(HUDPackage.CrosshairsLeft, ViewportCenter/*, FVector2d(0.f, 0.f), FLinearColor::White*/);
+			DrawCrosshairs(HUDPackage.CrosshairsLeft, ViewportCenter, FVector2d(-SpreadScaled, 0.f), FLinearColor::White);
 		}
 		if (HUDPackage.CrosshairsRight)
 		{
-			DrawCrosshairs(HUDPackage.CrosshairsRight, ViewportCenter/*, FVector2d(0.f, 0.f), FLinearColor::White*/);
+			DrawCrosshairs(HUDPackage.CrosshairsRight, ViewportCenter, FVector2d(SpreadScaled, 0.f), FLinearColor::White);
 		}
 		if (HUDPackage.CrosshairsTop)
 		{
-			DrawCrosshairs(HUDPackage.CrosshairsTop, ViewportCenter/*, FVector2d(0.f, 0.f), FLinearColor::White*/);
+			DrawCrosshairs(HUDPackage.CrosshairsTop, ViewportCenter, FVector2d(0.f, -SpreadScaled), FLinearColor::White);
 		}
 		if (HUDPackage.CrosshairsBottom)
 		{
-			DrawCrosshairs(HUDPackage.CrosshairsBottom, ViewportCenter/*, FVector2d(0.f, 0.f), FLinearColor::White*/);
+			DrawCrosshairs(HUDPackage.CrosshairsBottom, ViewportCenter, FVector2d(0.f, SpreadScaled), FLinearColor::White);
 		}
 	}
 }
 
-void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture, const FVector2D& ViewportCenter/*, FVector2D Spread, FLinearColor CrosshairColor*/)
+void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture, const FVector2D& ViewportCenter, FVector2D Spread, FLinearColor CrosshairColor)
 {
 	// 定义纹理的宽度，用于后续计算纹理的绘制位置和尺寸
 	const float TextureWidth = Texture->GetSizeX();
@@ -49,8 +51,8 @@ void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture, const FVector2D& ViewportC
 	// 计算纹理的绘制点，使其以视口中心为基准点进行绘制
 	// 这里使用视口中心减去纹理的一半宽度（或高度）来确保纹理的中心与视口的中心对齐
 	const FVector2d TextureDrawPoint(
-		ViewportCenter.X - (TextureWidth / 2.f),
-		ViewportCenter.Y - (TextureHeight / 2.f)
+		ViewportCenter.X - (TextureWidth / 2.f) + Spread.X,
+		ViewportCenter.Y - (TextureHeight / 2.f) + Spread.Y
 	);
 
 	// 绘制纹理
@@ -68,6 +70,6 @@ void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture, const FVector2D& ViewportC
 		0.f,
 		1.f,
 		1.f,
-		FLinearColor::White
+		CrosshairColor
 	);
 }

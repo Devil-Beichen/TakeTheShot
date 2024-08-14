@@ -118,5 +118,15 @@ private:
 	// 角色是否正在发射
 	bool bFireButtonPressed = false;
 
+	/**
+	 *  HUD 和准星
+	 */
+
+	// 准星速度因子
+	float CrosshairVelocityFactor = 0.f;
+
+	// 在空中准星速度
+	float CrosshairInAirFactor = 0.f;
+
 public:
 };

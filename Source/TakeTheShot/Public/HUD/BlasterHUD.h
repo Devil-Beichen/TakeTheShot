@@ -34,6 +34,10 @@ public:
 	// 准星下
 	UPROPERTY(EditDefaultsOnly, Category="Crosshairs")
 	UTexture2D* CrosshairsBottom;
+
+	// 准星扩散
+	UPROPERTY(EditDefaultsOnly, Category="Crosshairs")
+	float CrosshairSpread;
 };
 
 /** 爆破角色的HUD
@@ -62,7 +66,12 @@ private:
 	 * @param Spread 十字准星的扩展距离，用于调整十字准星的大小和形状。
 	 * @param CrosshairColor 十字准星的颜色，用于定制十字准星的颜色外观。
 	 */
-	void DrawCrosshairs(UTexture2D* Texture, const FVector2D& ViewportCenter/*, FVector2D Spread, FLinearColor CrosshairColor*/);
+	void DrawCrosshairs(UTexture2D* Texture, const FVector2D& ViewportCenter, FVector2D Spread, FLinearColor CrosshairColor);
+
+	// 十字准星最大扩展距离
+	UPROPERTY(EditAnywhere, Category="Crosshairs")
+	float CrosshairSpreadMax = 16.0f;
+
 public:
 	// 设置HUD的资源包
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }

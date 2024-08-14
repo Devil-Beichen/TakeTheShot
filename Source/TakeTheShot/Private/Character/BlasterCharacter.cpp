@@ -121,8 +121,6 @@ void ABlasterCharacter::PostInitializeComponents()
 	if (Combat)
 	{
 		Combat->Character = this;
-		/*Combat->Controller = Cast<ABlasterPlayerController>(Controller);
-		Combat->HUD = Cast<ABlasterHUD>(Combat->Controller->GetHUD());*/
 	}
 }
 
@@ -315,12 +313,15 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 	}
 }
 
+// 当角色启用瞄准时调用此函数
 void ABlasterCharacter::Aiming_Triggered()
 {
-	if (Combat && Combat->EquippedWeapon)
-	{
-		Combat->SetAiming(true);
-	}
+    // 检查是否存在Combat组件，是否装备了武器，以及角色是否未在下落状态
+    if (Combat && Combat->EquippedWeapon && !GetCharacterMovement()->IsFalling())
+    {
+        // 设置瞄准状态为true，启用瞄准
+        Combat->SetAiming(true);
+    }
 }
 
 void ABlasterCharacter::Aiming_Completed()
