@@ -128,5 +128,7 @@ private:
 	// 在空中准星速度
 	float CrosshairInAirFactor = 0.f;
 
+	FVector HitTarget; // 测试用的
+	
 public:
 };

@@ -94,4 +94,12 @@ private:
 	// 存储角色的转向状态，表示角色是否正在转弯。
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	ETurningInPlace TurningInPlace;
+
+	// 存储角色的右手变换信息，表示角色的右手在当前帧的位置和旋转信息。
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	FRotator RightHandRotation;
+
+	// 存储角色是否为本地玩家控制的信息，表示角色是否为本地玩家控制。
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	bool bLocallyControlled;
 };

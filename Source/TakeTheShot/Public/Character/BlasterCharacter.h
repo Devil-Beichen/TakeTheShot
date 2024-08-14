@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
+#include "BlasterComponents/CombatComponent.h"
 #include "GameFramework/Character.h"
 #include "Types/TurningInPlace.h"
 #include "BlasterCharacter.generated.h"
@@ -316,4 +317,11 @@ public:
 
 	// 获取当前的角色的转向状态
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
+
+	// 获取命中点
+	FORCEINLINE FVector GetHitTarget() const
+	{
+		if (Combat == nullptr) return FVector();
+		return Combat->HitTarget;
+	};
 };

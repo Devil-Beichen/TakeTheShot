@@ -36,9 +36,13 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (EquippedWeapon)
+	SetHUDCrosshairs(DeltaTime);
+
+	if (Character && Character->IsLocallyControlled())
 	{
-		SetHUDCrosshairs(DeltaTime);
+		FHitResult HitResult;
+		TraceUnderCrosshairs(HitResult);
+		HitTarget = HitResult.ImpactPoint;
 	}
 }
 
@@ -189,63 +193,63 @@ void UCombatComponent::SetHUDCrosshairs(const float DeltaTime)
 {
 	// 检查Character和其控制器是否为空，若为空则不执行后续操作
 	if (Character == nullptr || Character->Controller == nullptr) return;
-	
+
 	// 如果Controller为空，从Character的Controller中尝试获取一个ABlasterPlayerController类型的对象，否则使用现有的Controller
 	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
 	if (Controller)
 	{
-	    // 如果HUD为空，从Controller中尝试获取一个ABlasterHUD类型的对象，否则使用现有的HUD
-	    HUD = HUD == nullptr ? Cast<ABlasterHUD>(Controller->GetHUD()) : HUD;
-	    if (HUD)
-	    {
-	        // 初始化一个HUDPackage对象，用于存储十字准星的信息
-	        FHUDPackage HUDPackage;
-	        // 如果装备了武器，将武器的十字准星信息复制到HUDPackage中
-	        if (EquippedWeapon)
-	        {
-	            HUDPackage.CrosshairsCenter = EquippedWeapon->CrosshairsCenter;
-	            HUDPackage.CrosshairsLeft = EquippedWeapon->CrosshairsLeft;
-	            HUDPackage.CrosshairsRight = EquippedWeapon->CrosshairsRight;
-	            HUDPackage.CrosshairsTop = EquippedWeapon->CrosshairsTop;
-	            HUDPackage.CrosshairsBottom = EquippedWeapon->CrosshairsBottom;
-	        }
-	        else
-	        {
-	            // 如果没有装备武器，将十字准星信息设置为nullptr
-	            HUDPackage.CrosshairsCenter = nullptr;
-	            HUDPackage.CrosshairsLeft = nullptr;
-	            HUDPackage.CrosshairsRight = nullptr;
-	            HUDPackage.CrosshairsTop = nullptr;
-	            HUDPackage.CrosshairsBottom = nullptr;
-	        }
-	
-	        // 计算十字准星的扩散
-	
-	        // [0,600] ->[0,1] 将Character的速度映射到[0,1]的范围
-	        FVector2D WalkSpeedRange(0, Character->GetCharacterMovement()->MaxWalkSpeed);
-	        FVector2D VelocityMultiplierRange(0.f, 1.f);
-	        FVector Velocity = Character->GetVelocity();
-	        Velocity.Z = 0.f;
-	
-	        // 根据速度计算十字准星的扩散因子
-	        CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(WalkSpeedRange, VelocityMultiplierRange, Velocity.Size());
-	        // 如果Character在空中，调整十字准星的扩散因子
-	        if (Character->GetCharacterMovement()->IsFalling())
-	        {
-	            CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 2.25f, DeltaTime, 2.25f);
-	        }
-	        else
-	        {
-	            // 如果Character不在空中，调整十字准星的扩散因子
-	            CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
-	        }
-	
-	        // 设置HUDPackage的十字准星扩散值
-	        HUDPackage.CrosshairSpread = CrosshairVelocityFactor + CrosshairInAirFactor;
-	
-	        // 将HUDPackage设置到HUD中
-	        HUD->SetHUDPackage(HUDPackage);
-	    }
+		// 如果HUD为空，从Controller中尝试获取一个ABlasterHUD类型的对象，否则使用现有的HUD
+		HUD = HUD == nullptr ? Cast<ABlasterHUD>(Controller->GetHUD()) : HUD;
+		if (HUD)
+		{
+			// 初始化一个HUDPackage对象，用于存储十字准星的信息
+			FHUDPackage HUDPackage;
+			// 如果装备了武器，将武器的十字准星信息复制到HUDPackage中
+			if (EquippedWeapon)
+			{
+				HUDPackage.CrosshairsCenter = EquippedWeapon->CrosshairsCenter;
+				HUDPackage.CrosshairsLeft = EquippedWeapon->CrosshairsLeft;
+				HUDPackage.CrosshairsRight = EquippedWeapon->CrosshairsRight;
+				HUDPackage.CrosshairsTop = EquippedWeapon->CrosshairsTop;
+				HUDPackage.CrosshairsBottom = EquippedWeapon->CrosshairsBottom;
+			}
+			else
+			{
+				// 如果没有装备武器，将十字准星信息设置为nullptr
+				HUDPackage.CrosshairsCenter = nullptr;
+				HUDPackage.CrosshairsLeft = nullptr;
+				HUDPackage.CrosshairsRight = nullptr;
+				HUDPackage.CrosshairsTop = nullptr;
+				HUDPackage.CrosshairsBottom = nullptr;
+			}
+
+			// 计算十字准星的扩散
+
+			// [0,600] ->[0,1] 将Character的速度映射到[0,1]的范围
+			FVector2D WalkSpeedRange(0, Character->GetCharacterMovement()->MaxWalkSpeed);
+			FVector2D VelocityMultiplierRange(0.f, 1.f);
+			FVector Velocity = Character->GetVelocity();
+			Velocity.Z = 0.f;
+
+			// 根据速度计算十字准星的扩散因子
+			CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(WalkSpeedRange, VelocityMultiplierRange, Velocity.Size());
+			// 如果Character在空中，调整十字准星的扩散因子
+			if (Character->GetCharacterMovement()->IsFalling())
+			{
+				CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 2.25f, DeltaTime, 2.25f);
+			}
+			else
+			{
+				// 如果Character不在空中，调整十字准星的扩散因子
+				CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
+			}
+
+			// 设置HUDPackage的十字准星扩散值
+			HUDPackage.CrosshairSpread = CrosshairVelocityFactor + CrosshairInAirFactor;
+
+			// 将HUDPackage设置到HUD中
+			HUD->SetHUDPackage(HUDPackage);
+		}
 	}
 }
 

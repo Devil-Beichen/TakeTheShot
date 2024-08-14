@@ -37,7 +37,7 @@ public:
 
 	// 准星扩散
 	UPROPERTY(EditDefaultsOnly, Category="Crosshairs")
-	float CrosshairSpread;
+	float CrosshairSpread = 0.f;
 };
 
 /** 爆破角色的HUD
