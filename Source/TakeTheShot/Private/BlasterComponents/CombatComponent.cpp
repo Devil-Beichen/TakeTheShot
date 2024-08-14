@@ -46,18 +46,18 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	// 如果Character对象存在，并且当前玩家控制该角色
 	if (Character && Character->IsLocallyControlled())
 	{
-	    // 设置HUD十字准星
-	    SetHUDCrosshairs(DeltaTime);
-	
-	    // 初始化命中结果变量
-	    FHitResult HitResult;
-	    // 在十字准星位置进行射线检测，寻找命中对象
-	    TraceUnderCrosshairs(HitResult);
-	    // 记录命中点
-	    HitTarget = HitResult.ImpactPoint;
-	
-	    // 平滑过渡视野（FOV），以增强游戏体验
-	    InterpFOV(DeltaTime);
+		// 设置HUD十字准星
+		SetHUDCrosshairs(DeltaTime);
+
+		// 初始化命中结果变量
+		FHitResult HitResult;
+		// 在十字准星位置进行射线检测，寻找命中对象
+		TraceUnderCrosshairs(HitResult);
+		// 记录命中点
+		HitTarget = HitResult.ImpactPoint;
+
+		// 平滑过渡视野（FOV），以增强游戏体验
+		InterpFOV(DeltaTime);
 	}
 }
 
@@ -117,6 +117,11 @@ void UCombatComponent::FireButtonPressed(const bool bPressed)
 		TraceUnderCrosshairs(HitResult);
 		// 调用服务器端开火函数
 		ServerFire(HitResult.ImpactPoint);
+
+		if (EquippedWeapon)
+		{
+			CrosshairShootingFactor = 0.75f;
+		}
 	}
 }
 
@@ -259,8 +264,23 @@ void UCombatComponent::SetHUDCrosshairs(const float DeltaTime)
 				CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
 			}
 
+			// 根据是否瞄准状态，调整瞄准因子
+			if (bAiming)
+			{
+				// 当在瞄准状态时，将瞄准因子插值到目标值0.58
+				CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, 0.58f, DeltaTime, 30.f);
+			}
+			else
+			{
+				// 当不在瞄准状态时，将瞄准因子插值到目标值0
+				CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, 0.f, DeltaTime, 30.f);
+			}
+
+			// 无论状态如何，逐渐减少射击时的十字准星因子
+			CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, 40.f);
+
 			// 设置HUDPackage的十字准星扩散值
-			HUDPackage.CrosshairSpread = CrosshairVelocityFactor + CrosshairInAirFactor;
+			HUDPackage.CrosshairSpread = 0.5f + CrosshairVelocityFactor + CrosshairInAirFactor - CrosshairAimFactor + CrosshairShootingFactor;
 
 			// 将HUDPackage设置到HUD中
 			HUD->SetHUDPackage(HUDPackage);
@@ -271,27 +291,27 @@ void UCombatComponent::SetHUDCrosshairs(const float DeltaTime)
 // 用于处理视场角（FOV）的插值变化
 void UCombatComponent::InterpFOV(float DeltaTime)
 {
-    // 检查是否已经装备了武器，如果没有装备则直接返回
-    if (EquippedWeapon == nullptr) return;
+	// 检查是否已经装备了武器，如果没有装备则直接返回
+	if (EquippedWeapon == nullptr) return;
 
-    // 根据是否处于瞄准状态，来决定插值的目标FOV和插值速度
-    if (bAiming)
-    {
-        // 当处于瞄准状态时，FOV插值到装备武器的缩放FOV
-        CurrentFOV = FMath::FInterpTo(CurrentFOV, EquippedWeapon->GetZoomedFOV(), DeltaTime, EquippedWeapon->GetZoomInterpSpeed());
-    }
-    else
-    {
-        // 不处于瞄准状态时，FOV插值回到默认FOV
-        CurrentFOV = FMath::FInterpTo(CurrentFOV, DefaultFOV, DeltaTime, ZoomInterpSpeed);
-    }
+	// 根据是否处于瞄准状态，来决定插值的目标FOV和插值速度
+	if (bAiming)
+	{
+		// 当处于瞄准状态时，FOV插值到装备武器的缩放FOV
+		CurrentFOV = FMath::FInterpTo(CurrentFOV, EquippedWeapon->GetZoomedFOV(), DeltaTime, EquippedWeapon->GetZoomInterpSpeed());
+	}
+	else
+	{
+		// 不处于瞄准状态时，FOV插值回到默认FOV
+		CurrentFOV = FMath::FInterpTo(CurrentFOV, DefaultFOV, DeltaTime, ZoomInterpSpeed);
+	}
 
-    // 如果Character存在且有跟随相机，则更新相机的FOV
-    if (Character && Character->GetFollowCamera())
-    {
-        // 设置相机的FOV为当前计算得到的FOV
-        Character->GetFollowCamera()->SetFieldOfView(CurrentFOV);
-    }
+	// 如果Character存在且有跟随相机，则更新相机的FOV
+	if (Character && Character->GetFollowCamera())
+	{
+		// 设置相机的FOV为当前计算得到的FOV
+		Character->GetFollowCamera()->SetFieldOfView(CurrentFOV);
+	}
 }
 
 

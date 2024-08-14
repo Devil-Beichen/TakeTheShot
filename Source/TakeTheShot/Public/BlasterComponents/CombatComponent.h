@@ -128,6 +128,12 @@ private:
 	// 在空中准星速度
 	float CrosshairInAirFactor = 0.f;
 
+	// 瞄准的系数
+	float CrosshairAimFactor = 0.f;
+
+	// 射击的系数
+	float CrosshairShootingFactor = 0.f;
+
 	FVector HitTarget; // 命中点
 
 	/**
