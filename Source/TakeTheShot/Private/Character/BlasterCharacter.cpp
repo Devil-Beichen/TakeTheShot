@@ -5,6 +5,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "TakeTheShot.h"
 #include "BlasterComponents/CombatComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -42,6 +43,8 @@ ABlasterCharacter::ABlasterCharacter()
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	// 关闭与相机的碰撞
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	// 设置网格体碰撞的通道类型为自定义的网格体碰撞
+	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
@@ -50,6 +53,8 @@ ABlasterCharacter::ABlasterCharacter()
 	// 将新创建的Widget组件附加到根组件上
 	OverheadWidget->SetupAttachment(RootComponent);
 
+	// 设置角色的最大旋转速度
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 0.f, 540.f);
 	// 启用角色移动时的自动朝向功能
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
@@ -169,6 +174,21 @@ void ABlasterCharacter::PlayFireMontage(const bool bAiming) const
 		{
 			AnimInstance->Montage_Play(FireWeaponMontage);
 			const FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+			AnimInstance->Montage_JumpToSection(SectionName);
+		}
+	}
+}
+
+void ABlasterCharacter::MulticastPlayHitReactMontage_Implementation()
+{
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
+
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		if (HitReactMontage)
+		{
+			AnimInstance->Montage_Play(HitReactMontage);
+			const FName SectionName("FromFront");
 			AnimInstance->Montage_JumpToSection(SectionName);
 		}
 	}

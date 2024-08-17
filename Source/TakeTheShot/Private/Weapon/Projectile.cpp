@@ -1,11 +1,12 @@
 ﻿#include "Weapon/Projectile.h"
 
+#include "Character/BlasterCharacter.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
-
+#include "TakeTheShot.h"
 
 AProjectile::AProjectile()
 {
@@ -28,6 +29,7 @@ AProjectile::AProjectile()
 	CollisionBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	// 对静态世界对象通道的响应设置为阻挡，使得碰撞体与静态环境的碰撞有效
 	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECR_Block);
 
 	// 创建一个默认的移动组件，用于控制物体的移动和方向
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
@@ -60,6 +62,11 @@ void AProjectile::BeginPlay()
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor))
+	{
+		BlasterCharacter->MulticastPlayHitReactMontage();
+	}
+
 	Destroy();
 }
 

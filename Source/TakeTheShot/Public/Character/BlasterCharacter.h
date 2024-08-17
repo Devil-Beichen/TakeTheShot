@@ -45,6 +45,10 @@ public:
 	 */
 	void PlayFireMontage(const bool bAiming) const;
 
+	// 多播放命中重播蒙太奇
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastPlayHitReactMontage();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -282,6 +286,10 @@ private:
 	// 角色的射击 Montage 动画
 	UPROPERTY(EditDefaultsOnly, Category=Combat)
 	UAnimMontage* FireWeaponMontage = nullptr;
+
+	// 角色受击 Montage 动画
+	UPROPERTY(EditDefaultsOnly, Category=Combat)
+	UAnimMontage* HitReactMontage = nullptr;
 
 	// 如果接近相机就隐藏角色
 	void HideCameraIfCharacterClose();
