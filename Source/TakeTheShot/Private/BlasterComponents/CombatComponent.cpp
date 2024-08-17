@@ -112,15 +112,51 @@ void UCombatComponent::FireButtonPressed(const bool bPressed)
 	// 如果开火按钮被按下
 	if (bFireButtonPressed)
 	{
-		FHitResult HitResult;
-		TraceUnderCrosshairs(HitResult);
+		Fire();
+	}
+}
+
+// 开火
+void UCombatComponent::Fire()
+{
+	if (bCanFire)
+	{
+		bCanFire = false;
 		// 调用服务器端开火函数
-		ServerFire(HitResult.ImpactPoint);
+		ServerFire(HitTarget);
 
 		if (EquippedWeapon)
 		{
 			CrosshairShootingFactor = 1.75f;
 		}
+
+		StartFireTimer();
+	}
+}
+
+// 开火定时器开始
+void UCombatComponent::StartFireTimer()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr)return;
+	Character->GetWorldTimerManager().SetTimer(
+		FireTimer,
+		this,
+		&UCombatComponent::FireTimerFinished,
+		EquippedWeapon->FireDelay,
+		false
+	);
+}
+
+// 开火定时器完成
+void UCombatComponent::FireTimerFinished()
+{
+	bCanFire = true;
+
+	if (EquippedWeapon == nullptr)return;
+
+	if (bFireButtonPressed && EquippedWeapon->bAutomatic)
+	{
+		Fire();
 	}
 }
 
@@ -327,7 +363,6 @@ void UCombatComponent::InterpFOV(float DeltaTime)
 		Character->GetFollowCamera()->SetFieldOfView(CurrentFOV);
 	}
 }
-
 
 // 设置瞄准状态的函数
 // @param bIsAiming：布尔值，表示是否处于瞄准状态

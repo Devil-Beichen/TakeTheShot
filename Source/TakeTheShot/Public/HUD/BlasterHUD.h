@@ -42,6 +42,15 @@ public:
 	// 准星颜色
 	UPROPERTY(EditDefaultsOnly, Category="Crosshairs")
 	FLinearColor CrosshairColor = FLinearColor::White;
+
+	FHUDPackage()
+	{
+		CrosshairsCenter = nullptr;
+		CrosshairsLeft = nullptr;
+		CrosshairsRight = nullptr;
+		CrosshairsTop = nullptr;
+		CrosshairsBottom = nullptr;
+	}
 };
 
 /** 爆破角色的HUD

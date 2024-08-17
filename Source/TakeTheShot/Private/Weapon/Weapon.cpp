@@ -9,7 +9,6 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Net/UnrealNetwork.h"
 #include "Weapon/Casing.h"
-#include "Weapon/Projectile.h"
 
 
 AWeapon::AWeapon()

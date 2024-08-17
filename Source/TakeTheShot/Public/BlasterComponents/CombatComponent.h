@@ -161,5 +161,23 @@ private:
 	// 用于处理视场角（FOV）的插值变化
 	void InterpFOV(float DeltaTime);
 
+	// 可以开火
+	bool bCanFire = true;
+
+	/**
+	 *  自动开火定时器
+	 */
+
+	// 开火定时器
+	FTimerHandle FireTimer;
+
+	// 开火定时器开始
+	void StartFireTimer();
+	// 开火
+	void Fire();
+
+	// 开火定时器结束
+	void FireTimerFinished();
+
 public:
 };

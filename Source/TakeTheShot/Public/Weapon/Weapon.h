@@ -92,6 +92,14 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float ZoomInterpSpeed = 20.f;
 
+	// 是自动武器
+	UPROPERTY(EditDefaultsOnly, Category=Combat)
+	bool bAutomatic = false;
+
+	// 开火间隔
+	UPROPERTY(EditDefaultsOnly, Category=Combat, meta=(EditCondition = "bAutomatic == true", EditConditionHides))
+	float FireDelay = 0.15f;
+
 protected:
 	virtual void BeginPlay() override;
 
