@@ -75,6 +75,13 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
 }
 
+void ABlasterCharacter::OnRep_ReplicatedMovement()
+{
+	Super::OnRep_ReplicatedMovement();
+	SimProxiesTurn();
+	TimeSinceLastMovementReplication = 0.f;
+}
+
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -86,7 +93,20 @@ void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	AimOffset(DeltaTime);
+	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled())
+	{
+		AimOffset(DeltaTime);
+	}
+	else
+	{
+		TimeSinceLastMovementReplication += DeltaTime;
+		if (TimeSinceLastMovementReplication > 0.25f)
+		{
+			OnRep_ReplicatedMovement();
+		}
+
+		CalculateAO_Pitch();
+	}
 
 	HideCameraIfCharacterClose();
 }
@@ -405,7 +425,6 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 	}
 }
 
-
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
 	// 如果存在重叠的武器对象是本地控制的
@@ -462,14 +481,13 @@ void ABlasterCharacter::AimOffset(const float DeltaTime)
 	// 如果战斗组件没有装备武器，则返回
 	if (Combat && Combat->EquippedWeapon == nullptr) return;
 
-	FVector Velocity = GetVelocity();
-	Velocity.Z = 0.f;
-	const float Speed = Velocity.Size();
 	const bool bIsInAir = GetCharacterMovement()->IsFalling();
-
+	float Speed = CalculateSpeed();
 	// 如果速度为0且角色不在空中，则执行以下操作
 	if (Speed == 0.f && !bIsInAir)
 	{
+		bRotateRootBone = true;
+
 		// 禁用控制器yaw旋转，因为我们将使用输入直接控制yaw
 		bUseControllerRotationYaw = true;
 
@@ -488,6 +506,7 @@ void ABlasterCharacter::AimOffset(const float DeltaTime)
 	}
 	if (Speed > 0.f || bIsInAir) // 如果速度大于0或角色在空中，则执行以下操作
 	{
+		bRotateRootBone = false;
 		// 启用控制器的yaw旋转，这通常用于第一人称视角角色，以使角色的朝向与控制器的输入相匹配。
 		bUseControllerRotationYaw = true;
 
@@ -498,6 +517,18 @@ void ABlasterCharacter::AimOffset(const float DeltaTime)
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	}
 
+	CalculateAO_Pitch();
+}
+
+float ABlasterCharacter::CalculateSpeed()
+{
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.f;
+	return Velocity.Size();
+}
+
+void ABlasterCharacter::CalculateAO_Pitch()
+{
 	// 获取基础瞄准旋转的俯仰角
 	AO_Pitch = GetBaseAimRotation().Pitch;
 	// 如果俯仰角大于90度且当前对象不是本地控制的
@@ -509,6 +540,56 @@ void ABlasterCharacter::AimOffset(const float DeltaTime)
 		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
 	}
 }
+
+// 模拟代理旋转行为
+void ABlasterCharacter::SimProxiesTurn()
+{
+    // 如果战斗组件或装备的武器为空，则不执行旋转逻辑
+    if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
+    
+    // 计算当前速度
+    float Speed = CalculateSpeed();
+    
+    // 初始化根骨骼旋转标志为false
+    bRotateRootBone = false;
+    
+    // 如果速度大于0，则视为未在原地转动
+    if (Speed > 0.f)
+    {
+        TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+        return;
+    }
+    
+    // 保存上一帧的代理旋转
+    ProxyRotationLastFrame = ProxyRotation;
+    // 获取当前代理旋转
+    ProxyRotation = GetActorRotation();
+    // 计算当前帧与上一帧代理旋转的差异，并归一化
+    ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(ProxyRotation, ProxyRotationLastFrame).Yaw;
+    
+    // 判断是否超过转动阈值
+    if (FMath::Abs(ProxyYaw) > TurnThreshold)
+    {
+        // 根据转动方向设置转动状态
+        if (ProxyYaw > TurnThreshold)
+        {
+            TurningInPlace = ETurningInPlace::ETIP_Right;
+        }
+        else if (ProxyYaw < TurnThreshold)
+        {
+            TurningInPlace = ETurningInPlace::ETIP_Left;
+        }
+        else
+        {
+            TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+        }
+        return;
+    }
+    
+    // 如果未超过转动阈值，则视为未在原地转动
+    TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+}
+
 
 /**
  * 在原地转动角色。

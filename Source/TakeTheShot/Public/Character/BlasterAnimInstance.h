@@ -102,4 +102,8 @@ private:
 	// 存储角色是否为本地玩家控制的信息，表示角色是否为本地玩家控制。
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	bool bLocallyControlled;
+
+	// 存储角色是否需要旋转根骨骼的信息，表示角色是否需要旋转根骨骼。
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	bool bRotateRootBone;
 };

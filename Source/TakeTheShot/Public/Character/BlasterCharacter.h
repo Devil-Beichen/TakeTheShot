@@ -49,6 +49,9 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastPlayHitReactMontage();
 
+	// 重写角色移动通知
+	virtual void OnRep_ReplicatedMovement() override;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -57,6 +60,12 @@ protected:
 	 * @param DeltaTime 帧时间
 	 */
 	void AimOffset(const float DeltaTime);
+
+	// 计算AO_Pitch
+	void CalculateAO_Pitch();
+
+	// 模拟代理的转向
+	void SimProxiesTurn();
 
 #pragma region 按键输入相关
 
@@ -298,6 +307,24 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Camera")
 	float CameraThreshold = 200.f;
 
+	// 角色是否正在旋转
+	bool bRotateRootBone;
+
+	// 旋转根骨骼的阈值
+	float TurnThreshold = 0.5f;
+	// 存储代理旋转的变量上一帧
+	FRotator ProxyRotationLastFrame;
+	// 存储代理旋转的变量
+	FRotator ProxyRotation;
+	// 存储代理旋转的Yaw
+	float ProxyYaw;
+
+	// 上次移动复制的时间
+	float TimeSinceLastMovementReplication;
+
+	// 计算移动速度
+	float CalculateSpeed();
+
 public:
 	/**
 	 * 设置当前重叠的武器对象
@@ -340,4 +367,7 @@ public:
 		if (Combat == nullptr) return FVector();
 		return Combat->HitTarget;
 	};
+
+	// 获取角色是否正在根旋转
+	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
 };
