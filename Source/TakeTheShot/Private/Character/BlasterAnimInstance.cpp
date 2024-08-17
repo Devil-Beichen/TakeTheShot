@@ -103,7 +103,8 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			bLocallyControlled = true;
 			// 获取右手的网格空间位置和旋转信息
 			FTransform RightHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("Hand_R"), ERelativeTransformSpace::RTS_World);
-			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(BlasterCharacter->GetHitTarget(), RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - RightHandTransform.GetLocation()));
+			FRotator LookAtRotator = UKismetMathLibrary::FindLookAtRotation(BlasterCharacter->GetHitTarget(), RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - RightHandTransform.GetLocation()));
+			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotator, DeltaSeconds, 30.f);
 		}
 	}
 }

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "HUD/BlasterHUD.h"
 #include "CombatComponent.generated.h"
 
 // 追踪长度
@@ -135,6 +136,9 @@ private:
 	float CrosshairShootingFactor = 0.f;
 
 	FVector HitTarget; // 命中点
+
+	// 初始化一个HUDPackage对象，用于存储十字准星的信息
+	FHUDPackage HUDPackage;
 
 	/**
 	 *  瞄准的视角(FOV)

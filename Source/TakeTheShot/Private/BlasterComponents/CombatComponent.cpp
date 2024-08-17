@@ -4,7 +4,6 @@
 #include "Character/BlasterCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "HUD/BlasterHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "PlayerController/BlasterPlayerController.h"
@@ -120,7 +119,7 @@ void UCombatComponent::FireButtonPressed(const bool bPressed)
 
 		if (EquippedWeapon)
 		{
-			CrosshairShootingFactor = 0.75f;
+			CrosshairShootingFactor = 1.75f;
 		}
 	}
 }
@@ -190,6 +189,15 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 			ECollisionChannel::ECC_Visibility
 		);
 
+		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>())
+		{
+			HUDPackage.CrosshairColor = FLinearColor::Red;
+		}
+		else
+		{
+			HUDPackage.CrosshairColor = FLinearColor::White;
+		}
+
 		// 如果没有命中任何物体
 		if (!TraceHitResult.bBlockingHit)
 		{
@@ -222,8 +230,6 @@ void UCombatComponent::SetHUDCrosshairs(const float DeltaTime)
 		HUD = HUD == nullptr ? Cast<ABlasterHUD>(Controller->GetHUD()) : HUD;
 		if (HUD)
 		{
-			// 初始化一个HUDPackage对象，用于存储十字准星的信息
-			FHUDPackage HUDPackage;
 			// 如果装备了武器，将武器的十字准星信息复制到HUDPackage中
 			if (EquippedWeapon)
 			{

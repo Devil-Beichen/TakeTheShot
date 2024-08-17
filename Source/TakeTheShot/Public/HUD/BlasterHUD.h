@@ -38,6 +38,10 @@ public:
 	// 准星扩散
 	UPROPERTY(EditDefaultsOnly, Category="Crosshairs")
 	float CrosshairSpread = 0.f;
+
+	// 准星颜色
+	UPROPERTY(EditDefaultsOnly, Category="Crosshairs")
+	FLinearColor CrosshairColor = FLinearColor::White;
 };
 
 /** 爆破角色的HUD

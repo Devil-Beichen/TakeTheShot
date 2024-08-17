@@ -11,10 +11,8 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "HUD/BlasterHUD.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
-#include "PlayerController/BlasterPlayerController.h"
 #include "Weapon/Weapon.h"
 
 ABlasterCharacter::ABlasterCharacter()
@@ -45,6 +43,7 @@ ABlasterCharacter::ABlasterCharacter()
 	// 关闭与相机的碰撞
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
 	// 创建并初始化一个默认的Widget组件，用于显示头顶信息
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverlayWidget"));
@@ -316,12 +315,12 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 // 当角色启用瞄准时调用此函数
 void ABlasterCharacter::Aiming_Triggered()
 {
-    // 检查是否存在Combat组件，是否装备了武器，以及角色是否未在下落状态
-    if (Combat && Combat->EquippedWeapon && !GetCharacterMovement()->IsFalling())
-    {
-        // 设置瞄准状态为true，启用瞄准
-        Combat->SetAiming(true);
-    }
+	// 检查是否存在Combat组件，是否装备了武器，以及角色是否未在下落状态
+	if (Combat && Combat->EquippedWeapon && !GetCharacterMovement()->IsFalling())
+	{
+		// 设置瞄准状态为true，启用瞄准
+		Combat->SetAiming(true);
+	}
 }
 
 void ABlasterCharacter::Aiming_Completed()
