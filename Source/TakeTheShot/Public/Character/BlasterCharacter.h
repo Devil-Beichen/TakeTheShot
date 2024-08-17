@@ -283,6 +283,13 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category=Combat)
 	UAnimMontage* FireWeaponMontage = nullptr;
 
+	// 如果接近相机就隐藏角色
+	void HideCameraIfCharacterClose();
+
+	// 相机距离阈值
+	UPROPERTY(EditDefaultsOnly, Category="Camera")
+	float CameraThreshold = 200.f;
+
 public:
 	/**
 	 * 设置当前重叠的武器对象

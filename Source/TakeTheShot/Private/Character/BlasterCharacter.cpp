@@ -82,6 +82,8 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	AimOffset(DeltaTime);
+
+	HideCameraIfCharacterClose();
 }
 
 void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -348,6 +350,41 @@ void ABlasterCharacter::Fire_Completed()
 }
 
 #pragma endregion
+
+/**
+ * 如果角色靠近相机，隐藏相机以防止穿模。
+ * 这个函数主要用于解决角色靠近相机时可能出现的穿透问题，通过判断角色与相机的距离，
+ * 来决定是否隐藏角色和武器的网格模型。
+ */
+void ABlasterCharacter::HideCameraIfCharacterClose()
+{
+	// 如果当前角色不是本地控制的，则无需执行隐藏操作。
+	if (!IsLocallyControlled()) return;
+
+	// 获取相机位置与角色位置的距离。
+	float Distance = (FollowCamera->GetComponentLocation() - GetActorLocation()).Size();
+	// 如果距离小于设定的阈值，则隐藏角色模型。
+	if (Distance < CameraThreshold)
+	{
+		GetMesh()->SetVisibility(false);
+		// 如果存在战斗状态，并且装备了武器，同时武器的网格模型存在，则设置武器模型为不可见。
+		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
+		{
+			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+		}
+	}
+	else
+	{
+		// 如果距离大于等于阈值，恢复角色模型的可见性。
+		GetMesh()->SetVisibility(true);
+		// 同样地，如果存在战斗状态且装备了武器，则恢复武器模型的可见性。
+		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
+		{
+			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+		}
+	}
+}
+
 
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {

@@ -177,7 +177,15 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 	if (bScreenToWorld)
 	{
 		// 定义射线起点
-		const FVector Start = CrosshairWorldPosition;
+		FVector Start = CrosshairWorldPosition;
+		// 检查Character对象是否存在
+		if (Character)
+		{
+			// 计算光标世界方向与Character位置之间的距离，并加上一个偏移量
+			float DistanceToCharacter = (Character->GetActorLocation() - Start).Size();
+			// 根据计算出的距离，调整起始位置，以确保光标与Character之间的距离符合预期
+			Start += CrosshairWorldDirection * (DistanceToCharacter + 50.f);
+		}
 		// 定义射线终点，通过方向和长度计算
 		const FVector End = CrosshairWorldPosition + CrosshairWorldDirection * TRACE_LENGTH;
 
