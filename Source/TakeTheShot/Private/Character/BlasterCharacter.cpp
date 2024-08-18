@@ -14,6 +14,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "PlayerController/BlasterPlayerController.h"
 #include "Weapon/Weapon.h"
 
 ABlasterCharacter::ABlasterCharacter()
@@ -88,6 +89,15 @@ void ABlasterCharacter::BeginPlay()
 	Super::BeginPlay();
 	RunSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	AddDefaultMappingContext();
+
+	UpdateHUDHealth();
+
+	// 如果当前角色具有权威性（即服务器端），则注册一个事件处理函数
+	if (HasAuthority())
+	{
+		// 当角色受到任何伤害时，调用ReceiveDamage函数处理伤害逻辑
+		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
+	}
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -200,7 +210,7 @@ void ABlasterCharacter::PlayFireMontage(const bool bAiming) const
 	}
 }
 
-void ABlasterCharacter::MulticastPlayHitReactMontage_Implementation()
+void ABlasterCharacter::PlayHitReactMontage()
 {
 	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
 
@@ -213,6 +223,13 @@ void ABlasterCharacter::MulticastPlayHitReactMontage_Implementation()
 			AnimInstance->Montage_JumpToSection(SectionName);
 		}
 	}
+}
+
+void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	UpdateHUDHealth();
+	PlayHitReactMontage();
 }
 
 // 移动函数，根据输入值调整角色的移动方向
@@ -471,8 +488,21 @@ bool ABlasterCharacter::IsAiming() const
 	return (Combat && Combat->bAiming);
 }
 
+void ABlasterCharacter::UpdateHUDHealth()
+{
+	// 将控制器转换为BlasterPlayerController类型，并更新生命值
+	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
 void ABlasterCharacter::OnRep_Health()
 {
+	UpdateHUDHealth();
+	PlayHitReactMontage();
 }
 
 AWeapon* ABlasterCharacter::GetEquippedWeapon() const

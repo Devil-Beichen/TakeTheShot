@@ -13,4 +13,19 @@ UCLASS()
 class TAKETHESHOT_API ABlasterPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+
+public:
+	/** 设置HUD血量
+	 * 
+	 * @param Health		当前血量
+	 * @param MaxHealth		最大血量
+	 */
+	void SetHUDHealth(const float Health, const float MaxHealth);
+
+protected:
+	virtual void BeginPlay() override;
+
+private:
+	UPROPERTY()
+	class ABlasterHUD* BlasterHUD = nullptr;
 };

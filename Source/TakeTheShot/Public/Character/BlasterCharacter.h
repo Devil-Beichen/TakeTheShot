@@ -14,6 +14,7 @@ class UInputMappingContext;
 class UEnhancedInputLocalPlayerSubsystem;
 class UInputAction;
 class UAnimMontage;
+class ABlasterPlayerController;
 
 
 /*	爆破角色的基类
@@ -45,12 +46,34 @@ public:
 	 */
 	void PlayFireMontage(const bool bAiming) const;
 
-	// 多播放命中重播蒙太奇
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastPlayHitReactMontage();
+	// 播放被命中重播蒙太奇
+	void PlayHitReactMontage();
 
 	// 重写角色移动通知
 	virtual void OnRep_ReplicatedMovement() override;
+
+	/**
+	 * 接收伤害事件的回调函数。
+	 * 
+	 * 用于在Actor受到伤害时触发相应的事件处理逻辑。
+	 * 
+	 * @param DamagedActor 受伤的Actor对象。允许为null，表示环境默认值。
+	 * @param Damage 伤害数值。始终为正值。
+	 * @param DamageType 伤害类型对象，描述了伤害的具体类型。
+	 * @param InstigatorController 引发伤害的控制器，可能为AI或玩家控制器。
+	 * @param DamageCauser 造成伤害的具体Actor，如子弹、爆炸物等。
+	 */
+	UFUNCTION()
+	void ReceiveDamage(
+		AActor* DamagedActor,
+		float Damage,
+		const UDamageType* DamageType,
+		AController* InstigatorController,
+		AActor* DamageCauser
+	);
+
+	// 更新生命值
+	void UpdateHUDHealth();
 
 protected:
 	virtual void BeginPlay() override;
@@ -366,6 +389,10 @@ private:
 	// 回调当前生命值
 	UFUNCTION()
 	void OnRep_Health();
+
+	// 玩家控制器
+	UPROPERTY()
+	ABlasterPlayerController* BlasterPlayerController = nullptr;
 
 #pragma endregion
 

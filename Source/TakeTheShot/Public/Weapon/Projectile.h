@@ -42,6 +42,10 @@ protected:
 		FVector NormalImpulse,
 		const FHitResult& Hit);
 
+	// 伤害值
+	UPROPERTY(EditDefaultsOnly)
+	float Damage = 10.f;
+
 private:
 	// 碰撞盒
 	UPROPERTY(EditAnywhere, Category="Projectile")
