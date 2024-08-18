@@ -52,6 +52,9 @@ public:
 	// 重写角色移动通知
 	virtual void OnRep_ReplicatedMovement() override;
 
+	// 淘汰
+	void Elim();
+
 	/**
 	 * 接收伤害事件的回调函数。
 	 * 
