@@ -106,4 +106,8 @@ private:
 	// 存储角色是否需要旋转根骨骼的信息，表示角色是否需要旋转根骨骼。
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	bool bRotateRootBone;
+
+	// 存储角色是否被淘汰的信息，表示角色是否被淘汰。
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	bool bElimmed;
 };

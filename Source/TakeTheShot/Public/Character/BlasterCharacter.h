@@ -49,10 +49,14 @@ public:
 	// 播放被命中重播蒙太奇
 	void PlayHitReactMontage();
 
+	// 播放淘汰蒙太奇
+	void PlayElimMontage();
+
 	// 重写角色移动通知
 	virtual void OnRep_ReplicatedMovement() override;
 
-	// 淘汰
+	// 多播淘汰
+	UFUNCTION(NetMulticast, Reliable)
 	void Elim();
 
 	/**
@@ -326,6 +330,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category=Combat)
 	UAnimMontage* HitReactMontage = nullptr;
 
+	// 角色被淘汰 Montage 动画
+	UPROPERTY(EditDefaultsOnly, Category=Combat)
+	UAnimMontage* ElimMontage = nullptr;
+
 	// 如果接近相机就隐藏角色
 	void HideCameraIfCharacterClose();
 
@@ -397,6 +405,9 @@ private:
 	UPROPERTY()
 	ABlasterPlayerController* BlasterPlayerController = nullptr;
 
+	// 玩家是否被淘汰
+	bool bElimmed = false;
+
 #pragma endregion
 
 public:
@@ -421,4 +432,7 @@ public:
 
 	// 获取角色是否正在根旋转
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
+
+	// 获取角色是否被淘汰
+	FORCEINLINE bool IsElimmed() const { return bElimmed; }
 };

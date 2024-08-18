@@ -85,8 +85,10 @@ void ABlasterCharacter::OnRep_ReplicatedMovement()
 	TimeSinceLastMovementReplication = 0.f;
 }
 
-void ABlasterCharacter::Elim()
+void ABlasterCharacter::Elim_Implementation()
 {
+	bElimmed = true;
+	PlayElimMontage();
 }
 
 void ABlasterCharacter::BeginPlay()
@@ -230,6 +232,17 @@ void ABlasterCharacter::PlayHitReactMontage()
 	}
 }
 
+void ABlasterCharacter::PlayElimMontage()
+{
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		if (ElimMontage)
+		{
+			AnimInstance->Montage_Play(ElimMontage);
+		}
+	}
+}
+
 // 当角色受到伤害时调用此函数
 // 参数:
 // - DamagedActor: 受伤的角色对象
@@ -239,30 +252,30 @@ void ABlasterCharacter::PlayHitReactMontage()
 // - DamageCauser: 造成伤害的角色对象
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
-    // 更新生命值，并确保它不会超过最大值或低于0
-    Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
-    // 更新HUD上的生命值显示
-    UpdateHUDHealth();
+	// 更新生命值，并确保它不会超过最大值或低于0
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	// 更新HUD上的生命值显示
+	UpdateHUDHealth();
 
-    // 如果生命值为0，则角色死亡
-    if (Health == 0.f)
-    {
-        // 获取当前游戏模式并检查是否为ABlasterGameMode类型
-        if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
-        {
-            // 尝试获取并转换BlasterPlayerController对象
-            BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
-            // 获取并转换施加伤害的控制器为ABlasterPlayerController类型
-            ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatorController);
-            // 通知游戏模式角色已被淘汰
-            BlasterGameMode->PlayerEliminated(this, BlasterPlayerController, AttackerController);
-        }
-    }
-    else
-    {
-        // 如果角色没有死亡，则播放受伤反应动画
-        PlayHitReactMontage();
-    }
+	// 如果生命值为0，则角色死亡
+	if (Health == 0.f)
+	{
+		// 获取当前游戏模式并检查是否为ABlasterGameMode类型
+		if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+		{
+			// 尝试获取并转换BlasterPlayerController对象
+			BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+			// 获取并转换施加伤害的控制器为ABlasterPlayerController类型
+			ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatorController);
+			// 通知游戏模式角色已被淘汰
+			BlasterGameMode->PlayerEliminated(this, BlasterPlayerController, AttackerController);
+		}
+	}
+	else
+	{
+		// 如果角色没有死亡，则播放受伤反应动画
+		PlayHitReactMontage();
+	}
 }
 
 // 移动函数，根据输入值调整角色的移动方向

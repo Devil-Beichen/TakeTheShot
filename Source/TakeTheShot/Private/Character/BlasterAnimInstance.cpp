@@ -56,6 +56,9 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// 检查BlasterCharacter是否需要旋转根骨骼
 	bRotateRootBone = BlasterCharacter->ShouldRotateRootBone();
 
+	// 检查BlasterCharacter是否被淘汰
+	bElimmed = BlasterCharacter->IsElimmed();
+
 	// 获取角色的基础瞄准旋转
 	const FRotator AinRotation = BlasterCharacter->GetBaseAimRotation();
 	// 根据角色的移动方向创建旋转
