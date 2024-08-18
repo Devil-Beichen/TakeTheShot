@@ -3,6 +3,9 @@
 
 #include "HUD/BlasterHUD.h"
 
+#include "Blueprint/UserWidget.h"
+#include "HUD/CharacterOverlay.h"
+
 void ABlasterHUD::DrawHUD()
 {
 	Super::DrawHUD();
@@ -73,3 +76,40 @@ void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture, const FVector2D& ViewportC
 		CrosshairColor
 	);
 }
+
+void ABlasterHUD::BeginPlay()
+{
+	Super::BeginPlay();
+	AddCharacterOverlay();
+}
+
+/**
+ * 添加角色叠加界面
+ * 
+ * 此函数用于创建并显示一个与玩家角色相关联的叠加界面，该界面通常包含角色相关信息的显示
+ * 它是游戏HUD（Heads-Up Display）的一部分，用于向玩家提供必要的游戏内信息
+ * 
+ * 条件检查：
+ * 1. CharacterOverlayClass 必须被正确设置，否则无法创建叠加界面
+ * 2. 必须拥有一个有效的玩家控制器（PlayerController），因为叠加界面是通过玩家控制器创建的
+ * 
+ * 创建和显示叠加界面：
+ * 如果以上条件满足，将使用玩家控制器和 CharacterOverlayClass 指定的类创建一个 UCharacterOverlay 对象
+ * 创建成功后，通过将该对象添加到视口（Viewport），使其在游戏界面中显示出来
+ * 
+ * @note 如果 CharacterOverlayClass 未设置或玩家控制器不存在，函数将不执行任何操作
+ */
+void ABlasterHUD::AddCharacterOverlay()
+{
+    // 获取拥有此HUD的玩家控制器
+    APlayerController* PlayerController = GetOwningPlayerController();
+    
+    // 检查CharacterOverlayClass是否被设置，以及是否拥有有效的玩家控制器
+    if (CharacterOverlayClass && PlayerController)
+    {
+        // 创建UCharacterOverlay对象，并将其添加到玩家控制器的视口中
+        CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
+        CharacterOverlay->AddToViewport();
+    }
+}
+

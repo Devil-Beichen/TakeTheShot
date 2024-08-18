@@ -348,6 +348,27 @@ public:
 	bool IsAiming() const;
 #pragma  endregion
 
+#pragma region 角色属性相关
+
+private:
+	/**
+	 * 角色的生命相关
+	 */
+
+	// 最大生命值
+	UPROPERTY(EditDefaultsOnly, Category="Player Stats")
+	float MaxHealth = 100.f;
+
+	// 当前生命值
+	UPROPERTY(ReplicatedUsing= "OnRep_Health", VisibleAnywhere, Category="Player Stats")
+	float Health = 100.f;
+
+	// 回调当前生命值
+	UFUNCTION()
+	void OnRep_Health();
+
+#pragma endregion
+
 public:
 	// 获取AO_Yaw的值
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }

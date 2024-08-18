@@ -73,6 +73,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(ABlasterCharacter, Health);
 }
 
 void ABlasterCharacter::OnRep_ReplicatedMovement()
@@ -470,6 +471,10 @@ bool ABlasterCharacter::IsAiming() const
 	return (Combat && Combat->bAiming);
 }
 
+void ABlasterCharacter::OnRep_Health()
+{
+}
+
 AWeapon* ABlasterCharacter::GetEquippedWeapon() const
 {
 	if (Combat == nullptr) return nullptr;
@@ -544,50 +549,50 @@ void ABlasterCharacter::CalculateAO_Pitch()
 // 模拟代理旋转行为
 void ABlasterCharacter::SimProxiesTurn()
 {
-    // 如果战斗组件或装备的武器为空，则不执行旋转逻辑
-    if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
-    
-    // 计算当前速度
-    float Speed = CalculateSpeed();
-    
-    // 初始化根骨骼旋转标志为false
-    bRotateRootBone = false;
-    
-    // 如果速度大于0，则视为未在原地转动
-    if (Speed > 0.f)
-    {
-        TurningInPlace = ETurningInPlace::ETIP_NotTurning;
-        return;
-    }
-    
-    // 保存上一帧的代理旋转
-    ProxyRotationLastFrame = ProxyRotation;
-    // 获取当前代理旋转
-    ProxyRotation = GetActorRotation();
-    // 计算当前帧与上一帧代理旋转的差异，并归一化
-    ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(ProxyRotation, ProxyRotationLastFrame).Yaw;
-    
-    // 判断是否超过转动阈值
-    if (FMath::Abs(ProxyYaw) > TurnThreshold)
-    {
-        // 根据转动方向设置转动状态
-        if (ProxyYaw > TurnThreshold)
-        {
-            TurningInPlace = ETurningInPlace::ETIP_Right;
-        }
-        else if (ProxyYaw < TurnThreshold)
-        {
-            TurningInPlace = ETurningInPlace::ETIP_Left;
-        }
-        else
-        {
-            TurningInPlace = ETurningInPlace::ETIP_NotTurning;
-        }
-        return;
-    }
-    
-    // 如果未超过转动阈值，则视为未在原地转动
-    TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+	// 如果战斗组件或装备的武器为空，则不执行旋转逻辑
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
+
+	// 计算当前速度
+	float Speed = CalculateSpeed();
+
+	// 初始化根骨骼旋转标志为false
+	bRotateRootBone = false;
+
+	// 如果速度大于0，则视为未在原地转动
+	if (Speed > 0.f)
+	{
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
+
+	// 保存上一帧的代理旋转
+	ProxyRotationLastFrame = ProxyRotation;
+	// 获取当前代理旋转
+	ProxyRotation = GetActorRotation();
+	// 计算当前帧与上一帧代理旋转的差异，并归一化
+	ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(ProxyRotation, ProxyRotationLastFrame).Yaw;
+
+	// 判断是否超过转动阈值
+	if (FMath::Abs(ProxyYaw) > TurnThreshold)
+	{
+		// 根据转动方向设置转动状态
+		if (ProxyYaw > TurnThreshold)
+		{
+			TurningInPlace = ETurningInPlace::ETIP_Right;
+		}
+		else if (ProxyYaw < TurnThreshold)
+		{
+			TurningInPlace = ETurningInPlace::ETIP_Left;
+		}
+		else
+		{
+			TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		}
+		return;
+	}
+
+	// 如果未超过转动阈值，则视为未在原地转动
+	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 }
 
 

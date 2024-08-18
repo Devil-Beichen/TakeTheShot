@@ -7,6 +7,8 @@
 #include "BlasterHUD.generated.h"
 
 class UTexture2D;
+class UUserWidget;
+class UCharacterOverlay;
 
 // HUD的包
 USTRUCT(BlueprintType)
@@ -64,6 +66,20 @@ class TAKETHESHOT_API ABlasterHUD : public AHUD
 public:
 	// 绘制HUD
 	virtual void DrawHUD() override;
+
+	// 角色的HUD类
+	UPROPERTY(EditDefaultsOnly, Category= "Player Stats")
+	TSubclassOf<UUserWidget> CharacterOverlayClass;
+	
+	// 角色的HUD
+	UPROPERTY()
+	UCharacterOverlay* CharacterOverlay;
+
+protected:
+	virtual void BeginPlay() override;
+
+	// 添加角色的HUD
+	void AddCharacterOverlay();
 
 private:
 	// HUD的资源包
