@@ -87,7 +87,7 @@ void ABlasterCharacter::OnRep_ReplicatedMovement()
 
 void ABlasterCharacter::Elim_Implementation()
 {
-	bElimmed = true;
+	bEliminate = true;
 	PlayElimMontage();
 }
 

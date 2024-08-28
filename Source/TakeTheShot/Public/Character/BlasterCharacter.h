@@ -406,7 +406,7 @@ private:
 	ABlasterPlayerController* BlasterPlayerController = nullptr;
 
 	// 玩家是否被淘汰
-	bool bElimmed = false;
+	bool bEliminate = false;
 
 #pragma endregion
 
@@ -434,5 +434,5 @@ public:
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
 
 	// 获取角色是否被淘汰
-	FORCEINLINE bool IsElimmed() const { return bElimmed; }
+	FORCEINLINE bool IsEliminate() const { return bEliminate; }
 };

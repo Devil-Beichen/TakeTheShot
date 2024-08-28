@@ -57,7 +57,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bRotateRootBone = BlasterCharacter->ShouldRotateRootBone();
 
 	// 检查BlasterCharacter是否被淘汰
-	bElimmed = BlasterCharacter->IsElimmed();
+	bEliminate = BlasterCharacter->IsEliminate();
 
 	// 获取角色的基础瞄准旋转
 	const FRotator AinRotation = BlasterCharacter->GetBaseAimRotation();

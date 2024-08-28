@@ -109,5 +109,5 @@ private:
 
 	// 存储角色是否被淘汰的信息，表示角色是否被淘汰。
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
-	bool bElimmed;
+	bool bEliminate;
 };
