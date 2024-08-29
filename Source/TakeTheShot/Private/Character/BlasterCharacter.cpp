@@ -90,13 +90,14 @@ void ABlasterCharacter::OnRep_ReplicatedMovement()
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	Initialize();
+}
+
+void ABlasterCharacter::Initialize()
+{
 	RunSpeed = GetCharacterMovement()->MaxWalkSpeed;
 
-	if (IsLocallyControlled() || HasAuthority())
-	{
-		AddDefaultMappingContext();
-	}
-
+	AddDefaultMappingContext();
 
 	UpdateHUDHealth();
 
@@ -106,6 +107,13 @@ void ABlasterCharacter::BeginPlay()
 		// 当角色受到任何伤害时，调用ReceiveDamage函数处理伤害逻辑
 		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
 	}
+}
+
+void ABlasterCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	Initialize();
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -219,10 +227,10 @@ void ABlasterCharacter::MulticastElim_Implementation()
 {
 	bEliminate = true;
 	PlayElimMontage();
-	/*if (IsLocallyControlled() || HasAuthority())
+	if (IsLocallyControlled() || HasAuthority())
 	{
 		RemoveMappingContext();
-	}*/
+	}
 }
 
 void ABlasterCharacter::ElimTimeFinished()

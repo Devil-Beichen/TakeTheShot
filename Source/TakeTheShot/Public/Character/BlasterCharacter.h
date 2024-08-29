@@ -88,6 +88,12 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	// 初始化
+	virtual void Initialize();
+
+	// 玩家被控制时执行(只在服务器上调用)
+	virtual void PossessedBy(AController* NewController) override;
+
 	/**	瞄准偏移
 	 * 
 	 * @param DeltaTime 帧时间
