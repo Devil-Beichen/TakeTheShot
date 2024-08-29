@@ -49,6 +49,8 @@ ABlasterCharacter::ABlasterCharacter()
 	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	// 设置尽量调整位置，但一定要生成
+	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 	// 创建并初始化一个默认的Widget组件，用于显示头顶信息
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverlayWidget"));
@@ -85,17 +87,16 @@ void ABlasterCharacter::OnRep_ReplicatedMovement()
 	TimeSinceLastMovementReplication = 0.f;
 }
 
-void ABlasterCharacter::Elim_Implementation()
-{
-	bEliminate = true;
-	PlayElimMontage();
-}
-
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	RunSpeed = GetCharacterMovement()->MaxWalkSpeed;
-	AddDefaultMappingContext();
+
+	if (IsLocallyControlled() || HasAuthority())
+	{
+		AddDefaultMappingContext();
+	}
+
 
 	UpdateHUDHealth();
 
@@ -202,6 +203,36 @@ void ABlasterCharacter::RemoveMappingContext() const
 	}
 }
 
+void ABlasterCharacter::Elim()
+{
+	MulticastElim();
+	GetWorldTimerManager().SetTimer
+	(
+		ElimTime,
+		this,
+		&ABlasterCharacter::ElimTimeFinished,
+		ElimDelay
+	);
+}
+
+void ABlasterCharacter::MulticastElim_Implementation()
+{
+	bEliminate = true;
+	PlayElimMontage();
+	/*if (IsLocallyControlled() || HasAuthority())
+	{
+		RemoveMappingContext();
+	}*/
+}
+
+void ABlasterCharacter::ElimTimeFinished()
+{
+	if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+	{
+		BlasterGameMode->RequestRespawn(this, Controller);
+	}
+}
+
 void ABlasterCharacter::PlayFireMontage(const bool bAiming) const
 {
 	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
@@ -252,6 +283,9 @@ void ABlasterCharacter::PlayElimMontage()
 // - DamageCauser: 造成伤害的角色对象
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
+	// 如果已经死亡就返回
+	if (bEliminate == true) return;
+
 	// 更新生命值，并确保它不会超过最大值或低于0
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	// 更新HUD上的生命值显示
@@ -263,6 +297,8 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 		// 获取当前游戏模式并检查是否为ABlasterGameMode类型
 		if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
 		{
+			// 关闭Mehs的碰撞
+			GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 			// 尝试获取并转换BlasterPlayerController对象
 			BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
 			// 获取并转换施加伤害的控制器为ABlasterPlayerController类型

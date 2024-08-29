@@ -55,9 +55,12 @@ public:
 	// 重写角色移动通知
 	virtual void OnRep_ReplicatedMovement() override;
 
+	// 只在服务器上执行的淘汰
+	void Elim();
+
 	// 多播淘汰
 	UFUNCTION(NetMulticast, Reliable)
-	void Elim();
+	void MulticastElim();
 
 	/**
 	 * 接收伤害事件的回调函数。
@@ -407,6 +410,17 @@ private:
 
 	// 玩家是否被淘汰
 	bool bEliminate = false;
+
+	// 淘汰时间句柄
+	FTimerHandle ElimTime;
+
+	// 淘汰延迟时间
+	UPROPERTY(EditDefaultsOnly)
+	float ElimDelay = 3.f;
+
+	// 淘汰时间完成
+	UFUNCTION()
+	void ElimTimeFinished();
 
 #pragma endregion
 
