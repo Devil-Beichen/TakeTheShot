@@ -62,6 +62,8 @@ ABlasterCharacter::ABlasterCharacter()
 	// 启用角色移动时的自动朝向功能
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
+	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimeline"));
+
 	// 创建并初始化一个战斗组件，用于处理战斗相关逻辑
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
 	// 设置战斗组件为复制，使其在服务器和客户端之间同步
@@ -227,10 +229,9 @@ void ABlasterCharacter::MulticastElim_Implementation()
 {
 	bEliminate = true;
 	PlayElimMontage();
-	if (IsLocallyControlled() || HasAuthority())
-	{
-		RemoveMappingContext();
-	}
+	RemoveMappingContext();
+
+	StartDissolve();
 }
 
 void ABlasterCharacter::ElimTimeFinished()
@@ -593,6 +594,22 @@ void ABlasterCharacter::OnRep_Health()
 {
 	UpdateHUDHealth();
 	PlayHitReactMontage();
+}
+
+void ABlasterCharacter::UpdateDissolveMaterial(const float DissolveValue)
+{
+	GetMesh()->SetScalarParameterValueOnMaterials("Dissolve", DissolveValue);
+}
+
+void ABlasterCharacter::StartDissolve()
+{
+	DissolveTrack.BindDynamic(this, &ABlasterCharacter::UpdateDissolveMaterial);
+	if (DissolveCurve)
+	{
+		DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
+		DissolveTimeline->SetPlayRate(1.f / DissolveTime);
+		DissolveTimeline->Play();
+	}
 }
 
 AWeapon* ABlasterCharacter::GetEquippedWeapon() const

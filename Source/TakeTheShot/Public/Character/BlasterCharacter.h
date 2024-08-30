@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
 #include "BlasterComponents/CombatComponent.h"
+#include "Components/TimelineComponent.h"
 #include "GameFramework/Character.h"
 #include "Interface/InteractWithCrosshairsInterface.h"
 #include "Types/TurningInPlace.h"
@@ -421,12 +422,46 @@ private:
 	FTimerHandle ElimTime;
 
 	// 淘汰延迟时间
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category="Elim")
 	float ElimDelay = 3.f;
 
 	// 淘汰时间完成
 	UFUNCTION()
 	void ElimTimeFinished();
+
+	/**
+	 *  溶解效果
+	 */
+
+	//  溶解时间轴
+	UPROPERTY(VisibleAnywhere, Category="Elim")
+	UTimelineComponent* DissolveTimeline;
+
+	// 处理溶解曲线的函数签名
+	FOnTimelineFloat DissolveTrack;
+
+	// 溶解曲线
+	UPROPERTY(EditDefaultsOnly, Category="Elim")
+	UCurveFloat* DissolveCurve;
+
+	// 溶解的时间
+	UPROPERTY(EditDefaultsOnly, Category="Elim")
+	float DissolveTime = 2.f;
+
+	/**
+	 * 更新溶解材质参数
+	 * 
+	 * 此函数的目的是更新材质的溶解程度，以便在图形渲染中实现溶解效果动态变化
+	 * 溶解效果常用于模拟物体溶解、消失等特效，在电影特效和游戏中广泛应用
+	 * 
+	 * @param DissolveValue 溶解进度的浮点
+	 *                 
+	 */
+	UFUNCTION()
+	void UpdateDissolveMaterial(const float DissolveValue);
+
+	// 启动溶解
+	void StartDissolve();
 
 #pragma endregion
 
