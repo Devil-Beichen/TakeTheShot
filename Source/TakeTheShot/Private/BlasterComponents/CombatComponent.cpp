@@ -92,6 +92,14 @@ void UCombatComponent::OnRep_EquippedWeapon() const
 	// 此处应添加具体的逻辑代码，以响应装备武器的变化
 	if (EquippedWeapon && Character)
 	{
+		// 设置武器状态为已装备
+		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		// 尝试找到角色右手的插槽，如果找到，则将武器装备到该插槽
+		if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket")))
+		{
+			HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
+		}
+		
 		// 禁用角色的移动方向与旋转方向的自动对齐
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 

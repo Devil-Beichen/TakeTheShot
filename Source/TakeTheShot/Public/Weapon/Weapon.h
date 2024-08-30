@@ -56,6 +56,9 @@ public:
 	 */
 	virtual void Fire(const FVector& HitTarget) const;
 
+	// 丢弃武器
+	void Dropped();
+
 	/**
  *	武器准星的纹理资源
  */

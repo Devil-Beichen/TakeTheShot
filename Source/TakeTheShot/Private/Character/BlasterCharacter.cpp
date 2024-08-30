@@ -215,6 +215,11 @@ void ABlasterCharacter::RemoveMappingContext() const
 
 void ABlasterCharacter::Elim()
 {
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Dropped();
+	}
+
 	MulticastElim();
 	GetWorldTimerManager().SetTimer
 	(
@@ -230,8 +235,18 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	bEliminate = true;
 	PlayElimMontage();
 	RemoveMappingContext();
-
+	
+	// 开始溶解
 	StartDissolve();
+
+	// 禁用移动模式
+	GetCharacterMovement()->DisableMovement();
+	// 停止移动
+	GetCharacterMovement()->StopMovementImmediately();
+
+	// 关闭碰撞
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ABlasterCharacter::ElimTimeFinished()
@@ -306,8 +321,6 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 		// 获取当前游戏模式并检查是否为ABlasterGameMode类型
 		if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
 		{
-			// 关闭Mesh的碰撞
-			GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 			// 尝试获取并转换BlasterPlayerController对象
 			BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
 			// 获取并转换施加伤害的控制器为ABlasterPlayerController类型

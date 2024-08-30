@@ -107,6 +107,19 @@ void AWeapon::SetWeaponState(const EWeaponState State)
 		ShowPickupWidget(false);
 	// 将武器的碰撞检查关闭（只在服务器调用）
 		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		break;
+	case EWeaponState::EWS_Dropped:
+		if (HasAuthority())
+		{
+			// 将武器的碰撞检查开启（只在服务器调用）
+			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		}
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
 		break;
 	}
 }
@@ -120,6 +133,15 @@ void AWeapon::OnRep_WeaponState()
 	case EWeaponState::EWS_Equipped: // 当武器状态为装备中
 		// 隐藏拾取小部件，因为武器已经被装备
 		ShowPickupWidget(false);
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		break;
+	case EWeaponState::EWS_Dropped:
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
 		break;
 	}
 }
@@ -160,6 +182,14 @@ void AWeapon::Fire(const FVector& HitTarget) const
 			}
 		}
 	}
+}
+
+// 丢弃武器
+void AWeapon::Dropped()
+{
+	WeaponMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	SetWeaponState(EWeaponState::EWS_Dropped);
+	SetOwner(nullptr);
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
