@@ -16,6 +16,7 @@ class UEnhancedInputLocalPlayerSubsystem;
 class UInputAction;
 class UAnimMontage;
 class ABlasterPlayerController;
+class USoundCue;
 
 
 /*	爆破角色的基类
@@ -63,6 +64,8 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastElim();
 
+	virtual void Destroyed() override;
+	
 	/**
 	 * 接收伤害事件的回调函数。
 	 * 
@@ -421,9 +424,9 @@ private:
 	// 淘汰时间句柄
 	FTimerHandle ElimTime;
 
-	// 淘汰延迟时间
+	// 淘汰延迟生成时间
 	UPROPERTY(EditDefaultsOnly, Category="Elim")
-	float ElimDelay = 3.f;
+	float ElimDelayRegenerate = 3.f;
 
 	// 淘汰时间完成
 	UFUNCTION()
@@ -462,6 +465,25 @@ private:
 
 	// 启动溶解
 	void StartDissolve();
+
+	/**
+	 *  淘汰特效
+	 */
+
+	// 淘汰特效
+	UPROPERTY(EditDefaultsOnly, Category="Elim")
+	UParticleSystem* ElimBotEffect;
+
+	// 淘汰特效组件
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* ElimBotComponent;
+
+	// 淘汰声音
+	UPROPERTY(EditDefaultsOnly, Category="Elim")
+	USoundCue* ElimBotSound;
+
+	// 生成淘汰特效
+	void SpawnElimBot();
 
 #pragma endregion
 

@@ -13,9 +13,12 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameMode/BlasterGameMode.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "PlayerController/BlasterPlayerController.h"
+#include "Sound/SoundCue.h"
 #include "Weapon/Weapon.h"
 
 ABlasterCharacter::ABlasterCharacter()
@@ -226,36 +229,79 @@ void ABlasterCharacter::Elim()
 		ElimTime,
 		this,
 		&ABlasterCharacter::ElimTimeFinished,
-		ElimDelay
+		ElimDelayRegenerate
 	);
 }
 
+// 当角色被消除时，此函数将执行一系列相关操作
 void ABlasterCharacter::MulticastElim_Implementation()
 {
+	// 标记角色状态为已消除
 	bEliminate = true;
+
+	// 播放消除动画
 	PlayElimMontage();
+
+	// 移除输入映射上下文，停止响应用户输入
 	RemoveMappingContext();
-	
-	// 开始溶解
+
+	// 开始溶解效果
 	StartDissolve();
 
-	// 禁用移动模式
+	// 禁用移动模式，防止角色在消除后继续移动
 	GetCharacterMovement()->DisableMovement();
-	// 停止移动
+
+	// 立即停止所有移动，确保角色固定不动
 	GetCharacterMovement()->StopMovementImmediately();
 
-	// 关闭碰撞
+	// 关闭碰撞，使角色不会与其他物体发生碰撞
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 关闭网格模型的碰撞，进一步确保没有碰撞检测
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 在位置生成一个消除机器人的效果
+	SpawnElimBot();
 }
 
+// 当消除时间结束时调用
 void ABlasterCharacter::ElimTimeFinished()
 {
+	// 尝试获取游戏模式并进行类型检查，确保它是ABlasterGameMode的实例
 	if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
 	{
+		// 请求重生，传递当前角色和控制器的信息
 		BlasterGameMode->RequestRespawn(this, Controller);
 	}
 }
+
+
+// 生成淘汰机器人的效果和声音
+void ABlasterCharacter::SpawnElimBot()
+{
+	// 如果淘汰机器人效果存在，则生成效果
+	if (ElimBotEffect)
+	{
+		// 计算淘汰机器人生成的位置，Z轴提高200.f单位以避免地面遮挡
+		const FVector ElimBotSpawnPoint(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z + 200.f);
+
+		// 在计算出的位置生成淘汰机器人效果
+		ElimBotComponent = UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			ElimBotEffect,
+			ElimBotSpawnPoint,
+			GetActorRotation()
+		);
+	}
+
+	// 如果淘汰机器人声音存在，则生成声音
+	if (ElimBotSound)
+	{
+		// 在当前角色位置生成淘汰机器人声音
+		UGameplayStatics::SpawnSoundAtLocation(this, ElimBotSound, GetActorLocation());
+	}
+}
+
 
 void ABlasterCharacter::PlayFireMontage(const bool bAiming) const
 {
@@ -296,6 +342,17 @@ void ABlasterCharacter::PlayElimMontage()
 			AnimInstance->Montage_Play(ElimMontage);
 		}
 	}
+}
+
+void ABlasterCharacter::Destroyed()
+{
+	// 如果ElimBotComponent存在
+	if (ElimBotComponent)
+	{
+		// 销毁ElimBotComponent组件
+		ElimBotComponent->DestroyComponent();
+	}
+	Super::Destroyed();
 }
 
 // 当角色受到伤害时调用此函数
