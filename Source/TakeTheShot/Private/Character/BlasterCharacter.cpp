@@ -98,6 +98,7 @@ void ABlasterCharacter::BeginPlay()
 	Initialize();
 }
 
+// 初始化
 void ABlasterCharacter::Initialize()
 {
 	RunSpeed = GetCharacterMovement()->MaxWalkSpeed;
@@ -112,13 +113,6 @@ void ABlasterCharacter::Initialize()
 		// 当角色受到任何伤害时，调用ReceiveDamage函数处理伤害逻辑
 		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
 	}
-}
-
-void ABlasterCharacter::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-
-	Initialize();
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)

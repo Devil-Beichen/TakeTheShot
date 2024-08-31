@@ -22,6 +22,9 @@ public:
 	 */
 	void SetHUDHealth(const float Health, const float MaxHealth);
 
+	// 重写拥有pawn
+	virtual void OnPossess(APawn* InPawn) override;
+
 protected:
 	virtual void BeginPlay() override;
 

@@ -3,6 +3,7 @@
 
 #include "PlayerController/BlasterPlayerController.h"
 
+#include "Character/BlasterCharacter.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "HUD/BlasterHUD.h"
@@ -25,25 +26,35 @@ void ABlasterPlayerController::BeginPlay()
  */
 void ABlasterPlayerController::SetHUDHealth(const float Health, const float MaxHealth)
 {
-    // 检查BlasterHUD是否为空，如果为空则重新获取一个
-    BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
-    
-    // 检查BlasterHUD及其相关元素是否已正确初始化
-    const bool bHUDValid = BlasterHUD &&
-        BlasterHUD->CharacterOverlay &&
-        BlasterHUD->CharacterOverlay->HealthBar &&
-        BlasterHUD->CharacterOverlay->HealthText;
-    
-    // 如果BlasterHUD及其相关元素已正确初始化，则更新健康值显示
-    if (bHUDValid)
-    {
-        // 计算健康百分比并更新健康条
-        const float HealthPercent = Health / MaxHealth;
-        BlasterHUD->CharacterOverlay->HealthBar->SetPercent(HealthPercent);
-        
-        // 将当前健康值和最大健康值格式化为文本并更新健康文本
-        const FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
-        BlasterHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
-    }
+	// 检查BlasterHUD是否为空，如果为空则重新获取一个
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	// 检查BlasterHUD及其相关元素是否已正确初始化
+	const bool bHUDValid = BlasterHUD &&
+		BlasterHUD->CharacterOverlay &&
+		BlasterHUD->CharacterOverlay->HealthBar &&
+		BlasterHUD->CharacterOverlay->HealthText;
+
+	// 如果BlasterHUD及其相关元素已正确初始化，则更新健康值显示
+	if (bHUDValid)
+	{
+		// 计算健康百分比并更新健康条
+		const float HealthPercent = Health / MaxHealth;
+		BlasterHUD->CharacterOverlay->HealthBar->SetPercent(HealthPercent);
+
+		// 将当前健康值和最大健康值格式化为文本并更新健康文本
+		const FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
+		BlasterHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
+	}
 }
 
+// 玩家被控制的回调函数
+void ABlasterPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(InPawn))
+	{
+		BlasterCharacter->Initialize();
+	}
+}

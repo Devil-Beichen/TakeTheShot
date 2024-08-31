@@ -33,6 +33,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void PostInitializeComponents() override;
+	// 初始化
+	virtual void Initialize();
 
 	// 添加默认映射上下文
 	UFUNCTION()
@@ -65,7 +67,7 @@ public:
 	void MulticastElim();
 
 	virtual void Destroyed() override;
-	
+
 	/**
 	 * 接收伤害事件的回调函数。
 	 * 
@@ -91,12 +93,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
-	// 初始化
-	virtual void Initialize();
-
-	// 玩家被控制时执行(只在服务器上调用)
-	virtual void PossessedBy(AController* NewController) override;
 
 	/**	瞄准偏移
 	 * 
