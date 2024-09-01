@@ -28,7 +28,14 @@ public:
 	 * @param Score 要设置的分数值，用于更新HUD中的显示内容
 	 */
 	void SetHUDScore(const float Score);
-	
+
+	/**
+	 * 设置HUD上的击败数
+	 * 
+	 * @param Defeats 要设置的击败数
+	 */
+	void SetHUDDefeats(const int32 Defeats);
+
 	// 重写拥有pawn
 	virtual void OnPossess(APawn* InPawn) override;
 

@@ -671,6 +671,8 @@ void ABlasterCharacter::PollInit()
 		{
 			// 初始化分数为0
 			BlasterPlayerState->AddToScore(0.f);
+			// 初始化死亡次数
+			BlasterPlayerState->AddTotDefeats(0);
 		}
 	}
 }

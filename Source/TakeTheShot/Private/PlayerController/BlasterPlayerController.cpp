@@ -64,6 +64,22 @@ void ABlasterPlayerController::SetHUDScore(const float Score)
 	}
 }
 
+void ABlasterPlayerController::SetHUDDefeats(const int32 Defeats)
+{
+	// 检查BlasterHUD是否为空，如果为空则重新获取一个
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	// 检查BlasterHUD及其相关元素是否已正确初始化
+	const bool bHUDValid = BlasterHUD &&
+		BlasterHUD->CharacterOverlay &&
+		BlasterHUD->CharacterOverlay->DefeatsAmount;
+	if (bHUDValid)
+	{
+		const FString DefeatsText = FString::Printf(TEXT("%d"), Defeats);
+		BlasterHUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(DefeatsText));
+	}
+}
+
 // 玩家被控制的回调函数
 void ABlasterPlayerController::OnPossess(APawn* InPawn)
 {

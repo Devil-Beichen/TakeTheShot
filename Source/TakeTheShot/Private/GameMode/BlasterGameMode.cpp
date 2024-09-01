@@ -17,11 +17,16 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, 
 
 	// 类似地，根据VictimController是否存在，转换并获取相应的ABlasterPlayerState对象
 	// 如果VictimController为nullptr，则VictimPlayerState为nullptr
-	const ABlasterPlayerState* VictimPlayerState = VictimController ? Cast<ABlasterPlayerState>(VictimController->PlayerState) : nullptr;
+	ABlasterPlayerState* VictimPlayerState = VictimController ? Cast<ABlasterPlayerState>(VictimController->PlayerState) : nullptr;
 
 	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState)
 	{
 		AttackerPlayerState->AddToScore(1.f);
+	}
+	// 受害者玩家状态
+	if (VictimPlayerState)
+	{
+		VictimPlayerState->AddTotDefeats();
 	}
 
 	if (EliminatedCharacter)

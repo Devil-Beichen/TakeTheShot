@@ -29,4 +29,8 @@ public:
 	// 分数
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* ScoreAmount;
+
+	// 死亡次数
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* DefeatsAmount;
 };

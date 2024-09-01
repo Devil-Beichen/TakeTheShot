@@ -15,8 +15,15 @@ class TAKETHESHOT_API ABlasterPlayerState : public APlayerState
 	GENERATED_BODY()
 
 public:
+	/**
+	 *  复制 通知
+	 */
+
 	// 重写分数发生变化
 	virtual void OnRep_Score() override;
+	// 死亡回调
+	UFUNCTION()
+	virtual void OnRep_Defeats();
 
 	/**
 	 * 向得分添加指定数量的分数
@@ -30,6 +37,12 @@ public:
 	// 我设置分数
 	void MySetScore();
 
+	// 增加死亡次数
+	void AddTotDefeats(const int32 DefeatsAmount = 1);
+
+	// 设置死亡次数
+	void SetDefeats();
+
 private:
 	// 玩家角色
 	UPROPERTY()
@@ -37,4 +50,8 @@ private:
 	// 玩家控制器
 	UPROPERTY()
 	class ABlasterPlayerController* Controller = nullptr;
+
+	// 死亡
+	UPROPERTY(ReplicatedUsing = OnRep_Defeats)
+	int32 Defeats = 0;
 };
