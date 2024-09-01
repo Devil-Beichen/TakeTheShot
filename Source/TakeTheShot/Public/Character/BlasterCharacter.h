@@ -91,6 +91,9 @@ public:
 	// 更新生命值
 	void UpdateHUDHealth();
 
+	// 初始化HUD
+	void PollInit();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -480,6 +483,10 @@ private:
 
 	// 生成淘汰特效
 	void SpawnElimBot();
+
+	// 玩家状态
+	UPROPERTY()
+	class ABlasterPlayerState* BlasterPlayerState = nullptr;
 
 #pragma endregion
 

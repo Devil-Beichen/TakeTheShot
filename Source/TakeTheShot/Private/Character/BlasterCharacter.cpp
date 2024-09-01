@@ -18,6 +18,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "PlayerController/BlasterPlayerController.h"
+#include "PlayerState/BlasterPlayerState.h"
 #include "Sound/SoundCue.h"
 #include "Weapon/Weapon.h"
 
@@ -135,6 +136,8 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	}
 
 	HideCameraIfCharacterClose();
+
+	PollInit();
 }
 
 void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -651,6 +654,24 @@ void ABlasterCharacter::UpdateHUDHealth()
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+// 初始化角色的一些属性
+void ABlasterCharacter::PollInit()
+{
+	// 检查BlasterPlayerState是否已经创建
+	if (BlasterPlayerState == nullptr)
+	{
+		// 如果尚未创建，则尝试创建它
+		BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+
+		// 如果BlasterPlayerState成功创建
+		if (BlasterPlayerState)
+		{
+			// 初始化分数为0
+			BlasterPlayerState->AddToScore(0.f);
+		}
 	}
 }
 

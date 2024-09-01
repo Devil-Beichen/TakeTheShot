@@ -22,6 +22,13 @@ public:
 	 */
 	void SetHUDHealth(const float Health, const float MaxHealth);
 
+	/**
+	 * 设置HUD（Heads-Up Display）中的分数显示
+	 * 
+	 * @param Score 要设置的分数值，用于更新HUD中的显示内容
+	 */
+	void SetHUDScore(const float Score);
+	
 	// 重写拥有pawn
 	virtual void OnPossess(APawn* InPawn) override;
 

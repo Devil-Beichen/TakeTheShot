@@ -6,6 +6,9 @@
 #include "Blueprint/UserWidget.h"
 #include "CharacterOverlay.generated.h"
 
+
+class UTextBlock;
+
 /**
  * 角色属性的UI
  */
@@ -21,5 +24,9 @@ public:
 
 	// 当前血量文本
 	UPROPERTY(meta=(BindWidget))
-	class UTextBlock* HealthText;
+	UTextBlock* HealthText;
+
+	// 分数
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* ScoreAmount;
 };
