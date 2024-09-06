@@ -25,7 +25,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	// 指定Aiming属性需要在服务器和客户端之间同步复制
 	DOREPLIFETIME(UCombatComponent, bAiming);
-	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo,COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 }
 
 void UCombatComponent::BeginPlay()
@@ -36,6 +36,10 @@ void UCombatComponent::BeginPlay()
 	{
 		DefaultFOV = Character->GetFollowCamera()->FieldOfView;
 		CurrentFOV = DefaultFOV;
+		if (Character->HasAuthority())
+		{
+			InitializeCarriedAmmo();
+		}
 	}
 }
 
@@ -100,6 +104,13 @@ void UCombatComponent::SetEquippedWeaponState()
 	EquippedWeapon->SetOwner(Character);
 	// 设置弹药信息
 	EquippedWeapon->SetHUDAmmo();
+
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+
+	UpdateCarriedAmmo();
 
 	// 禁用角色的移动方向与旋转方向的自动对齐
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -175,8 +186,25 @@ bool UCombatComponent::CanFire()
 	return !EquippedWeapon->IsAmmoEmpty() && bCanFire;
 }
 
+// 携带弹药发生改变的时候触发
 void UCombatComponent::OnRep_CarriedAmmo()
 {
+	UpdateCarriedAmmo();
+}
+
+// 更新携带的弹药数量
+void UCombatComponent::UpdateCarriedAmmo()
+{
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+}
+
+void UCombatComponent::InitializeCarriedAmmo()
+{
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, StartingARAmmo);
 }
 
 // 服务器端开火处理，用于同步所有客户端的开火动作

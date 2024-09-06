@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Weapon/WeaponTypes.h"
 #include "Weapon.generated.h"
 
 UENUM(BlueprintType)
@@ -201,6 +202,10 @@ private:
 	UPROPERTY()
 	class ABlasterPlayerController* BlasterOwnerController;
 
+	// 武器类型
+	UPROPERTY(EditDefaultsOnly)
+	EWeaponType WeaponType = EWeaponType::EWT_AssaultRifle;
+
 public:
 	// 设置武器状态
 	void SetWeaponState(const EWeaponState State);
@@ -221,4 +226,6 @@ public:
 
 	// 子弹为空
 	FORCEINLINE bool IsAmmoEmpty() const { return Ammo <= 0; }
+	// 获取武器类型
+	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 };

@@ -194,8 +194,18 @@ private:
 	UFUNCTION()
 	void OnRep_CarriedAmmo();
 
+	// 更新携带弹药
+	void UpdateCarriedAmmo();
+
 	// 携带弹药的哈希表
 	TMap<EWeaponType, int32> CarriedAmmoMap;
+
+	// 开始的备用弹药
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+	int32 StartingARAmmo = 30;
+
+	// 初始化携带弹药
+	void InitializeCarriedAmmo();
 
 public:
 };
