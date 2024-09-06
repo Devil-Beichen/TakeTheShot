@@ -191,7 +191,7 @@ private:
 
 	// 弹匣容量
 	UPROPERTY(EditDefaultsOnly)
-	int32 MagCapacity;
+	int32 MagCapacity = 30;
 
 	// 拥有自己的玩家角色
 	UPROPERTY()
@@ -218,4 +218,7 @@ public:
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	// 获取瞄准时放大视野的插值速度
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
+
+	// 子弹为空
+	FORCEINLINE bool IsAmmoEmpty() const { return Ammo <= 0; }
 };

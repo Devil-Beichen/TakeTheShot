@@ -126,7 +126,7 @@ void UCombatComponent::FireButtonPressed(const bool bPressed)
 // 开火
 void UCombatComponent::Fire()
 {
-	if (bCanFire)
+	if (CanFire())
 	{
 		bCanFire = false;
 		// 调用服务器端开火函数
@@ -165,6 +165,13 @@ void UCombatComponent::FireTimerFinished()
 	{
 		Fire();
 	}
+}
+
+// 可以开火
+bool UCombatComponent::CanFire()
+{
+	if (EquippedWeapon == nullptr) return false;
+	return !EquippedWeapon->IsAmmoEmpty() && bCanFire;
 }
 
 // 服务器端开火处理，用于同步所有客户端的开火动作

@@ -115,7 +115,7 @@ void AWeapon::OnRep_Owner()
 // 消耗子弹
 void AWeapon::SpendRound()
 {
-	--Ammo;
+	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
 	SetHUDAmmo();
 }
 

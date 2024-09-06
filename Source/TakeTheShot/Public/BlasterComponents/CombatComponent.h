@@ -182,5 +182,8 @@ private:
 	// 开火定时器结束
 	void FireTimerFinished();
 
+	// 可以开火
+	bool CanFire();
+
 public:
 };
