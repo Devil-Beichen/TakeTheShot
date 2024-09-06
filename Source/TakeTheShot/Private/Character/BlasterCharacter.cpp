@@ -233,6 +233,11 @@ void ABlasterCharacter::Elim()
 // 当角色被消除时，此函数将执行一系列相关操作
 void ABlasterCharacter::MulticastElim_Implementation()
 {
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->SetHUDWeaponAmmo(0);
+	}
+
 	// 标记角色状态为已消除
 	bEliminate = true;
 

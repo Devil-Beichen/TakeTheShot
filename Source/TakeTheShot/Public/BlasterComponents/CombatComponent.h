@@ -47,7 +47,10 @@ protected:
 
 	// 当装备的武器发生变化时调用此函数
 	UFUNCTION()
-	void OnRep_EquippedWeapon() const;
+	void OnRep_EquippedWeapon();
+
+	// 设置当前装备的武器的状态
+	void SetEquippedWeaponState();
 
 	/**
 	* 处理发射按钮按下事件

@@ -37,6 +37,12 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	// 重写OnRep_Owner函数
+	virtual void OnRep_Owner() override;
+
+	// 设置HUD的弹药显示
+	void SetHUDAmmo();
+
 	/**
 	 * 设置是否激活PickupWidget。
 	 * 
@@ -54,7 +60,7 @@ public:
 	 * 
 	 * @param HitTarget 目标位置的向量表示，类型为FVector
 	 */
-	virtual void Fire(const FVector& HitTarget) const;
+	virtual void Fire(const FVector& HitTarget);
 
 	// 丢弃武器
 	void Dropped();
@@ -172,9 +178,35 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Weapon Properties")
 	TSubclassOf<class ACasing> CasingClass;
 
+	// 剩余子弹数量
+	UPROPERTY(EditDefaultsOnly, ReplicatedUsing="OnRep_Ammo")
+	int32 Ammo = 30;
+
+	// 消耗子弹
+	void SpendRound();
+
+	// 当剩余子弹数量发生变化时回调函数 只会在客户端执行
+	UFUNCTION()
+	void OnRep_Ammo();
+
+	// 弹匣容量
+	UPROPERTY(EditDefaultsOnly)
+	int32 MagCapacity;
+
+	// 拥有自己的玩家角色
+	UPROPERTY()
+	class ABlasterCharacter* BlasterOwnerCharacter;
+
+	// 拥有自己的玩家控制器
+	UPROPERTY()
+	class ABlasterPlayerController* BlasterOwnerController;
+
 public:
 	// 设置武器状态
 	void SetWeaponState(const EWeaponState State);
+
+	// 武器状态设置
+	void WeaponStateSet();
 
 	// 获取球形组件
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }

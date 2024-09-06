@@ -33,4 +33,8 @@ public:
 	// 死亡次数
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* DefeatsAmount;
+
+	// 武器弹药
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* WeaponAmmoAmount;
 };

@@ -65,9 +65,28 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	// 检查角色和待装备的武器是否为空，如果为空则不执行任何操作
 	if (Character == nullptr || WeaponToEquip == nullptr) return;
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->SetOwner(nullptr);
+		EquippedWeapon->Dropped();
+	}
 
 	// 将待装备的武器设置为当前装备的武器
 	EquippedWeapon = WeaponToEquip;
+	SetEquippedWeaponState();
+}
+
+// 当装备的武器发生变化时调用此函数
+void UCombatComponent::OnRep_EquippedWeapon()
+{
+	// 检查角色和待装备的武器是否为空，如果为空则不执行任何操作
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+	SetEquippedWeaponState();
+}
+
+// 设置当前装备的武器的状态
+void UCombatComponent::SetEquippedWeaponState()
+{
 	// 设置武器状态为已装备
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	// 尝试找到角色右手的插槽，如果找到，则将武器装备到该插槽
@@ -76,36 +95,16 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
 	}
 
-	// 设置武器的所有者为角色
+	// 设置武器的所有者
 	EquippedWeapon->SetOwner(Character);
+	// 设置弹药信息
+	EquippedWeapon->SetHUDAmmo();
 
 	// 禁用角色的移动方向与旋转方向的自动对齐
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 
 	// 设置角色是否使用控制器的偏航旋转
 	Character->bUseControllerRotationYaw = true;
-}
-
-// 当装备的武器发生变化时调用此函数
-void UCombatComponent::OnRep_EquippedWeapon() const
-{
-	// 此处应添加具体的逻辑代码，以响应装备武器的变化
-	if (EquippedWeapon && Character)
-	{
-		// 设置武器状态为已装备
-		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-		// 尝试找到角色右手的插槽，如果找到，则将武器装备到该插槽
-		if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket")))
-		{
-			HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
-		}
-		
-		// 禁用角色的移动方向与旋转方向的自动对齐
-		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-
-		// 设置角色是否使用控制器的偏航旋转
-		Character->bUseControllerRotationYaw = true;
-	}
 }
 
 // 当开火按钮被按下时，处理相关逻辑

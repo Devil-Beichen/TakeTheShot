@@ -15,13 +15,13 @@ AProjectileWeapon::AProjectileWeapon()
 // AProjectileWeapon::Fire - 向指定目标发射子弹
 // 参数:
 //   HitTarget - FVector类型，子弹命中目标的位置
-void AProjectileWeapon::Fire(const FVector& HitTarget) const
+void AProjectileWeapon::Fire(const FVector& HitTarget)
 {
 	// 调用基类的Fire方法，执行一些基础的发射动作
 	Super::Fire(HitTarget);
-	
+
 	if (!HasAuthority()) return;
-	
+
 	// 获取当前武器的所有者（持有者），并尝试将其转换为APawn类型
 	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
 

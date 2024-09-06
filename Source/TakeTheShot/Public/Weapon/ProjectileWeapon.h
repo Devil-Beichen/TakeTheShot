@@ -17,7 +17,7 @@ class TAKETHESHOT_API AProjectileWeapon : public AWeapon
 public:
 	AProjectileWeapon();
 
-	virtual void Fire(const FVector& HitTarget) const override;
+	virtual void Fire(const FVector& HitTarget)  override;
 
 protected:
 	virtual void BeginPlay() override;

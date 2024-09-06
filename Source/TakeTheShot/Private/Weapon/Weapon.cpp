@@ -8,6 +8,7 @@
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Net/UnrealNetwork.h"
+#include "PlayerController/BlasterPlayerController.h"
 #include "Weapon/Casing.h"
 
 
@@ -94,19 +95,73 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
+	DOREPLIFETIME(AWeapon, Ammo);
+}
+
+void AWeapon::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+	if (GetOwner() == nullptr)
+	{
+		BlasterOwnerCharacter = nullptr;
+		BlasterOwnerController = nullptr;
+	}
+	else
+	{
+		SetHUDAmmo();
+	}
+}
+
+// 消耗子弹
+void AWeapon::SpendRound()
+{
+	--Ammo;
+	SetHUDAmmo();
+}
+
+// 当剩余子弹数量发生变化时回调函数 只会在客户端执行
+void AWeapon::OnRep_Ammo()
+{
+	SetHUDAmmo();
+}
+
+void AWeapon::SetHUDAmmo()
+{
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter)
+	{
+		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+		if (BlasterOwnerController)
+		{
+			BlasterOwnerController->SetHUDWeaponAmmo(Ammo);
+		}
+	}
 }
 
 void AWeapon::SetWeaponState(const EWeaponState State)
 {
 	WeaponState = State;
+	WeaponStateSet();
+}
 
+// 当武器状态发生变化时调用的函数
+void AWeapon::OnRep_WeaponState()
+{
+	WeaponStateSet();
+}
+
+void AWeapon::WeaponStateSet()
+{
 	switch (WeaponState)
 	{
 	case EWeaponState::EWS_Equipped:
 		// 隐藏武器的拾取提示，因为已经装备完毕
 		ShowPickupWidget(false);
-	// 将武器的碰撞检查关闭（只在服务器调用）
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		if (HasAuthority())
+		{
+			// 将武器的碰撞检查关闭（只在服务器调用）
+			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
 		WeaponMesh->SetSimulatePhysics(false);
 		WeaponMesh->SetEnableGravity(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -124,29 +179,6 @@ void AWeapon::SetWeaponState(const EWeaponState State)
 	}
 }
 
-// 当武器状态发生变化时调用的函数
-void AWeapon::OnRep_WeaponState()
-{
-	// 根据武器状态执行不同的操作
-	switch (WeaponState)
-	{
-	case EWeaponState::EWS_Equipped: // 当武器状态为装备中
-		// 隐藏拾取小部件，因为武器已经被装备
-		ShowPickupWidget(false);
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-		break;
-	case EWeaponState::EWS_Dropped:
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
-		break;
-	}
-}
-
-
 void AWeapon::ShowPickupWidget(const bool bShowWidget) const
 {
 	// 根据传入的参数bShowWidget来设置物品获取提示的可见性和武器模型的自定义深度渲染状态
@@ -160,7 +192,7 @@ void AWeapon::ShowPickupWidget(const bool bShowWidget) const
 	}
 }
 
-void AWeapon::Fire(const FVector& HitTarget) const
+void AWeapon::Fire(const FVector& HitTarget)
 {
 	if (FireAnimation)
 	{
@@ -182,14 +214,18 @@ void AWeapon::Fire(const FVector& HitTarget) const
 			}
 		}
 	}
+	SpendRound();
 }
 
 // 丢弃武器
 void AWeapon::Dropped()
 {
+	// 将武器从父组件中分离（即从装备者身上分离）
 	WeaponMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 	SetWeaponState(EWeaponState::EWS_Dropped);
 	SetOwner(nullptr);
+	BlasterOwnerCharacter = nullptr;
+	BlasterOwnerController = nullptr;
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
