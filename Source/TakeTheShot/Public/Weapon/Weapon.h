@@ -178,7 +178,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Weapon Properties")
 	TSubclassOf<class ACasing> CasingClass;
 
-	// 剩余子弹数量
+	// 当前子弹
 	UPROPERTY(EditDefaultsOnly, ReplicatedUsing="OnRep_Ammo")
 	int32 Ammo = 30;
 
@@ -189,7 +189,7 @@ private:
 	UFUNCTION()
 	void OnRep_Ammo();
 
-	// 弹匣容量
+	// 弹匣容量(备弹量)
 	UPROPERTY(EditDefaultsOnly)
 	int32 MagCapacity = 30;
 

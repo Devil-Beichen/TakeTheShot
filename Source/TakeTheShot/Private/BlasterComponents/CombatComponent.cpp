@@ -25,6 +25,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	// 指定Aiming属性需要在服务器和客户端之间同步复制
 	DOREPLIFETIME(UCombatComponent, bAiming);
+	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo,COND_OwnerOnly);
 }
 
 void UCombatComponent::BeginPlay()
@@ -172,6 +173,10 @@ bool UCombatComponent::CanFire()
 {
 	if (EquippedWeapon == nullptr) return false;
 	return !EquippedWeapon->IsAmmoEmpty() && bCanFire;
+}
+
+void UCombatComponent::OnRep_CarriedAmmo()
+{
 }
 
 // 服务器端开火处理，用于同步所有客户端的开火动作

@@ -36,11 +36,17 @@ public:
 	 */
 	void SetHUDDefeats(const int32 Defeats);
 
-	/**	设置弹药
+	/**	设置武器里的弹药（弹匣）
 	 * 
 	 * @param Ammo 弹药
 	 */
 	void SetHUDWeaponAmmo(const int32 Ammo);
+
+	/**	设置携带的带药(备弹)
+	 * 
+	 * @param Ammo 弹药
+	 */
+	void SetHUDCarriedAmmo(const int32 Ammo);
 
 	// 重写拥有pawn
 	virtual void OnPossess(APawn* InPawn) override;

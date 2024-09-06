@@ -34,7 +34,11 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* DefeatsAmount;
 
-	// 武器弹药
+	// 弹匣容量
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* WeaponAmmoAmount;
+
+	// 携带弹药量(备弹量)
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* CarriedAmmoAmount;
 };

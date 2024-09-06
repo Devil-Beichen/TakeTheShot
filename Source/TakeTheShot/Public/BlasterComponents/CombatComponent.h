@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "HUD/BlasterHUD.h"
+#include "Weapon/WeaponTypes.h"
 #include "CombatComponent.generated.h"
 
 // 追踪长度
@@ -184,6 +185,17 @@ private:
 
 	// 可以开火
 	bool CanFire();
+
+	// 当前装备武器携带的弹药
+	UPROPERTY(ReplicatedUsing=OnRep_CarriedAmmo)
+	int32 CarriedAmmo = 0;
+
+	// 回调携带弹药发生改变(只会发生在客户端)
+	UFUNCTION()
+	void OnRep_CarriedAmmo();
+
+	// 携带弹药的哈希表
+	TMap<EWeaponType, int32> CarriedAmmoMap;
 
 public:
 };
