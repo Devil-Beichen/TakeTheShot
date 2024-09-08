@@ -50,6 +50,10 @@ public:
 	 */
 	void PlayFireMontage(const bool bAiming) const;
 
+	// 多播重装填蒙太奇
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayReloadMontage();
+
 	// 播放被命中重播蒙太奇
 	void PlayHitReactMontage();
 
@@ -147,6 +151,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* FireAction = nullptr;
 
+	// 定义一个UInputAction类型的动作，用于处理重装填操作
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Reload = nullptr;
+
 	// 增强输入子系统
 	UPROPERTY()
 	UEnhancedInputLocalPlayerSubsystem* EnhancedSubsystem = nullptr;
@@ -229,6 +237,9 @@ protected:
 	UFUNCTION()
 	void Fire_Completed();
 
+	// 重装填按钮按下动作
+	UFUNCTION()
+	void ReloadButtonPressed();
 
 #pragma endregion
 
@@ -337,6 +348,10 @@ private:
 	// 角色的射击 Montage 动画
 	UPROPERTY(EditDefaultsOnly, Category=Combat)
 	UAnimMontage* FireWeaponMontage = nullptr;
+
+	// 角色重装填 Montage 动画
+	UPROPERTY(EditDefaultsOnly, Category=Combat)
+	UAnimMontage* ReloadMontage = nullptr;
 
 	// 角色受击 Montage 动画
 	UPROPERTY(EditDefaultsOnly, Category=Combat)

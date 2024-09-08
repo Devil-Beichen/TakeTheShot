@@ -32,6 +32,9 @@ public:
 	UFUNCTION()
 	void EquipWeapon(AWeapon* WeaponToEquip);
 
+	// 重新装填
+	void Reload();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -98,6 +101,10 @@ protected:
 	 * @param DeltaTime 帧之间的时间差，用于计算十字准星的移动速度
 	*/
 	void SetHUDCrosshairs(const float DeltaTime);
+
+	// 服务器重新装填
+	UFUNCTION(Server, Reliable)
+	void ServerReload();
 
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例

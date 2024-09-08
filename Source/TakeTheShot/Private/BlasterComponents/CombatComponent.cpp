@@ -119,6 +119,22 @@ void UCombatComponent::SetEquippedWeaponState()
 	Character->bUseControllerRotationYaw = true;
 }
 
+// 重新装填逻辑
+void UCombatComponent::Reload()
+{
+	if (CarriedAmmo > 0)
+	{
+		ServerReload();
+	}
+}
+
+void UCombatComponent::ServerReload_Implementation()
+{
+	if (Character == nullptr)return;
+
+	Character->PlayReloadMontage();
+}
+
 // 当开火按钮被按下时，处理相关逻辑
 void UCombatComponent::FireButtonPressed(const bool bPressed)
 {
@@ -202,6 +218,7 @@ void UCombatComponent::UpdateCarriedAmmo()
 	}
 }
 
+// 初始化携带的弹药数量
 void UCombatComponent::InitializeCarriedAmmo()
 {
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, StartingARAmmo);

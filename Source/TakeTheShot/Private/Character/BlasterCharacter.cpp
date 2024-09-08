@@ -167,6 +167,9 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		// 绑定射击动作的触发事件
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ABlasterCharacter::Fire_Started);
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &ABlasterCharacter::Fire_Completed);
+
+		// 绑定重装动作的开始事件
+		EnhancedInputComponent->BindAction(Reload, ETriggerEvent::Started, this, &ABlasterCharacter::ReloadButtonPressed);
 	}
 }
 
@@ -305,7 +308,6 @@ void ABlasterCharacter::SpawnElimBot()
 	}
 }
 
-
 void ABlasterCharacter::PlayFireMontage(const bool bAiming) const
 {
 	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
@@ -316,6 +318,29 @@ void ABlasterCharacter::PlayFireMontage(const bool bAiming) const
 		{
 			AnimInstance->Montage_Play(FireWeaponMontage);
 			const FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+			AnimInstance->Montage_JumpToSection(SectionName);
+		}
+	}
+}
+
+void ABlasterCharacter::PlayReloadMontage_Implementation()
+{
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
+
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		if (ReloadMontage)
+		{
+			AnimInstance->Montage_Play(ReloadMontage);
+			FName SectionName;
+			switch (Combat->EquippedWeapon->GetWeaponType())
+			{
+			case EWeaponType::EWT_AssaultRifle:
+				SectionName = FName("Rifle");
+				break;
+			default:
+				break;
+			}
 			AnimInstance->Montage_JumpToSection(SectionName);
 		}
 	}
@@ -568,6 +593,14 @@ void ABlasterCharacter::Fire_Completed()
 	if (Combat)
 	{
 		Combat->FireButtonPressed(false);
+	}
+}
+
+void ABlasterCharacter::ReloadButtonPressed()
+{
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->Reload();
 	}
 }
 
