@@ -504,14 +504,7 @@ void ABlasterCharacter::Crouch_Started()
 如果有控制权，则直接通知所有客户端开始减速*/
 void ABlasterCharacter::Slow_Started()
 {
-	if (!HasAuthority())
-	{
-		ServerSlowStarted();
-	}
-	else
-	{
-		MulticastSlowStarted();
-	}
+	ServerSlowStarted();
 }
 
 // 该函数被服务器调用，以确保所有客户端都能正确地接收到减速状态并作出相应调整。

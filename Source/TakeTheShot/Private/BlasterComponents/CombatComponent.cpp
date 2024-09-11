@@ -435,16 +435,17 @@ void UCombatComponent::InterpFOV(float DeltaTime)
 // @param bIsAiming：布尔值，表示是否处于瞄准状态
 void UCombatComponent::SetAiming(const bool bIsAiming)
 {
-	// 更新当前是否处于瞄准状态
 	bAiming = bIsAiming;
-
-	if (Character->HasAuthority())
-	{
-		// 设置瞄准速度，根据当前的瞄准状态调整
-		MulticastSetAimingSpeed();
-	}
 	// 向服务器请求设置瞄准状态，确保服务器和客户端状态同步
-	ServerSetAiming(bIsAiming);
+	ServerSetAiming(bAiming);
+}
+
+// 服务器端设置瞄准状态的函数，用于同步客户端和服务器端的状态
+// @param bIsAiming：布尔值，表示是否处于瞄准状态
+void UCombatComponent::ServerSetAiming_Implementation(const bool bIsAiming)
+{
+	bAiming = bIsAiming;
+	MulticastSetAimingSpeed();
 }
 
 void UCombatComponent::MulticastSetAimingSpeed_Implementation() const
@@ -464,12 +465,4 @@ void UCombatComponent::MulticastSetAimingSpeed_Implementation() const
 
 		Character->bIsSlowWalk = false;
 	}
-}
-
-// 服务器端设置瞄准状态的函数，用于同步客户端和服务器端的状态
-// @param bIsAiming：布尔值，表示是否处于瞄准状态
-void UCombatComponent::ServerSetAiming_Implementation(const bool bIsAiming)
-{
-	bAiming = bIsAiming;
-	MulticastSetAimingSpeed();
 }
