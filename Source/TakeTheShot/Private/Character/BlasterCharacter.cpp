@@ -542,15 +542,7 @@ void ABlasterCharacter::MulticastSlowStarted_Implementation()
 void ABlasterCharacter::Equip_Started()
 {
 	if (!Combat) return;
-
-	if (HasAuthority())
-	{
-		Combat->EquipWeapon(OverlappingWeapon);
-	}
-	else
-	{
-		ServerEquipButtonPressed();
-	}
+	ServerEquipButtonPressed();
 }
 
 void ABlasterCharacter::ServerEquipButtonPressed_Implementation()

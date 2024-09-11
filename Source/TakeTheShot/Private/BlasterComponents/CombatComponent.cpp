@@ -100,8 +100,11 @@ void UCombatComponent::SetEquippedWeaponState()
 		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
 	}
 
-	// 设置武器的所有者
-	EquippedWeapon->SetOwner(Character);
+	// 设置武器的所有者(只会在服务端设置)
+	if (Character->HasAuthority())
+	{
+		EquippedWeapon->SetOwner(Character);
+	}
 	// 设置弹药信息
 	EquippedWeapon->SetHUDAmmo();
 
