@@ -8,8 +8,10 @@
 #include "Components/TimelineComponent.h"
 #include "GameFramework/Character.h"
 #include "Interface/InteractWithCrosshairsInterface.h"
-#include "Types/TurningInPlace.h"
+#include "BlasterTypes/TurningInPlace.h"
+#include "BlasterTypes/CombatState.h"
 #include "BlasterCharacter.generated.h"
+
 
 class UInputMappingContext;
 class UEnhancedInputLocalPlayerSubsystem;
@@ -53,6 +55,10 @@ public:
 	// 多播重装填蒙太奇
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayReloadMontage();
+
+	// 完成换弹
+	UFUNCTION(BlueprintCallable)
+	void FinishReload();
 
 	// 播放被命中重播蒙太奇
 	void PlayHitReactMontage();
@@ -320,7 +326,7 @@ private:
 	/**	使用VisibleAnywhere宏声明一个全局可见的属性
 	*	这里声明了一个指向CombatComponent的指针，用于管理游戏中的战斗相关逻辑
 	*/
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
 	class UCombatComponent* Combat = nullptr;
 
 	/*  服务器端可靠地处理装备按钮按下事件
@@ -530,4 +536,10 @@ public:
 
 	// 获取角色是否被淘汰
 	FORCEINLINE bool IsEliminate() const { return bEliminate; }
+	// 获取角色的生命值
+	FORCEINLINE float GetHealth() const { return Health; }
+	// 获取角色的最大生命值
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
+	// 获取角色的武器状态
+	FORCEINLINE ECombatState GetCombatState() const { return Combat == nullptr ? ECombatState::ECS_MAX : Combat->CombatState; }
 };

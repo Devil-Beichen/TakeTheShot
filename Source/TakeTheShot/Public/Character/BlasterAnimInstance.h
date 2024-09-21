@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "Types/TurningInPlace.h"
+#include "BlasterTypes/TurningInPlace.h"
 #include "BlasterAnimInstance.generated.h"
 
 /**	爆破角色的基类
@@ -31,7 +31,10 @@ public:
 	 * @param DeltaSeconds 动画更新的时间间隔，以秒为单位。此参数用于计算动画的增量变化，以便实现平滑的动画效果。
 	 * @override 说明此函数是对其基类函数的重写。
 	 */
-	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+	/*virtual void NativeUpdateAnimation(float DeltaSeconds) override;*/
+
+	// 线程安全更新动画
+	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 
 private:
 	// 角色的引用
@@ -110,4 +113,8 @@ private:
 	// 存储角色是否被淘汰的信息，表示角色是否被淘汰。
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	bool bEliminate;
+
+	// 存储角色是否需要使用FABRIK算法的信息，表示角色是否需要使用FABRIK算法。
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	bool bUseFABRIK;
 };

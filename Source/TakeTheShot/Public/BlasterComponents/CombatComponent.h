@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "HUD/BlasterHUD.h"
 #include "Weapon/WeaponTypes.h"
+#include "BlasterTypes/CombatState.h"
 #include "CombatComponent.generated.h"
 
 // 追踪长度
@@ -105,6 +106,10 @@ protected:
 	// 服务器重新装填
 	UFUNCTION(Server, Reliable)
 	void ServerReload();
+
+	// 处理弹药加载
+	UFUNCTION()
+	void HandleReload();
 
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
@@ -213,6 +218,14 @@ private:
 
 	// 初始化携带弹药
 	void InitializeCarriedAmmo();
+
+	// 战斗状态
+	UPROPERTY(ReplicatedUsing="OnRep_CombatState")
+	ECombatState CombatState = ECombatState::ECS_Unoccupied;
+
+	// 当状态发生改变的时候触发回调函数（只会在客户端触发）
+	UFUNCTION()
+	void OnRep_CombatState();
 
 public:
 };

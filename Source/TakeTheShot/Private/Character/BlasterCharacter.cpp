@@ -346,6 +346,15 @@ void ABlasterCharacter::PlayReloadMontage_Implementation()
 	}
 }
 
+// 换弹结束
+void ABlasterCharacter::FinishReload()
+{
+	if (HasAuthority() && Combat)
+	{
+		Combat->CombatState = ECombatState::ECS_Unoccupied;
+	}
+}
+
 void ABlasterCharacter::PlayHitReactMontage()
 {
 	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
