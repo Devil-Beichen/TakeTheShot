@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "PlayerController/BlasterPlayerController.h"
+#include "Sound/SoundCue.h"
 #include "Weapon/Weapon.h"
 
 
@@ -116,6 +117,16 @@ void UCombatComponent::SetEquippedWeaponState()
 
 	UpdateCarriedAmmo();
 
+	// 播放装备武器的音效
+	if (EquippedWeapon->EquipSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			EquippedWeapon->EquipSound,
+			Character->GetActorLocation()
+		);
+	}
+
 	// 禁用角色的移动方向与旋转方向的自动对齐
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 
@@ -126,7 +137,7 @@ void UCombatComponent::SetEquippedWeaponState()
 // 重新装填逻辑
 void UCombatComponent::Reload()
 {
-	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading)
+	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading && !EquippedWeapon->IsFull())
 	{
 		ServerReload();
 	}

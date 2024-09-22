@@ -117,4 +117,12 @@ private:
 	// 存储角色是否需要使用FABRIK算法的信息，表示角色是否需要使用FABRIK算法。
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	bool bUseFABRIK;
+
+	// 存储角色是否需要使用瞄准偏移信息的信息，表示角色是否需要使用瞄准偏移信息。
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	bool bUseAimOffsets;
+
+	// 存储角色是否需要使用右手偏移信息的信息，表示角色是否需要使用右手偏移信息。
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	bool bTransformRightHand;
 };

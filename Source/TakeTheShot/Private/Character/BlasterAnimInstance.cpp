@@ -122,7 +122,7 @@ void UBlasterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeThreadSafeUpdateAnimation(DeltaSeconds);
 
-		// 检查BlasterCharacter是否已初始化，如果没有，则尝试将其设置为当前拥有的炮手角色
+	// 检查BlasterCharacter是否已初始化，如果没有，则尝试将其设置为当前拥有的炮手角色
 	if (BlasterCharacter == nullptr)
 	{
 		// 尝试将当前的炮手角色赋值给BlasterCharacter，如果不存在则不进行赋值
@@ -218,4 +218,6 @@ void UBlasterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 	}
 
 	bUseFABRIK = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+	bUseAimOffsets = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+	bTransformRightHand = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
 }

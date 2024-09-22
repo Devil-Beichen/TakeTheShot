@@ -113,6 +113,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category=Combat, meta=(EditCondition = "bAutomatic == true", EditConditionHides))
 	float FireDelay = 0.15f;
 
+	// 拾取武器的音效
+	UPROPERTY(EditDefaultsOnly)
+	class USoundCue* EquipSound;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -235,4 +239,6 @@ public:
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	// 获取弹匣容量
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
+	// 弹匣已满
+	FORCEINLINE bool IsFull() const { return Ammo == MagCapacity; }
 };
