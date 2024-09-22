@@ -146,6 +146,12 @@ void UCombatComponent::OnRep_CombatState()
 	case ECombatState::ECS_Reloading:
 		HandleReload();
 		break;
+	case ECombatState::ECS_Unoccupied:
+		if (bFireButtonPressed)
+		{
+			Fire();
+		}
+		break;
 	}
 }
 
@@ -219,7 +225,7 @@ void UCombatComponent::FireTimerFinished()
 bool UCombatComponent::CanFire()
 {
 	if (EquippedWeapon == nullptr) return false;
-	return !EquippedWeapon->IsAmmoEmpty() && bCanFire;
+	return !EquippedWeapon->IsAmmoEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 }
 
 // 携带弹药发生改变的时候触发
@@ -258,7 +264,7 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 	if (EquippedWeapon == nullptr) return;
 
 	// 如果角色存在
-	if (Character)
+	if (Character && CombatState == ECombatState::ECS_Unoccupied)
 	{
 		// 播放角色开火动画，参数bAiming表示是否瞄准状态
 		Character->PlayFireMontage(bAiming);
