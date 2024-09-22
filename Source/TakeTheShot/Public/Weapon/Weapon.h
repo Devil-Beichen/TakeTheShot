@@ -66,6 +66,9 @@ public:
 	// 丢弃武器
 	void Dropped();
 
+	// 添加子弹
+	void AddAmmo(int AmmoToAdd);
+
 	/**
  *	武器准星的纹理资源
  */
@@ -228,4 +231,8 @@ public:
 	FORCEINLINE bool IsAmmoEmpty() const { return Ammo <= 0; }
 	// 获取武器类型
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+	// 获取剩余子弹
+	FORCEINLINE int32 GetAmmo() const { return Ammo; }
+	// 获取弹匣容量
+	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 };

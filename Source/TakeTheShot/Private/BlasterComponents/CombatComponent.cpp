@@ -134,8 +134,12 @@ void UCombatComponent::Reload()
 
 void UCombatComponent::ServerReload_Implementation()
 {
-	if (Character == nullptr)return;
+	// 检查角色或装备的武器是否为空，若为空则不执行任何操作
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+
+	// 更改战斗状态为“正在重新装填”
 	CombatState = ECombatState::ECS_Reloading;
+	// 处理重新装填动作
 	HandleReload();
 }
 
@@ -159,6 +163,61 @@ void UCombatComponent::OnRep_CombatState()
 void UCombatComponent::HandleReload()
 {
 	Character->PlayReloadMontage();
+}
+
+void UCombatComponent::FinishReload()
+{
+	if (Character == nullptr) return;
+	if (Character->HasAuthority())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+		UpdateAmmoValues();
+	}
+	if (bFireButtonPressed)
+	{
+		Fire();
+	}
+}
+
+int32 UCombatComponent::AmountToReload()
+{
+	if (EquippedWeapon == nullptr) return 0;
+	// 需要填充的子弹
+	const int32 RoomInMag = EquippedWeapon->GetMagCapacity() - EquippedWeapon->GetAmmo();
+
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		/**
+		 * 判断备用弹药和弹夹容量，选择一个最小的
+		 */
+		// 获取当前武器携带的弹药数量
+		const int32 AmountCarried = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+		const int Least = FMath::Min(RoomInMag, AmountCarried);
+		return FMath::Clamp(RoomInMag, 0, Least);
+	}
+
+	return 0;
+}
+
+void UCombatComponent::UpdateAmmoValues()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+
+	// 确定需要重新装填的弹药数量
+	const int32 ReloadAmount = AmountToReload();
+
+	// 检查携带的弹药中是否包含当前装备武器的类型
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		// 减少携带弹药中对应类型的数量
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
+		// 更新携带的该类型弹药数量
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+
+	// 将装备的武器的弹药数量增加（负数表示减少，这里实际上是增加武器内的弹药）
+	EquippedWeapon->AddAmmo(-ReloadAmount);
+	UpdateCarriedAmmo();
 }
 
 // 当开火按钮被按下时，处理相关逻辑

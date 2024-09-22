@@ -351,14 +351,7 @@ void ABlasterCharacter::FinishReload()
 {
 	if (Combat == nullptr) return;
 
-	if (HasAuthority())
-	{
-		Combat->CombatState = ECombatState::ECS_Unoccupied;
-	}
-	if (Combat->bFireButtonPressed)
-	{
-		Combat->Fire();
-	}
+	Combat->FinishReload();
 }
 
 void ABlasterCharacter::PlayHitReactMontage()

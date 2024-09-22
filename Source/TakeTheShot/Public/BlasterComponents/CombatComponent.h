@@ -111,6 +111,12 @@ protected:
 	UFUNCTION()
 	void HandleReload();
 
+	// 完成装填
+	void FinishReload();
+
+	// 获取当前角色的弹药数量
+	int32 AmountToReload();
+
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
 	UPROPERTY()
@@ -226,6 +232,9 @@ private:
 	// 当状态发生改变的时候触发回调函数（只会在客户端触发）
 	UFUNCTION()
 	void OnRep_CombatState();
+
+	// 完成重新换弹
+	void UpdateAmmoValues();
 
 public:
 };
