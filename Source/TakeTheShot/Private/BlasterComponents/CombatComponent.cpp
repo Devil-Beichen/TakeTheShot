@@ -289,6 +289,12 @@ void UCombatComponent::FireTimerFinished()
 	{
 		Fire();
 	}
+
+	// 检查弹药是否为空
+	if (EquippedWeapon->IsAmmoEmpty())
+	{
+		Reload();
+	}
 }
 
 // 可以开火
