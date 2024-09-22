@@ -48,13 +48,27 @@ public:
 	 */
 	void SetHUDCarriedAmmo(const int32 Ammo);
 
+	// 设置HUD上的匹配倒计时
+	void SetHUDMatchCountdown(float CountdownTime);
+
 	// 重写拥有pawn
 	virtual void OnPossess(APawn* InPawn) override;
+
+	virtual void Tick(float DeltaSeconds) override;
 
 protected:
 	virtual void BeginPlay() override;
 
+	// 设置HUD时间
+	void SetHUDTime();
+
 private:
 	UPROPERTY()
 	class ABlasterHUD* BlasterHUD = nullptr;
+
+	// 匹配倒计时
+	float MatchTime = 120.f;
+
+	// 倒计时整数
+	uint32 CountdownInt = 0;
 };

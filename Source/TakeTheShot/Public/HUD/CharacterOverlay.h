@@ -41,4 +41,8 @@ public:
 	// 携带弹药量(备弹量)
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* CarriedAmmoAmount;
+
+	// 倒计时
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* MatchCountdownText;
 };

@@ -15,6 +15,35 @@ void ABlasterPlayerController::BeginPlay()
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
 }
 
+void ABlasterPlayerController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	SetHUDTime();
+}
+
+// 玩家被控制的回调函数
+void ABlasterPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(InPawn))
+	{
+		BlasterCharacter->Initialize();
+	}
+}
+
+void ABlasterPlayerController::SetHUDTime()
+{
+	const uint32 SecondsLeft = FMath::CeilToInt(MatchTime - GetWorld()->GetTimeSeconds());
+	if (CountdownInt != SecondsLeft)
+	{
+		SetHUDMatchCountdown(MatchTime - GetWorld()->GetTimeSeconds());
+	}
+
+	CountdownInt = SecondsLeft;
+}
+
 /**
  * 在游戏界面中设置HUD的健康值。
  * 
@@ -113,13 +142,22 @@ void ABlasterPlayerController::SetHUDCarriedAmmo(const int32 Ammo)
 	}
 }
 
-// 玩家被控制的回调函数
-void ABlasterPlayerController::OnPossess(APawn* InPawn)
+void ABlasterPlayerController::SetHUDMatchCountdown(float CountdownTime)
 {
-	Super::OnPossess(InPawn);
+	// 检查BlasterHUD是否为空，如果为空则重新获取一个
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 
-	if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(InPawn))
+	// 检查BlasterHUD及其相关元素是否已正确初始化
+	const bool bHUDValid = BlasterHUD &&
+		BlasterHUD->CharacterOverlay &&
+		BlasterHUD->CharacterOverlay->MatchCountdownText;
+	if (bHUDValid)
 	{
-		BlasterCharacter->Initialize();
+		// 分钟
+		const int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
+		// 秒
+		const int32 Seconds = CountdownTime - Minutes * 60;
+		const FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+		BlasterHUD->CharacterOverlay->MatchCountdownText->SetText(FText::FromString(CountdownText));
 	}
 }
