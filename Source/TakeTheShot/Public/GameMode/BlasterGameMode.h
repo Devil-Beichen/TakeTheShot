@@ -18,6 +18,10 @@ class TAKETHESHOT_API ABlasterGameMode : public AGameMode
 	GENERATED_BODY()
 
 public:
+	ABlasterGameMode();
+
+	virtual void Tick(float DeltaSeconds) override;
+
 	/**
 	 * 当玩家被消灭时调用此函数，用于处理消灭相关的逻辑。
 	 * 
@@ -38,4 +42,18 @@ public:
 	 * @param EliminatedController 被消除角色的控制器对象指针。
 	 */
 	virtual void RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController);
+
+	// 热身时间
+	UPROPERTY(EditDefaultsOnly)
+	float WarmupTime = 10.f;
+
+	// 关卡开始的时间
+	float LevelStartingTime = 0.f;
+
+protected:
+	virtual void BeginPlay() override;
+
+private:
+	// 倒计时时间
+	float CountDownTime = 0.f;
 };

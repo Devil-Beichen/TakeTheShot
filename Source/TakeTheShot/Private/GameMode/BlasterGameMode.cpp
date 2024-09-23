@@ -9,6 +9,38 @@
 #include "PlayerController/BlasterPlayerController.h"
 #include "PlayerState/BlasterPlayerState.h"
 
+ABlasterGameMode::ABlasterGameMode()
+{
+	// 设置默认延迟启动（有预热时间）
+	bDelayedStart = true;
+}
+
+
+void ABlasterGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	LevelStartingTime = GetWorld()->GetTimeSeconds();
+}
+
+void ABlasterGameMode::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	// 当比赛状态为等待开始时
+	if (MatchState == MatchState::WaitingToStart)
+	{
+	    // 计算倒计时时间，直到比赛开始
+	    CountDownTime = WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+	    // 如果倒计时结束
+	    if (CountDownTime <= 0.f)
+	    {
+	        // 开始比赛
+	        StartMatch();
+	    }
+	}
+}
+
 void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController)
 {
 	// 根据AttackerController是否存在，转换并获取相应的ABlasterPlayerState对象
