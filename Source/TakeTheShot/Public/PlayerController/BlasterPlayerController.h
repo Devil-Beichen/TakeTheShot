@@ -56,11 +56,53 @@ public:
 
 	virtual void Tick(float DeltaSeconds) override;
 
+	// 获取服务器的时间
+	virtual float GetServerTime() const;
+
+	// 在PlayerController的viewport/net连接与此播放器控制器关联后调用
+	virtual void ReceivedPlayer() override; // 尽快与服务器时间同步
+
 protected:
 	virtual void BeginPlay() override;
 
 	// 设置HUD时间
 	void SetHUDTime();
+
+	/**
+	 * 服务器与客户端之间的时间同步
+	 */
+
+	/** 请求服务器的时间(服务端执行)
+	 * @param TimeOfClientRequest 客户端请求的时间
+	 */
+	UFUNCTION(Server, Reliable)
+	void ServerRequestServetTime(const float TimeOfClientRequest);
+
+	/**
+	 * 向客户端报告当前服务器的时间
+	 * 
+	 * 该函数以可靠的方式（即数据包不会丢失）从客户端请求服务器时间这在同步时间或调整客户端操作时序时非常有用
+	 * 
+	 * @param TimeOfClientRequest 客户端发出请求的时间这个参数记录了客户端请求服务器时间的时间点
+	 * @param TimeServerReceivedClientRequest 服务器接收到客户端请求的时间这个参数记录了服务器端接收到客户端时间请求的时间点
+	 * 
+	 * 注意：尽管这里提供了两个时间参数，但这个函数的实际作用可能是为了测量网络延迟或进行时间同步操作
+	 */
+	UFUNCTION(Client, Reliable)
+	void ClientRequestServetTime(const float TimeOfClientRequest, const float TimeServerReceivedClientRequest);
+
+	// 客户端与服务器之间的时间差
+	float ClientServerDelta = 0.f;
+
+	// 时间同步的频率
+	UPROPERTY(EditDefaultsOnly, Category = Time)
+	float TimeSyncFrequency = 5.f;
+
+	// 时间同步的计时器
+	float TimeSyncRunningTime = 0.f;
+
+	// 检查时间同步
+	void CheckTimeSync(float DeltaSeconds);
 
 private:
 	UPROPERTY()
