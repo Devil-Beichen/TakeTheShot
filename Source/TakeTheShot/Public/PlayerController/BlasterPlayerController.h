@@ -62,11 +62,17 @@ public:
 	// 在PlayerController的viewport/net连接与此播放器控制器关联后调用
 	virtual void ReceivedPlayer() override; // 尽快与服务器时间同步
 
+	// 匹配状态改变
+	void OnMatchStateSet(FName State);
+
 protected:
 	virtual void BeginPlay() override;
 
 	// 设置HUD时间
 	void SetHUDTime();
+
+	// 初始化
+	void PollInit();
 
 	/**
 	 * 服务器与客户端之间的时间同步
@@ -113,4 +119,28 @@ private:
 
 	// 倒计时整数
 	uint32 CountdownInt = 0;
+
+	// 匹配状态
+	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
+	FName MatchState;
+
+	// 匹配状态改变(只会在客户端回调)
+	UFUNCTION()
+	void OnRep_MatchState();
+
+	// 设置UI
+	void SetOverlay();
+
+	// 玩家UI
+	UPROPERTY()
+	class UCharacterOverlay* CharacterOverlay;
+
+	// UI是否已经初始化
+	bool bInitializeCharacterOverlay = false;
+
+	float HUDHealth;
+	float HUDMaxHealth;
+
+	float HUDScore;
+	int32 HUDDefeats;
 };

@@ -23,6 +23,19 @@ void ABlasterGameMode::BeginPlay()
 	LevelStartingTime = GetWorld()->GetTimeSeconds();
 }
 
+void ABlasterGameMode::OnMatchStateSet()
+{
+	Super::OnMatchStateSet();
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(*It))
+		{
+			BlasterPlayer->OnMatchStateSet(MatchState);
+		}
+	}
+}
+
 void ABlasterGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -30,14 +43,14 @@ void ABlasterGameMode::Tick(float DeltaSeconds)
 	// 当比赛状态为等待开始时
 	if (MatchState == MatchState::WaitingToStart)
 	{
-	    // 计算倒计时时间，直到比赛开始
-	    CountDownTime = WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
-	    // 如果倒计时结束
-	    if (CountDownTime <= 0.f)
-	    {
-	        // 开始比赛
-	        StartMatch();
-	    }
+		// 计算倒计时时间，直到比赛开始
+		CountDownTime = WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		// 如果倒计时结束
+		if (CountDownTime <= 0.f)
+		{
+			// 开始比赛
+			StartMatch();
+		}
 	}
 }
 

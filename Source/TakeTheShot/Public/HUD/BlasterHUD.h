@@ -70,16 +70,16 @@ public:
 	// 角色的HUD类
 	UPROPERTY(EditDefaultsOnly, Category= "Player Stats")
 	TSubclassOf<UUserWidget> CharacterOverlayClass;
-	
-	// 角色的HUD
-	UPROPERTY()
-	UCharacterOverlay* CharacterOverlay;
-
-protected:
-	virtual void BeginPlay() override;
 
 	// 添加角色的HUD
 	void AddCharacterOverlay();
+
+	// 角色的HUD
+	UPROPERTY()
+	class UCharacterOverlay* CharacterOverlay;
+
+protected:
+	virtual void BeginPlay() override;
 
 private:
 	// HUD的资源包

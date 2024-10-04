@@ -53,6 +53,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+    // 匹配状态设置
+	virtual void OnMatchStateSet() override;
+
 private:
 	// 倒计时时间
 	float CountDownTime = 0.f;

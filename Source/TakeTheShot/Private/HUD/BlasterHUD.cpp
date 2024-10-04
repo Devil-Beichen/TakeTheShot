@@ -80,7 +80,6 @@ void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture, const FVector2D& ViewportC
 void ABlasterHUD::BeginPlay()
 {
 	Super::BeginPlay();
-	AddCharacterOverlay();
 }
 
 /**
@@ -101,15 +100,14 @@ void ABlasterHUD::BeginPlay()
  */
 void ABlasterHUD::AddCharacterOverlay()
 {
-    // 获取拥有此HUD的玩家控制器
-    APlayerController* PlayerController = GetOwningPlayerController();
-    
-    // 检查CharacterOverlayClass是否被设置，以及是否拥有有效的玩家控制器
-    if (CharacterOverlayClass && PlayerController)
-    {
-        // 创建UCharacterOverlay对象，并将其添加到玩家控制器的视口中
-        CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
-        CharacterOverlay->AddToViewport();
-    }
-}
+	// 获取拥有此HUD的玩家控制器
+	APlayerController* PlayerController = GetOwningPlayerController();
 
+	// 检查CharacterOverlayClass是否被设置，以及是否拥有有效的玩家控制器
+	if (CharacterOverlayClass && PlayerController)
+	{
+		// 创建UCharacterOverlay对象，并将其添加到玩家控制器的视口中
+		CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
+		CharacterOverlay->AddToViewport();
+	}
+}
