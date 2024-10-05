@@ -71,12 +71,23 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category= "Player Stats")
 	TSubclassOf<UUserWidget> CharacterOverlayClass;
 
-	// 添加角色的HUD
-	void AddCharacterOverlay();
-
 	// 角色的HUD
 	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay;
+
+	// 添加角色的HUD
+	void AddCharacterOverlay();
+
+	// 显示通知类
+	UPROPERTY(EditDefaultsOnly, Category= "Announcement")
+	TSubclassOf<UUserWidget> AnnouncementClass;
+
+	// 显示通知
+	UPROPERTY()
+	class UAnnouncement* Announcement;
+
+	// 添加通知
+	void AddAnnouncement();
 
 protected:
 	virtual void BeginPlay() override;

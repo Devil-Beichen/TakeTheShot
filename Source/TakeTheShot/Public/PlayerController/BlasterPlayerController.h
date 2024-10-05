@@ -128,8 +128,11 @@ private:
 	UFUNCTION()
 	void OnRep_MatchState();
 
-	// 设置UI
-	void SetOverlay();
+	// 设置匹配状态
+	void SetMatchState();
+
+	// 匹配开始函数
+	void HandleMatchHasStarted();
 
 	// 玩家UI
 	UPROPERTY()

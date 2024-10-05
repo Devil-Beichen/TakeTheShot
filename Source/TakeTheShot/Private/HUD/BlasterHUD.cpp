@@ -4,6 +4,7 @@
 #include "HUD/BlasterHUD.h"
 
 #include "Blueprint/UserWidget.h"
+#include "HUD/Announcement.h"
 #include "HUD/CharacterOverlay.h"
 
 void ABlasterHUD::DrawHUD()
@@ -109,5 +110,19 @@ void ABlasterHUD::AddCharacterOverlay()
 		// 创建UCharacterOverlay对象，并将其添加到玩家控制器的视口中
 		CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
 		CharacterOverlay->AddToViewport();
+	}
+}
+
+void ABlasterHUD::AddAnnouncement()
+{
+	// 获取拥有此HUD的玩家控制器
+	APlayerController* PlayerController = GetOwningPlayerController();
+
+	// 检查CharacterOverlayClass是否被设置，以及是否拥有有效的玩家控制器
+	if (AnnouncementClass && PlayerController)
+	{
+		// 创建UCharacterOverlay对象，并将其添加到玩家控制器的视口中
+		Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
+		Announcement->AddToViewport();
 	}
 }
