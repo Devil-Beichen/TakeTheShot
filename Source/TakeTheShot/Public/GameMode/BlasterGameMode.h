@@ -47,16 +47,23 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float WarmupTime = 10.f;
 
+	// 游戏时间
+	UPROPERTY(EditDefaultsOnly)
+	float MatchTime = 120.f;
+
 	// 关卡开始的时间
 	float LevelStartingTime = 0.f;
 
 protected:
 	virtual void BeginPlay() override;
 
-    // 匹配状态设置
+	// 匹配状态设置
 	virtual void OnMatchStateSet() override;
 
 private:
 	// 倒计时时间
 	float CountDownTime = 0.f;
+
+public:
+	FORCEINLINE float GetCountdownTime() const { return CountDownTime; }
 };

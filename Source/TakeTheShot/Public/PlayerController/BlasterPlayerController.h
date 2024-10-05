@@ -51,6 +51,9 @@ public:
 	// 设置HUD上的匹配倒计时
 	void SetHUDMatchCountdown(float CountdownTime);
 
+	// 设置HUD上的公告倒计时
+	void SetHUDAnnouncementCountdown(float CountdownTime);
+
 	// 重写拥有pawn
 	virtual void OnPossess(APawn* InPawn) override;
 
@@ -110,12 +113,40 @@ protected:
 	// 检查时间同步
 	void CheckTimeSync(float DeltaSeconds);
 
+	// 服务器检查匹配状态
+	UFUNCTION(Server, Reliable)
+	void ServerCheckMatchState();
+
+	/**
+	 * 客户端加入游戏
+	 * 
+	 * 此函数用于让客户端在游戏进行中加入，提供游戏状态和时间信息以同步客户端的状态。
+	 * 
+	 * @param StateOfMatch 游戏对局的状态名称，用于识别当前游戏处于哪个阶段。
+	 * @param Warmup 游戏的热身时间，单位为秒，用于同步客户端的热身状态。
+	 * @param Match 游戏的匹配时间，单位为秒，用于同步客户端的匹配状态。
+	 * @param StartingTime 游戏的开始时间，单位为秒，用于同步客户端的游戏开始时间。
+	 */
+	UFUNCTION(Client, Reliable)
+	void ClientJoinMidGame(FName StateOfMatch, float Warmup, float Match, float StartingTime);
+
 private:
+	// HUD
 	UPROPERTY()
 	class ABlasterHUD* BlasterHUD = nullptr;
 
+	// 游戏模式
+	UPROPERTY()
+	class ABlasterGameMode* BlasterGameMode;
+
+	// 玩家进入游戏时的时间
+	float LevelStartingTime = 0.f;
+
 	// 匹配倒计时
-	float MatchTime = 120.f;
+	float MatchTime = 0.f;
+	// 预热时间
+	float WarmupTime = 0.f;
+
 
 	// 倒计时整数
 	uint32 CountdownInt = 0;

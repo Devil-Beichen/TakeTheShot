@@ -7,19 +7,19 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameMode.h"
+#include "GameMode/BlasterGameMode.h"
 #include "HUD/Announcement.h"
 #include "HUD/BlasterHUD.h"
 #include "HUD/CharacterOverlay.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 void ABlasterPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
-	if (BlasterHUD)
-	{
-		BlasterHUD->AddAnnouncement();
-	}
+
+	ServerCheckMatchState();
 }
 
 void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -49,16 +49,48 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 	}
 }
 
+// 设置HUD倒计时
 void ABlasterPlayerController::SetHUDTime()
 {
-	const uint32 SecondsLeft = FMath::CeilToInt(MatchTime - GetServerTime());
-	if (CountdownInt != SecondsLeft)
+	// 初始化剩余时间
+	float TimeLeft = 0.f;
+
+	// 根据比赛状态计算剩余时间
+	if (MatchState == MatchState::WaitingToStart)
 	{
-		SetHUDMatchCountdown(MatchTime - GetServerTime());
+		// 如果比赛处于等待开始状态，计算暖-up时间减去服务器时间再加上关卡开始时间
+		TimeLeft = WarmupTime - GetServerTime() + LevelStartingTime;
+	}
+	else if (MatchState == MatchState::InProgress)
+	{
+		// 如果比赛处于进行中状态，计算比赛时间加上暖-up时间减去服务器时间再加上关卡开始时间
+		TimeLeft = MatchTime + WarmupTime - GetServerTime() + LevelStartingTime;
 	}
 
+	// 计算剩余秒数
+	uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
+	
+	// 如果剩余秒数有变化
+	if (CountdownInt != SecondsLeft)
+	{
+		// 如果比赛处于等待开始状态
+		if (MatchState == MatchState::WaitingToStart)
+		{
+			// 设置HUD公告倒计时
+			SetHUDAnnouncementCountdown(TimeLeft);
+		}
+		// 如果比赛处于进行中状态
+		if (MatchState == MatchState::InProgress)
+		{
+			// 设置HUD比赛倒计时
+			SetHUDMatchCountdown(TimeLeft);
+		}
+	}
+
+	// 更新倒计时整数秒数
 	CountdownInt = SecondsLeft;
 }
+
 
 void ABlasterPlayerController::PollInit()
 {
@@ -84,6 +116,32 @@ void ABlasterPlayerController::CheckTimeSync(float DeltaSeconds)
 	{
 		ServerRequestServetTime(GetWorld()->GetTimeSeconds());
 		TimeSyncRunningTime = 0.f;
+	}
+}
+
+void ABlasterPlayerController::ServerCheckMatchState_Implementation()
+{
+	ABlasterGameMode* GameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	if (GameMode)
+	{
+		MatchState = GameMode->GetMatchState();
+		WarmupTime = GameMode->WarmupTime;
+		MatchTime = GameMode->MatchTime;
+		LevelStartingTime = GameMode->LevelStartingTime;
+		ClientJoinMidGame(MatchState, WarmupTime, MatchTime, LevelStartingTime);
+	}
+}
+
+void ABlasterPlayerController::ClientJoinMidGame_Implementation(FName StateOfMatch, float Warmup, float Match, float StartingTime)
+{
+	MatchState = StateOfMatch;
+	WarmupTime = Warmup;
+	MatchTime = Match;
+	LevelStartingTime = StartingTime;
+	OnMatchStateSet(MatchState);
+	if (BlasterHUD && MatchState == MatchState::WaitingToStart)
+	{
+		BlasterHUD->AddAnnouncement();
 	}
 }
 
@@ -249,6 +307,27 @@ void ABlasterPlayerController::SetHUDMatchCountdown(float CountdownTime)
 		const int32 Seconds = CountdownTime - Minutes * 60;
 		const FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
 		BlasterHUD->CharacterOverlay->MatchCountdownText->SetText(FText::FromString(CountdownText));
+	}
+}
+
+void ABlasterPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
+{
+	// 检查BlasterHUD是否为空，如果为空则重新获取一个
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	// 检查BlasterHUD及其相关元素是否已正确初始化
+	const bool bHUDValid = BlasterHUD &&
+		BlasterHUD->Announcement &&
+		BlasterHUD->Announcement->WarmupTime;
+	if (bHUDValid)
+	{
+		// 分钟
+		const int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
+		// 秒
+		const int32 Seconds = CountdownTime - Minutes * 60;
+
+		const FString CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+		BlasterHUD->Announcement->WarmupTime->SetText(FText::FromString(CountdownText));
 	}
 }
 
