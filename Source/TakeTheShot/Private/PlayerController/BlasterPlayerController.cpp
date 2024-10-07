@@ -55,6 +55,8 @@ void ABlasterPlayerController::SetHUDTime()
 	// 初始化剩余时间
 	float TimeLeft = 0.f;
 
+	// GEngine->AddOnScreenDebugMessage(1, 0.1, HasAuthority() ? FColor::Blue : FColor::Green, MatchState.ToString());
+
 	// 根据比赛状态计算剩余时间
 	if (MatchState == MatchState::WaitingToStart)
 	{
@@ -66,10 +68,15 @@ void ABlasterPlayerController::SetHUDTime()
 		// 如果比赛处于进行中状态，计算比赛时间加上暖-up时间减去服务器时间再加上关卡开始时间
 		TimeLeft = MatchTime + WarmupTime - GetServerTime() + LevelStartingTime;
 	}
+	// GEngine->AddOnScreenDebugMessage(2, 0.1, HasAuthority() ? FColor::Blue : FColor::Green, FString::SanitizeFloat(TimeLeft));
+
+	GEngine->AddOnScreenDebugMessage(2, 0.1, HasAuthority() ? FColor::Blue : FColor::Green,
+	                                 FString::Printf(TEXT("预热时间 %f \n 服务器时间 %f \n 关卡开始时间%f \n 倒计时时间%f"),
+	                                                 WarmupTime, GetServerTime(), LevelStartingTime, TimeLeft));
 
 	// 计算剩余秒数
 	uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
-	
+
 	// 如果剩余秒数有变化
 	if (CountdownInt != SecondsLeft)
 	{
@@ -143,6 +150,8 @@ void ABlasterPlayerController::ClientJoinMidGame_Implementation(FName StateOfMat
 	{
 		BlasterHUD->AddAnnouncement();
 	}
+
+	GEngine->AddOnScreenDebugMessage(-1, 30, HasAuthority() ? FColor::Red : FColor::Yellow, FString::Printf(TEXT("%s的关卡开始时间 %f"), *GetName(), LevelStartingTime));
 }
 
 // 服务端时间同步回调函数
@@ -321,6 +330,12 @@ void ABlasterPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
 		BlasterHUD->Announcement->WarmupTime;
 	if (bHUDValid)
 	{
+		if (CountdownTime < 0.f)
+		{
+			BlasterHUD->Announcement->WarmupTime->SetText(FText());
+			return;
+		}
+
 		// 分钟
 		const int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
 		// 秒

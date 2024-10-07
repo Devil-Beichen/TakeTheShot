@@ -65,5 +65,6 @@ private:
 	float CountDownTime = 0.f;
 
 public:
+	// 获取倒计时时间
 	FORCEINLINE float GetCountdownTime() const { return CountDownTime; }
 };

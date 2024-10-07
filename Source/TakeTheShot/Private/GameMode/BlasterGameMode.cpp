@@ -44,7 +44,7 @@ void ABlasterGameMode::Tick(float DeltaSeconds)
 	if (MatchState == MatchState::WaitingToStart)
 	{
 		// 计算倒计时时间，直到比赛开始
-		CountDownTime = WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		 CountDownTime = WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
 		// 如果倒计时结束
 		if (CountDownTime <= 0.f)
 		{
