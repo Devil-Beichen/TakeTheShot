@@ -54,6 +54,9 @@ public:
 	// 关卡开始的时间
 	float LevelStartingTime = 0.f;
 
+	// 关卡时间初始化
+	uint8 bLevelTimeInit : 1;
+
 protected:
 	virtual void BeginPlay() override;
 

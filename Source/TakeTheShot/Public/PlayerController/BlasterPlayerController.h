@@ -117,6 +117,9 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerCheckMatchState();
 
+	// 匹配模式是否已经初始化
+	uint8 bGameModeInit : 1;
+
 	/**
 	 * 客户端加入游戏
 	 * 
@@ -134,6 +137,9 @@ private:
 	// HUD
 	UPROPERTY()
 	class ABlasterHUD* BlasterHUD = nullptr;
+
+	UPROPERTY()
+	class ABlasterGameMode* GameMode;
 
 	// 游戏模式
 	UPROPERTY()

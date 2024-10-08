@@ -13,6 +13,7 @@ ABlasterGameMode::ABlasterGameMode()
 {
 	// 设置默认延迟启动（有预热时间）
 	bDelayedStart = true;
+	bLevelTimeInit = false;
 }
 
 
@@ -20,7 +21,12 @@ void ABlasterGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	LevelStartingTime = GetWorld()->GetTimeSeconds();
+	if (bLevelTimeInit == false)
+	{
+		bLevelTimeInit = true;
+		LevelStartingTime = GetWorld()->GetTimeSeconds();
+		GEngine->AddOnScreenDebugMessage(-1, 120, FColor::Orange, FString::Printf(TEXT("游戏模式...关卡启动的时间为%f"), LevelStartingTime));
+	}
 }
 
 void ABlasterGameMode::OnMatchStateSet()
@@ -44,7 +50,7 @@ void ABlasterGameMode::Tick(float DeltaSeconds)
 	if (MatchState == MatchState::WaitingToStart)
 	{
 		// 计算倒计时时间，直到比赛开始
-		 CountDownTime = WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		CountDownTime = WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
 		// 如果倒计时结束
 		if (CountDownTime <= 0.f)
 		{

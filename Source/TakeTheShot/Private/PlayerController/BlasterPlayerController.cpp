@@ -18,8 +18,12 @@ void ABlasterPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	GameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
 
-	ServerCheckMatchState();
+	if (!HasAuthority())
+	{
+		ServerCheckMatchState();
+	}
 }
 
 void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -31,6 +35,15 @@ void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 void ABlasterPlayerController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if (HasAuthority() && bGameModeInit == false && GameMode)
+	{
+		if (GameMode->bLevelTimeInit)
+		{
+			bGameModeInit = true;
+			ServerCheckMatchState();
+		}
+	}
 
 	SetHUDTime();
 
@@ -54,8 +67,6 @@ void ABlasterPlayerController::SetHUDTime()
 {
 	// 初始化剩余时间
 	float TimeLeft = 0.f;
-
-	// GEngine->AddOnScreenDebugMessage(1, 0.1, HasAuthority() ? FColor::Blue : FColor::Green, MatchState.ToString());
 
 	// 根据比赛状态计算剩余时间
 	if (MatchState == MatchState::WaitingToStart)
@@ -128,7 +139,8 @@ void ABlasterPlayerController::CheckTimeSync(float DeltaSeconds)
 
 void ABlasterPlayerController::ServerCheckMatchState_Implementation()
 {
-	ABlasterGameMode* GameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	GameMode = GameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : GameMode;
+
 	if (GameMode)
 	{
 		MatchState = GameMode->GetMatchState();
@@ -146,12 +158,11 @@ void ABlasterPlayerController::ClientJoinMidGame_Implementation(FName StateOfMat
 	MatchTime = Match;
 	LevelStartingTime = StartingTime;
 	OnMatchStateSet(MatchState);
+	GEngine->AddOnScreenDebugMessage(-1, 30, HasAuthority() ? FColor::Red : FColor::Yellow, FString::Printf(TEXT("%s的关卡开始时间 %f"), *GetName(), LevelStartingTime));
 	if (BlasterHUD && MatchState == MatchState::WaitingToStart)
 	{
 		BlasterHUD->AddAnnouncement();
 	}
-
-	GEngine->AddOnScreenDebugMessage(-1, 30, HasAuthority() ? FColor::Red : FColor::Yellow, FString::Printf(TEXT("%s的关卡开始时间 %f"), *GetName(), LevelStartingTime));
 }
 
 // 服务端时间同步回调函数
@@ -363,6 +374,15 @@ void ABlasterPlayerController::SetMatchState()
 	// 等待开始
 	if (MatchState == MatchState::WaitingToStart)
 	{
+		/*if (BlasterHUD)
+		{
+			/*if (BlasterHUD->Announcement)
+			{
+				BlasterHUD->Announcement->RemoveFromParent();
+			}#1#
+			
+			BlasterHUD->AddAnnouncement();
+		}*/
 	}
 	// 匹配中
 	if (MatchState == MatchState::InProgress)
