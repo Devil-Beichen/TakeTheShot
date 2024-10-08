@@ -79,7 +79,6 @@ void ABlasterPlayerController::SetHUDTime()
 		// 如果比赛处于进行中状态，计算比赛时间加上暖-up时间减去服务器时间再加上关卡开始时间
 		TimeLeft = MatchTime + WarmupTime - GetServerTime() + LevelStartingTime;
 	}
-	// GEngine->AddOnScreenDebugMessage(2, 0.1, HasAuthority() ? FColor::Blue : FColor::Green, FString::SanitizeFloat(TimeLeft));
 
 	GEngine->AddOnScreenDebugMessage(2, 0.1, HasAuthority() ? FColor::Blue : FColor::Green,
 	                                 FString::Printf(TEXT("预热时间 %f \n 服务器时间 %f \n 关卡开始时间%f \n 倒计时时间%f"),
@@ -159,10 +158,6 @@ void ABlasterPlayerController::ClientJoinMidGame_Implementation(FName StateOfMat
 	LevelStartingTime = StartingTime;
 	OnMatchStateSet(MatchState);
 	GEngine->AddOnScreenDebugMessage(-1, 30, HasAuthority() ? FColor::Red : FColor::Yellow, FString::Printf(TEXT("%s的关卡开始时间 %f"), *GetName(), LevelStartingTime));
-	if (BlasterHUD && MatchState == MatchState::WaitingToStart)
-	{
-		BlasterHUD->AddAnnouncement();
-	}
 }
 
 // 服务端时间同步回调函数
@@ -374,15 +369,14 @@ void ABlasterPlayerController::SetMatchState()
 	// 等待开始
 	if (MatchState == MatchState::WaitingToStart)
 	{
-		/*if (BlasterHUD)
+		if (BlasterHUD)
 		{
-			/*if (BlasterHUD->Announcement)
+			if (BlasterHUD->Announcement)
 			{
 				BlasterHUD->Announcement->RemoveFromParent();
-			}#1#
-			
+			}
 			BlasterHUD->AddAnnouncement();
-		}*/
+		}
 	}
 	// 匹配中
 	if (MatchState == MatchState::InProgress)
