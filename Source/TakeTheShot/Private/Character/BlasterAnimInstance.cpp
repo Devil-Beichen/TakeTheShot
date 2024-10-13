@@ -217,7 +217,16 @@ void UBlasterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 		}
 	}
 
-	bUseFABRIK = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
-	bUseAimOffsets = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
-	bTransformRightHand = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+	if (BlasterCharacter->GetDisableGameplay())
+	{
+		bUseFABRIK = false;
+		bUseAimOffsets = false;
+		bTransformRightHand = false;
+	}
+	else
+	{
+		bUseFABRIK = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+		bUseAimOffsets = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+		bTransformRightHand = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+	}
 }

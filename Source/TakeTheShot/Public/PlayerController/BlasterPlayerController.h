@@ -128,19 +128,18 @@ protected:
 	 * @param StateOfMatch 游戏对局的状态名称，用于识别当前游戏处于哪个阶段。
 	 * @param Warmup 游戏的热身时间，单位为秒，用于同步客户端的热身状态。
 	 * @param Match 游戏的匹配时间，单位为秒，用于同步客户端的匹配状态。
+	 * @param Cooldown 游戏的冷却时间，单位为秒，用于同步客户端的冷却状态。
 	 * @param StartingTime 游戏的开始时间，单位为秒，用于同步客户端的游戏开始时间。
 	 */
 	UFUNCTION(Client, Reliable)
-	void ClientJoinMidGame(FName StateOfMatch, float Warmup, float Match, float StartingTime);
+	void ClientJoinMidGame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
+
 
 private:
 	// HUD
 	UPROPERTY()
 	class ABlasterHUD* BlasterHUD = nullptr;
-
-	UPROPERTY()
-	class ABlasterGameMode* GameMode;
-
+	
 	// 游戏模式
 	UPROPERTY()
 	class ABlasterGameMode* BlasterGameMode;
@@ -153,6 +152,8 @@ private:
 	// 预热时间
 	float WarmupTime = 0.f;
 
+	// 结束的冷却时间
+	float CooldownTime = 0.f;
 
 	// 倒计时整数
 	uint32 CountdownInt = 0;

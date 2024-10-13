@@ -76,7 +76,12 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastElim();
 
+	// 重写销毁角色
 	virtual void Destroyed() override;
+
+	// 禁用游戏功能
+	UPROPERTY(Replicated)
+	bool bDisableGameplay = false;
 
 	/**
 	 * 接收伤害事件的回调函数。
@@ -103,6 +108,9 @@ public:
 
 	// 初始化HUD
 	void PollInit();
+
+	// 旋转角色
+	void RotateInPlace(float DeltaTime);
 
 protected:
 	virtual void BeginPlay() override;
@@ -542,4 +550,8 @@ public:
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 	// 获取角色的武器状态
 	FORCEINLINE ECombatState GetCombatState() const { return Combat == nullptr ? ECombatState::ECS_MAX : Combat->CombatState; }
+	// 获取角色的武器组件
+	FORCEINLINE UCombatComponent* GetCombat() const { return Combat; }
+	// 获取是否禁用游戏部分功能
+	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 };

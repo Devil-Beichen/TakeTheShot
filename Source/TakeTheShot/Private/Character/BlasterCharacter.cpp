@@ -84,6 +84,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(ABlasterCharacter, Health);
+	DOREPLIFETIME(ABlasterCharacter, bDisableGameplay);
 }
 
 void ABlasterCharacter::OnRep_ReplicatedMovement()
@@ -120,20 +121,7 @@ void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled())
-	{
-		AimOffset(DeltaTime);
-	}
-	else
-	{
-		TimeSinceLastMovementReplication += DeltaTime;
-		if (TimeSinceLastMovementReplication > 0.25f)
-		{
-			OnRep_ReplicatedMovement();
-		}
-
-		CalculateAO_Pitch();
-	}
+	RotateInPlace(DeltaTime);
 
 	HideCameraIfCharacterClose();
 
@@ -249,7 +237,8 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	PlayElimMontage();
 
 	// 移除输入映射上下文，停止响应用户输入
-	RemoveMappingContext();
+	// RemoveMappingContext();
+	bDisableGameplay = true;
 
 	// 开始溶解效果
 	StartDissolve();
@@ -388,6 +377,11 @@ void ABlasterCharacter::Destroyed()
 		// 销毁ElimBotComponent组件
 		ElimBotComponent->DestroyComponent();
 	}
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Destroy();
+	}
+
 	Super::Destroyed();
 }
 
@@ -432,6 +426,8 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 // 移动函数，根据输入值调整角色的移动方向
 void ABlasterCharacter::Move(const FInputActionValue& Value)
 {
+	if (bDisableGameplay) return;
+
 	// 检查控制器是否存在，如果不存在则直接返回
 	if (!Controller) return;
 
@@ -472,6 +468,7 @@ void ABlasterCharacter::Look(const FInputActionValue& Value)
 // 跳跃开始函数，当跳跃动作开始时被调用
 void ABlasterCharacter::Jump_Started()
 {
+	if (bDisableGameplay) return;
 	// 如果角色处于蹲伏状态，则取消蹲伏；否则执行跳跃动作
 	if (bIsCrouched)
 	{
@@ -493,6 +490,7 @@ void ABlasterCharacter::Jump_Completed()
 // 蹲伏开始函数，当蹲伏动作开始时被调用
 void ABlasterCharacter::Crouch_Started()
 {
+	if (bDisableGameplay) return;
 	// 根据角色当前的状态，决定是取消蹲伏还是开始蹲伏
 	// 如果角色处于蹲伏状态，则取消蹲伏；否则执行蹲伏动作
 	if (bIsCrouched)
@@ -542,6 +540,7 @@ void ABlasterCharacter::MulticastSlowStarted_Implementation()
 // 拾取装备按钮开始函数，当按下装备按钮时被调用
 void ABlasterCharacter::Equip_Started()
 {
+	if (bDisableGameplay) return;
 	if (!Combat) return;
 	ServerEquipButtonPressed();
 }
@@ -557,6 +556,7 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 // 当角色启用瞄准时调用此函数
 void ABlasterCharacter::Aiming_Triggered()
 {
+	if (bDisableGameplay) return;
 	// 检查是否存在Combat组件，是否装备了武器，以及角色是否未在下落状态
 	if (Combat && Combat->EquippedWeapon && !GetCharacterMovement()->IsFalling())
 	{
@@ -575,6 +575,8 @@ void ABlasterCharacter::Aiming_Completed()
 
 void ABlasterCharacter::Fire_Started()
 {
+	if (bDisableGameplay) return;
+
 	if (Combat)
 	{
 		Combat->FireButtonPressed(true);
@@ -591,6 +593,7 @@ void ABlasterCharacter::Fire_Completed()
 
 void ABlasterCharacter::ReloadButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (Combat && Combat->EquippedWeapon)
 	{
 		Combat->Reload();
@@ -708,6 +711,48 @@ void ABlasterCharacter::PollInit()
 		}
 	}
 }
+
+// 在原地旋转角色
+// 
+// 此函数负责在游戏过程中处理角色的原地旋转逻辑。根据角色的网络角色和是否被禁用，
+// 它会执行不同的操作来更新角色的瞄准偏移或处理运动的复制。
+//
+// 参数:
+// - DeltaTime: 自上次调用以来的时间（以秒为单位）
+void ABlasterCharacter::RotateInPlace(float DeltaTime)
+{
+	// 如果游戏玩法被禁用，则直接返回，不执行任何操作
+	if (bDisableGameplay)
+	{
+		// 禁用控制器旋转
+		bUseControllerRotationYaw = false;
+		// 设置为未转动状态
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		// 返回，不再执行后续代码
+		return;
+	}
+
+	// 如果当前角色的本地角色不是模拟代理（SimulatedProxy）或者是由本地玩家控制的，
+	// 则根据Delta_time更新瞄准偏移
+	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled())
+	{
+		AimOffset(DeltaTime);
+	}
+	else
+	{
+		// 如果不是本地控制的角色，则增加自上次运动复制以来的时间
+		TimeSinceLastMovementReplication += DeltaTime;
+		// 如果自上次运动复制以来的时间超过0.25秒，则调用函数处理运动的复制
+		if (TimeSinceLastMovementReplication > 0.25f)
+		{
+			OnRep_ReplicatedMovement();
+		}
+
+		// 计算和更新瞄准偏移的俯仰角
+		CalculateAO_Pitch();
+	}
+}
+
 
 void ABlasterCharacter::OnRep_Health()
 {

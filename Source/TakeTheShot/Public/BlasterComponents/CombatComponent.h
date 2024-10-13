@@ -36,6 +36,13 @@ public:
 	// 重新装填
 	void Reload();
 
+	/**
+	* 处理发射按钮按下事件
+	* 当发射按钮被按下或松开时，调用本函数通知对象
+	* @param bPressed 指示按钮是否被按下当按钮被按下时，bPressed为true；当按钮被松开时，bPressed为false
+	*/
+	void FireButtonPressed(const bool bPressed);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -56,13 +63,6 @@ protected:
 
 	// 设置当前装备的武器的状态
 	void SetEquippedWeaponState();
-
-	/**
-	* 处理发射按钮按下事件
-	* 当发射按钮被按下或松开时，调用本函数通知对象
-	* @param bPressed 指示按钮是否被按下当按钮被按下时，bPressed为true；当按钮被松开时，bPressed为false
-	*/
-	void FireButtonPressed(const bool bPressed);
 
 	/**
 	 * 服务器端发射函数

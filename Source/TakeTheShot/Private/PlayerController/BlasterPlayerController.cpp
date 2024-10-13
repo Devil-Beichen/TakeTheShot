@@ -13,12 +13,13 @@
 #include "HUD/CharacterOverlay.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "BlasterComponents/CombatComponent.h"
 
 void ABlasterPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
-	GameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
 
 	if (!HasAuthority())
 	{
@@ -36,9 +37,9 @@ void ABlasterPlayerController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (HasAuthority() && bGameModeInit == false && GameMode)
+	if (HasAuthority() && bGameModeInit == false && BlasterGameMode)
 	{
-		if (GameMode->bLevelTimeInit)
+		if (BlasterGameMode->bLevelTimeInit)
 		{
 			bGameModeInit = true;
 			ServerCheckMatchState();
@@ -80,6 +81,11 @@ void ABlasterPlayerController::SetHUDTime()
 		TimeLeft = MatchTime + WarmupTime - GetServerTime() + LevelStartingTime;
 	}
 
+	else if (MatchState == MatchState::Cooldown)
+	{
+		TimeLeft = CooldownTime + MatchTime + WarmupTime - GetServerTime() + LevelStartingTime;
+	}
+
 	GEngine->AddOnScreenDebugMessage(2, 0.1, HasAuthority() ? FColor::Blue : FColor::Green,
 	                                 FString::Printf(TEXT("预热时间 %f \n 服务器时间 %f \n 关卡开始时间%f \n 倒计时时间%f"),
 	                                                 WarmupTime, GetServerTime(), LevelStartingTime, TimeLeft));
@@ -87,11 +93,28 @@ void ABlasterPlayerController::SetHUDTime()
 	// 计算剩余秒数
 	uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
 
+	// 如果当前对象拥有权威性（例如，在服务器上）
+	if (HasAuthority())
+	{
+		// 初始化或更新BlasterGameMode对象，确保它不为nullptr
+		// 如果BlasterGameMode为nullptr，则通过UGameplayStatics::GetGameMode(this)获取当前游戏模式，并尝试将其转换为ABlasterGameMode类型
+		// 否则，使用已有的BlasterGameMode对象
+		BlasterGameMode = BlasterGameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : BlasterGameMode;
+
+		// 如果BlasterGameMode对象有效
+		if (BlasterGameMode)
+		{
+			// 计算剩余秒数，四舍五入到最近的整数
+			// 这里的计算是将当前关卡开始时间与游戏模式的倒计时时间相加后的结果进行上限取整
+			SecondsLeft = FMath::CeilToInt(BlasterGameMode->GetCountdownTime() + LevelStartingTime);
+		}
+	}
+
 	// 如果剩余秒数有变化
 	if (CountdownInt != SecondsLeft)
 	{
-		// 如果比赛处于等待开始状态
-		if (MatchState == MatchState::WaitingToStart)
+		// 如果比赛处于等待开始或者结束状态
+		if (MatchState == MatchState::WaitingToStart || MatchState == MatchState::Cooldown)
 		{
 			// 设置HUD公告倒计时
 			SetHUDAnnouncementCountdown(TimeLeft);
@@ -138,23 +161,25 @@ void ABlasterPlayerController::CheckTimeSync(float DeltaSeconds)
 
 void ABlasterPlayerController::ServerCheckMatchState_Implementation()
 {
-	GameMode = GameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : GameMode;
+	BlasterGameMode = BlasterGameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : BlasterGameMode;
 
-	if (GameMode)
+	if (BlasterGameMode)
 	{
-		MatchState = GameMode->GetMatchState();
-		WarmupTime = GameMode->WarmupTime;
-		MatchTime = GameMode->MatchTime;
-		LevelStartingTime = GameMode->LevelStartingTime;
-		ClientJoinMidGame(MatchState, WarmupTime, MatchTime, LevelStartingTime);
+		MatchState = BlasterGameMode->GetMatchState();
+		WarmupTime = BlasterGameMode->WarmupTime;
+		MatchTime = BlasterGameMode->MatchTime;
+		CooldownTime = BlasterGameMode->CooldownTime;
+		LevelStartingTime = BlasterGameMode->LevelStartingTime;
+		ClientJoinMidGame(MatchState, WarmupTime, MatchTime, CooldownTime, LevelStartingTime);
 	}
 }
 
-void ABlasterPlayerController::ClientJoinMidGame_Implementation(FName StateOfMatch, float Warmup, float Match, float StartingTime)
+void ABlasterPlayerController::ClientJoinMidGame_Implementation(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime)
 {
 	MatchState = StateOfMatch;
 	WarmupTime = Warmup;
 	MatchTime = Match;
+	CooldownTime = Cooldown;
 	LevelStartingTime = StartingTime;
 	OnMatchStateSet(MatchState);
 	GEngine->AddOnScreenDebugMessage(-1, 30, HasAuthority() ? FColor::Red : FColor::Yellow, FString::Printf(TEXT("%s的关卡开始时间 %f"), *GetName(), LevelStartingTime));
@@ -316,6 +341,12 @@ void ABlasterPlayerController::SetHUDMatchCountdown(float CountdownTime)
 		BlasterHUD->CharacterOverlay->MatchCountdownText;
 	if (bHUDValid)
 	{
+		if (CountdownTime < 0.f)
+		{
+			BlasterHUD->CharacterOverlay->MatchCountdownText->SetText(FText());
+			return;
+		}
+
 		// 分钟
 		const int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
 		// 秒
@@ -411,9 +442,25 @@ void ABlasterPlayerController::HandleCooldown()
 	if (BlasterHUD)
 	{
 		BlasterHUD->CharacterOverlay->RemoveFromParent();
-		if (BlasterHUD->Announcement)
+
+		const bool bHUDValid = BlasterHUD->Announcement && BlasterHUD->Announcement->AnnouncementText && BlasterHUD->Announcement->InfoText;
+
+		if (bHUDValid)
 		{
 			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
+			FString AnnouncementText = FString::Printf(TEXT("比赛结束了"));
+			BlasterHUD->Announcement->AnnouncementText->SetText(FText::FromString(AnnouncementText));
+			BlasterHUD->Announcement->InfoText->SetText(FText());
 		}
+	}
+	// 尝试将当前控制的游戏角色转换为ABlasterCharacter类型，以便禁用其游戏玩法功能
+	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetPawn());
+	if (BlasterCharacter)
+	{
+	    // 禁用角色的游戏玩法功能，通常用于游戏暂停或菜单界面显示时
+	    BlasterCharacter->bDisableGameplay = true;
+	    
+	    // 获取角色的战斗组件并设置开火按钮状态为未按下，防止在游戏玩法禁用时角色继续开火
+	    BlasterCharacter->GetCombat()->FireButtonPressed(false);
 	}
 }
