@@ -379,9 +379,14 @@ void ABlasterPlayerController::SetMatchState()
 		}
 	}
 	// 匹配中
-	if (MatchState == MatchState::InProgress)
+	else if (MatchState == MatchState::InProgress)
 	{
 		HandleMatchHasStarted();
+	}
+	// 比赛结束冷却
+	else if (MatchState == MatchState::Cooldown)
+	{
+		HandleCooldown();
 	}
 }
 
@@ -396,5 +401,19 @@ void ABlasterPlayerController::HandleMatchHasStarted()
 			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
 		}
 		BlasterHUD->AddCharacterOverlay();
+	}
+}
+
+// 冷却
+void ABlasterPlayerController::HandleCooldown()
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	if (BlasterHUD)
+	{
+		BlasterHUD->CharacterOverlay->RemoveFromParent();
+		if (BlasterHUD->Announcement)
+		{
+			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
+		}
 	}
 }

@@ -9,6 +9,11 @@
 #include "PlayerController/BlasterPlayerController.h"
 #include "PlayerState/BlasterPlayerState.h"
 
+namespace MatchState
+{
+	const FName Cooldown = FName("Cooldown");
+}
+
 ABlasterGameMode::ABlasterGameMode()
 {
 	// 设置默认延迟启动（有预热时间）
@@ -57,6 +62,18 @@ void ABlasterGameMode::Tick(float DeltaSeconds)
 			// 开始比赛
 			StartMatch();
 		}
+	}
+	// 如果比赛状态为进行中
+	else if (MatchState == MatchState::InProgress)
+	{
+	    // 计算倒计时时间，考虑到预热时间和比赛时间，以及当前世界时间和关卡开始时间
+	    CountDownTime = WarmupTime + MatchTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+	    // 如果倒计时时间小于等于0，则表示比赛时间结束
+	    if (CountDownTime <= 0.f)
+	    {
+	        // 将比赛状态设置为冷却状态，准备进入下一阶段
+	        SetMatchState(MatchState::Cooldown);
+	    }
 	}
 }
 

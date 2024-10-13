@@ -9,6 +9,13 @@
 class ABlasterCharacter;
 class ABlasterPlayerController;
 
+namespace MatchState
+{
+	// 比赛时间已到，显示获胜者并且开始冷却定时器
+	extern TAKETHESHOT_API const FName Cooldown;
+}
+
+
 /**
  *  爆破游戏模式
  */
@@ -56,6 +63,10 @@ public:
 
 	// 关卡时间初始化
 	uint8 bLevelTimeInit : 1;
+
+	// 冷却时间
+	UPROPERTY(EditDefaultsOnly)
+	float CooldownTime = 10.f;
 
 protected:
 	virtual void BeginPlay() override;

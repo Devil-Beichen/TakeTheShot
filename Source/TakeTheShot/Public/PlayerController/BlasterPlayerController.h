@@ -171,6 +171,9 @@ private:
 	// 匹配开始函数
 	void HandleMatchHasStarted();
 
+	// 处理冷却时间函数
+	void HandleCooldown();
+
 	// 玩家UI
 	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay;
