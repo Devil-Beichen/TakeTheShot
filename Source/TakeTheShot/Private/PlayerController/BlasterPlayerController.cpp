@@ -14,6 +14,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "BlasterComponents/CombatComponent.h"
+#include "GameState/BlasterGameState.h"
+#include "PlayerState/BlasterPlayerState.h"
 
 void ABlasterPlayerController::BeginPlay()
 {
@@ -450,17 +452,44 @@ void ABlasterPlayerController::HandleCooldown()
 			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
 			FString AnnouncementText = FString::Printf(TEXT("比赛结束了"));
 			BlasterHUD->Announcement->AnnouncementText->SetText(FText::FromString(AnnouncementText));
-			BlasterHUD->Announcement->InfoText->SetText(FText());
+			ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
+			ABlasterPlayerState* BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+			if (BlasterGameState)
+			{
+				TArray<ABlasterPlayerState*> TopPlayers = BlasterGameState->TopScoringPlayers;
+				FString InfoTextString;
+				if (TopPlayers.Num() == 0)
+				{
+					InfoTextString = FString::Printf(TEXT("没有赢家！！！"));
+				}
+				else if (TopPlayers.Num() == 1 && TopPlayers[0] == BlasterPlayerState)
+				{
+					InfoTextString = FString::Printf(TEXT("恭喜你，获得了胜利"));
+				}
+				else if (TopPlayers.Num() == 1)
+				{
+					InfoTextString = FString::Printf(TEXT("获胜者：\n%s"), *TopPlayers[0]->GetPlayerName());
+				}
+				else if (TopPlayers.Num() > 1)
+				{
+					InfoTextString = FString::Printf(TEXT("获胜的玩家有：\n"));
+					for (auto TiedPlayer : TopPlayers)
+					{
+						InfoTextString.Append(FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName()));
+					}
+				}
+				BlasterHUD->Announcement->InfoText->SetText(FText::FromString(InfoTextString));
+			}
 		}
 	}
 	// 尝试将当前控制的游戏角色转换为ABlasterCharacter类型，以便禁用其游戏玩法功能
 	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetPawn());
-	if (BlasterCharacter)
+	if (BlasterCharacter && BlasterCharacter->GetCombat())
 	{
-	    // 禁用角色的游戏玩法功能，通常用于游戏暂停或菜单界面显示时
-	    BlasterCharacter->bDisableGameplay = true;
-	    
-	    // 获取角色的战斗组件并设置开火按钮状态为未按下，防止在游戏玩法禁用时角色继续开火
-	    BlasterCharacter->GetCombat()->FireButtonPressed(false);
+		// 禁用角色的游戏玩法功能，通常用于游戏暂停或菜单界面显示时
+		BlasterCharacter->bDisableGameplay = true;
+
+		// 获取角色的战斗组件并设置开火按钮状态为未按下，防止在游戏玩法禁用时角色继续开火
+		BlasterCharacter->GetCombat()->FireButtonPressed(false);
 	}
 }

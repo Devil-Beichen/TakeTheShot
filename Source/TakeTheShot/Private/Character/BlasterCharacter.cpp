@@ -240,6 +240,11 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	// RemoveMappingContext();
 	bDisableGameplay = true;
 
+	if (Combat)
+	{
+		Combat->FireButtonPressed(false);
+	}
+
 	// 开始溶解效果
 	StartDissolve();
 
@@ -377,7 +382,15 @@ void ABlasterCharacter::Destroyed()
 		// 销毁ElimBotComponent组件
 		ElimBotComponent->DestroyComponent();
 	}
-	if (Combat && Combat->EquippedWeapon)
+
+	// 获取当前游戏模式并判断是否为ABlasterGameMode类型
+	ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+
+	// 判断比赛状态是否不在进行中
+	bool bMatchNotInProgress = BlasterGameMode && BlasterGameMode->GetMatchState() != MatchState::InProgress;
+
+	// 如果Combat组件存在、装备的武器存在且比赛不在进行中，则销毁装备的武器
+	if (Combat && Combat->EquippedWeapon && bMatchNotInProgress)
 	{
 		Combat->EquippedWeapon->Destroy();
 	}

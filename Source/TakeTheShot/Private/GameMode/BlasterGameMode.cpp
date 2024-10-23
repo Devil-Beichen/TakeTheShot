@@ -5,12 +5,14 @@
 
 #include "Character/BlasterCharacter.h"
 #include "GameFramework/PlayerStart.h"
+#include "GameState/BlasterGameState.h"
 #include "Kismet/GameplayStatics.h"
 #include "PlayerController/BlasterPlayerController.h"
 #include "PlayerState/BlasterPlayerState.h"
 
 namespace MatchState
 {
+	// 比赛为冷却状态
 	const FName Cooldown = FName("Cooldown");
 }
 
@@ -66,14 +68,14 @@ void ABlasterGameMode::Tick(float DeltaSeconds)
 	// 如果比赛状态为进行中
 	else if (MatchState == MatchState::InProgress)
 	{
-	    // 计算倒计时时间，考虑到预热时间和比赛时间，以及当前世界时间和关卡开始时间
-	    CountDownTime = WarmupTime + MatchTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
-	    // 如果倒计时时间小于等于0，则表示比赛时间结束
-	    if (CountDownTime <= 0.f)
-	    {
-	        // 将比赛状态设置为冷却状态，准备进入下一阶段
-	        SetMatchState(MatchState::Cooldown);
-	    }
+		// 计算倒计时时间，考虑到预热时间和比赛时间，以及当前世界时间和关卡开始时间
+		CountDownTime = WarmupTime + MatchTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		// 如果倒计时时间小于等于0，则表示比赛时间结束
+		if (CountDownTime <= 0.f)
+		{
+			// 将比赛状态设置为冷却状态，准备进入下一阶段
+			SetMatchState(MatchState::Cooldown);
+		}
 	}
 	else if (MatchState == MatchState::Cooldown)
 	{
@@ -85,6 +87,7 @@ void ABlasterGameMode::Tick(float DeltaSeconds)
 	}
 }
 
+// 玩家被淘汰
 void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController)
 {
 	// 根据AttackerController是否存在，转换并获取相应的ABlasterPlayerState对象
@@ -95,9 +98,12 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, 
 	// 如果VictimController为nullptr，则VictimPlayerState为nullptr
 	ABlasterPlayerState* VictimPlayerState = VictimController ? Cast<ABlasterPlayerState>(VictimController->PlayerState) : nullptr;
 
-	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState)
+	ABlasterGameState* BlasterGameState = GetGameState<ABlasterGameState>();
+
+	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && BlasterGameState)
 	{
 		AttackerPlayerState->AddToScore(1.f);
+		BlasterGameState->UpdateTopScore(AttackerPlayerState);
 	}
 	// 受害者玩家状态
 	if (VictimPlayerState)
