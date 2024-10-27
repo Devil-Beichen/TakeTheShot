@@ -101,6 +101,10 @@ void ABlasterHUD::BeginPlay()
  */
 void ABlasterHUD::AddCharacterOverlay()
 {
+	if (CharacterOverlay)
+	{
+		CharacterOverlay->RemoveFromRoot();
+	}
 	// 获取拥有此HUD的玩家控制器
 	APlayerController* PlayerController = GetOwningPlayerController();
 
@@ -113,8 +117,13 @@ void ABlasterHUD::AddCharacterOverlay()
 	}
 }
 
+// 添加公告
 void ABlasterHUD::AddAnnouncement()
 {
+	if (Announcement)
+	{
+		Announcement->RemoveFromRoot();
+	}
 	// 获取拥有此HUD的玩家控制器
 	APlayerController* PlayerController = GetOwningPlayerController();
 

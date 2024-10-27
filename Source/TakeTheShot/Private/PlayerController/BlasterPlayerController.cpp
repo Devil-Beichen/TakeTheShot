@@ -47,11 +47,9 @@ void ABlasterPlayerController::Tick(float DeltaSeconds)
 			ServerCheckMatchState();
 		}
 	}
-
-	SetHUDTime();
-
 	CheckTimeSync(DeltaSeconds);
 	PollInit();
+	SetHUDTime();
 }
 
 // 玩家被控制的回调函数
@@ -133,7 +131,6 @@ void ABlasterPlayerController::SetHUDTime()
 	CountdownInt = SecondsLeft;
 }
 
-
 void ABlasterPlayerController::PollInit()
 {
 	if (CharacterOverlay == nullptr)
@@ -184,6 +181,18 @@ void ABlasterPlayerController::ClientJoinMidGame_Implementation(FName StateOfMat
 	CooldownTime = Cooldown;
 	LevelStartingTime = StartingTime;
 	OnMatchStateSet(MatchState);
+	// 等待开始
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		if (BlasterHUD)
+		{
+			if (BlasterHUD->Announcement)
+			{
+				BlasterHUD->Announcement->RemoveFromParent();
+			}
+			BlasterHUD->AddAnnouncement();
+		}
+	}
 	GEngine->AddOnScreenDebugMessage(-1, 30, HasAuthority() ? FColor::Red : FColor::Yellow, FString::Printf(TEXT("%s的关卡开始时间 %f"), *GetName(), LevelStartingTime));
 }
 
@@ -399,20 +408,8 @@ void ABlasterPlayerController::OnRep_MatchState()
 
 void ABlasterPlayerController::SetMatchState()
 {
-	// 等待开始
-	if (MatchState == MatchState::WaitingToStart)
-	{
-		if (BlasterHUD)
-		{
-			if (BlasterHUD->Announcement)
-			{
-				BlasterHUD->Announcement->RemoveFromParent();
-			}
-			BlasterHUD->AddAnnouncement();
-		}
-	}
 	// 匹配中
-	else if (MatchState == MatchState::InProgress)
+	if (MatchState == MatchState::InProgress)
 	{
 		HandleMatchHasStarted();
 	}
@@ -429,11 +426,11 @@ void ABlasterPlayerController::HandleMatchHasStarted()
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 	if (BlasterHUD)
 	{
+		if (BlasterHUD->CharacterOverlay == nullptr) BlasterHUD->AddCharacterOverlay();
 		if (BlasterHUD->Announcement)
 		{
 			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
 		}
-		BlasterHUD->AddCharacterOverlay();
 	}
 }
 
