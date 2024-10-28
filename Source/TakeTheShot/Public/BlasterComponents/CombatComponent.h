@@ -222,6 +222,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 	int32 StartingARAmmo = 30;
 
+	// 开始的备用火箭弹
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+	int32 StartingRocketAmmo = 0;
+
 	// 初始化携带弹药
 	void InitializeCarriedAmmo();
 

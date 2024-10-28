@@ -57,6 +57,8 @@ AWeapon::AWeapon()
 	PickupWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupWidget"));
 	// 附加到根组件上
 	PickupWidget->SetupAttachment(RootComponent);
+	// 设置默认的自定义通道
+	WeaponMesh->SetCustomDepthStencilValue(1);
 }
 
 void AWeapon::BeginPlay()
