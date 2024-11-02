@@ -317,6 +317,7 @@ void ABlasterCharacter::PlayFireMontage(const bool bAiming) const
 	}
 }
 
+// 换弹动作
 void ABlasterCharacter::PlayReloadMontage_Implementation()
 {
 	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
@@ -330,6 +331,9 @@ void ABlasterCharacter::PlayReloadMontage_Implementation()
 			switch (Combat->EquippedWeapon->GetWeaponType())
 			{
 			case EWeaponType::EWT_AssaultRifle:
+				SectionName = FName("Rifle");
+				break;
+			case EWeaponType::EWT_RocketLauncher:
 				SectionName = FName("Rifle");
 				break;
 			default:

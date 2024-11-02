@@ -24,6 +24,10 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	// 抛射体组件
+	UPROPERTY(VisibleAnywhere, Category="Projectile")
+	class UProjectileMovementComponent* ProjectileMovementComponent;
+
 	// 碰撞盒
 	UPROPERTY(EditAnywhere, Category="Projectile")
 	class UBoxComponent* CollisionBox;
@@ -51,10 +55,6 @@ protected:
 	float Damage = 10.f;
 
 private:
-	// 抛射体组件
-	UPROPERTY(VisibleAnywhere, Category="Projectile")
-	class UProjectileMovementComponent* ProjectileMovementComponent;
-
 	// 粒子特效
 	UPROPERTY(EditAnywhere, Category="Projectile")
 	UParticleSystem* Tracer;

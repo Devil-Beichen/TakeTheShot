@@ -17,6 +17,9 @@ AWeapon::AWeapon()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 
+	// 设置为复制移动，以便在服务器和客户端之间同步
+	SetReplicateMovement(true);
+
 	// 创建默认子对象USkeletalMeshComponent，用于表示武器的网格组件
 	// 使用文本"WeaponMesh"作为名称，以便在编辑器中识别
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));

@@ -50,6 +50,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	USoundAttenuation* LoopingSoundAttenuation;
 
+	UPROPERTY(VisibleAnywhere)
+	class URocketMovementComponent* RocketMovementComponent;
+
 private:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* RocketMesh;

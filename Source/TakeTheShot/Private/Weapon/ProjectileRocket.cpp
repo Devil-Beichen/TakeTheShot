@@ -11,6 +11,7 @@
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
+#include "Weapon/RocketMovementComponent.h"
 
 
 AProjectileRocket::AProjectileRocket()
@@ -18,6 +19,14 @@ AProjectileRocket::AProjectileRocket()
 	RocketMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Rocket Mesh"));
 	RocketMesh->SetupAttachment(RootComponent);
 	RocketMesh->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+
+	// 创建一个火箭弹移动组件，用于控制物体的移动和方向
+	RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponent>(TEXT("RocketMovementComponent"));
+
+	// 启用移动组件的旋转跟随速度，使得物体的朝向与移动方向一致
+	RocketMovementComponent->bRotationFollowsVelocity = true;
+	// 将移动组件设置为同步，以实现多客户端同步
+	RocketMovementComponent->SetIsReplicated(true);
 }
 
 void AProjectileRocket::Destroyed()
@@ -72,6 +81,10 @@ void AProjectileRocket::DestroyTimerFinished()
 
 void AProjectileRocket::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (OtherActor == GetOwner())
+	{
+		return;
+	}
 	if (const APawn* FiringPawn = GetInstigator(); FiringPawn && HasAuthority())
 	{
 		if (AController* FiringController = FiringPawn->GetController())

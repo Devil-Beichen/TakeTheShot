@@ -14,6 +14,8 @@ class TAKETHESHOT_API AProjectileBullet : public AProjectile
 {
 	GENERATED_BODY()
 
+	AProjectileBullet();
+
 protected:
 	/**
 	 * 处理Actor的碰撞事件。
