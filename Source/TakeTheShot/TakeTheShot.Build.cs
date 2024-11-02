@@ -15,7 +15,8 @@ public class TakeTheShot : ModuleRules
 			"Engine",
 			"InputCore",
 			"UMG",
-			"EnhancedInput"
+			"EnhancedInput",
+			"Niagara"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

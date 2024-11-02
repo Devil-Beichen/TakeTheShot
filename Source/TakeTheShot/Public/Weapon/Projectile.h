@@ -24,6 +24,10 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	// 碰撞盒
+	UPROPERTY(EditAnywhere, Category="Projectile")
+	class UBoxComponent* CollisionBox;
+
 	/**
 	 * 处理Actor的碰撞事件。
 	 * 当这个Actor与其他Actor发生碰撞时，会调用此函数。
@@ -47,10 +51,6 @@ protected:
 	float Damage = 10.f;
 
 private:
-	// 碰撞盒
-	UPROPERTY(EditAnywhere, Category="Projectile")
-	class UBoxComponent* CollisionBox;
-
 	// 抛射体组件
 	UPROPERTY(VisibleAnywhere, Category="Projectile")
 	class UProjectileMovementComponent* ProjectileMovementComponent;
@@ -73,4 +73,7 @@ private:
 
 public:
 	virtual void Tick(float DeltaTime) override;
+
+	// 生成效果
+	void GeneratingEffects();
 };

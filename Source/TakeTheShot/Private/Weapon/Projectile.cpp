@@ -59,6 +59,7 @@ void AProjectile::BeginPlay()
 	}
 }
 
+// 检测碰撞事件
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	Destroy();
@@ -69,8 +70,10 @@ void AProjectile::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AProjectile::Destroyed()
+// 生成效果
+void AProjectile::GeneratingEffects()
 {
+	CollisionBox->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 	if (ImpactParticles)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
@@ -79,5 +82,11 @@ void AProjectile::Destroyed()
 	{
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, GetActorLocation());
 	}
+}
+
+// 生成特效
+void AProjectile::Destroyed()
+{
+	GeneratingEffects();
 	Super::Destroyed();
 }
