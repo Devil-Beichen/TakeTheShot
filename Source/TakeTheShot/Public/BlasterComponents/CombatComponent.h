@@ -218,13 +218,17 @@ private:
 	// 携带弹药的哈希表
 	TMap<EWeaponType, int32> CarriedAmmoMap;
 
-	// 开始的备用弹药
+	// 开始的步枪备用弹药
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 	int32 StartingARAmmo = 30;
 
-	// 开始的备用火箭弹
+	// 开始的火箭弹备用弹药
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 	int32 StartingRocketAmmo = 0;
+
+	// 开始的手枪备用弹药
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+	int32 StartingPistolAmmo = 30;
 
 	// 初始化携带弹药
 	void InitializeCarriedAmmo();

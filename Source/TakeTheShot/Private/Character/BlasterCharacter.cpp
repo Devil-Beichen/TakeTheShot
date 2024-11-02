@@ -97,6 +97,12 @@ void ABlasterCharacter::OnRep_ReplicatedMovement()
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	// 如果当前角色具有权威性（即服务器端），则注册一个事件处理函数
+	if (HasAuthority())
+	{
+		// 当角色受到任何伤害时，调用ReceiveDamage函数处理伤害逻辑
+		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
+	}
 	Initialize();
 }
 
@@ -108,13 +114,6 @@ void ABlasterCharacter::Initialize()
 	AddDefaultMappingContext();
 
 	UpdateHUDHealth();
-
-	// 如果当前角色具有权威性（即服务器端），则注册一个事件处理函数
-	if (HasAuthority())
-	{
-		// 当角色受到任何伤害时，调用ReceiveDamage函数处理伤害逻辑
-		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
-	}
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -336,6 +335,9 @@ void ABlasterCharacter::PlayReloadMontage_Implementation()
 			case EWeaponType::EWT_RocketLauncher:
 				SectionName = FName("Rifle");
 				break;
+			case EWeaponType::EWT_Pistol:
+				SectionName = FName("Rifle");
+				break;
 			default:
 				break;
 			}
@@ -411,6 +413,11 @@ void ABlasterCharacter::Destroyed()
 // - DamageCauser: 造成伤害的角色对象
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
+	// 添加日志记录，记录每次调用的详细信息
+	UE_LOG(LogTemp, Log, TEXT("%s 收到了 %f点伤害，调用者: %s, 损伤来源: %s"),
+	       *this->GetName(), Damage,
+	       InstigatorController ? *InstigatorController->GetName() : TEXT("None"),
+	       DamageCauser ? *DamageCauser->GetName() : TEXT("None"));
 	// 如果已经死亡就返回
 	if (bEliminate == true) return;
 
