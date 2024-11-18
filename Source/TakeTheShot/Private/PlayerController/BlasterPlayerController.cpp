@@ -131,6 +131,7 @@ void ABlasterPlayerController::SetHUDTime()
 	CountdownInt = SecondsLeft;
 }
 
+// 初始化
 void ABlasterPlayerController::PollInit()
 {
 	if (CharacterOverlay == nullptr)
@@ -148,6 +149,7 @@ void ABlasterPlayerController::PollInit()
 	}
 }
 
+// 检查时间同步
 void ABlasterPlayerController::CheckTimeSync(float DeltaSeconds)
 {
 	TimeSyncRunningTime += DeltaSeconds;
@@ -158,6 +160,7 @@ void ABlasterPlayerController::CheckTimeSync(float DeltaSeconds)
 	}
 }
 
+// 服务器检查比赛状态
 void ABlasterPlayerController::ServerCheckMatchState_Implementation()
 {
 	BlasterGameMode = BlasterGameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : BlasterGameMode;
@@ -173,6 +176,7 @@ void ABlasterPlayerController::ServerCheckMatchState_Implementation()
 	}
 }
 
+// 客户端加入比赛回调函数
 void ABlasterPlayerController::ClientJoinMidGame_Implementation(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime)
 {
 	MatchState = StateOfMatch;
@@ -181,9 +185,11 @@ void ABlasterPlayerController::ClientJoinMidGame_Implementation(FName StateOfMat
 	CooldownTime = Cooldown;
 	LevelStartingTime = StartingTime;
 	OnMatchStateSet(MatchState);
+
 	// 等待开始
 	if (MatchState == MatchState::WaitingToStart)
 	{
+		// 判断HUD是否为nullptr
 		if (BlasterHUD)
 		{
 			if (BlasterHUD->Announcement)
@@ -191,6 +197,22 @@ void ABlasterPlayerController::ClientJoinMidGame_Implementation(FName StateOfMat
 				BlasterHUD->Announcement->RemoveFromParent();
 			}
 			BlasterHUD->AddAnnouncement();
+			// 隐藏公告
+			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
+	else if (MatchState == MatchState::InProgress)
+	{
+		// 判断HUD是否为nullptr
+		if (BlasterHUD)
+		{
+			if (BlasterHUD->Announcement)
+			{
+				BlasterHUD->Announcement->RemoveFromParent();
+			}
+			BlasterHUD->AddAnnouncement();
+			// 隐藏公告
+			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
 	GEngine->AddOnScreenDebugMessage(-1, 30, HasAuthority() ? FColor::Red : FColor::Yellow, FString::Printf(TEXT("%s的关卡开始时间 %f"), *GetName(), LevelStartingTime));
@@ -211,12 +233,14 @@ void ABlasterPlayerController::ClientRequestServetTime_Implementation(const floa
 	ClientServerDelta = CurrentServerTime - GetWorld()->GetTimeSeconds();
 }
 
+// 获取服务器时间
 float ABlasterPlayerController::GetServerTime() const
 {
 	if (HasAuthority()) return GetWorld()->GetTimeSeconds();
 	else return GetWorld()->GetTimeSeconds() + ClientServerDelta;
 }
 
+// 玩家 possession 后调用
 void ABlasterPlayerController::ReceivedPlayer()
 {
 	Super::ReceivedPlayer();
