@@ -20,8 +20,6 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 	// 调用基类的Fire方法，执行一些基础的发射动作
 	Super::Fire(HitTarget);
 
-	if (!HasAuthority()) return;
-
 	// 获取当前武器的所有者（持有者），并尝试将其转换为APawn类型
 	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
 
@@ -36,16 +34,15 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 		const FRotator TargetRotation = ToTarget.Rotation();
 
 		// 检查是否已设定ProjectileClass且武器的所有者有效
-		if (ProjectileClass && InstigatorPawn)
+		if (ProjectileClass)
 		{
-			// 设置生成参数
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = GetOwner();
-			SpawnParams.Instigator = InstigatorPawn;
-
 			// 获取当前世界
-			if (UWorld* World = GetWorld())
+			if (UWorld* World = GetWorld(); HasAuthority() && InstigatorPawn)
 			{
+				// 设置生成参数
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.Owner = GetOwner();
+				SpawnParams.Instigator = InstigatorPawn;
 				// 在世界中生成一个子弹Actor
 				World->SpawnActor<AProjectile>(
 					ProjectileClass,

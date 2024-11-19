@@ -18,6 +18,7 @@ public:
 	// 开火
 	virtual void Fire(const FVector& HitTarget) override;
 
+private:
 	// 伤害
 	UPROPERTY(EditDefaultsOnly)
 	float Damage = 20.f;
@@ -25,4 +26,8 @@ public:
 	// 命中特效
 	UPROPERTY(EditDefaultsOnly)
 	class UParticleSystem* ImpactParticles;
+
+	// 拖尾特效
+	UPROPERTY(EditDefaultsOnly)
+	UParticleSystem* BeamParticles;
 };
