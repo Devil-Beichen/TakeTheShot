@@ -18,6 +18,15 @@ public:
 	// 开火
 	virtual void Fire(const FVector& HitTarget) override;
 
+protected:
+	/**
+	 * 随机打散命中点
+	 * @param TraceStart   打射线的起点
+	 * @param HitTarget    命中点
+	 * @return 
+	 */
+	FVector TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget);
+
 private:
 	// 伤害
 	UPROPERTY(EditDefaultsOnly)
@@ -42,4 +51,20 @@ private:
 	// 命中音效
 	UPROPERTY(EditDefaultsOnly)
 	USoundCue* HitSound;
+
+	/**
+	 *  带散点的命中追踪轨迹结束
+	 */
+
+	// 命中追踪轨迹结束
+	UPROPERTY(EditDefaultsOnly, Category="Weapon Scatter")
+	float DistanceToShere = 800.f;
+
+	// 命中球体半径
+	UPROPERTY(EditDefaultsOnly, Category="Weapon Scatter")
+	float SphereRadius = 75.f;
+
+	// 是否使用散射
+	UPROPERTY(EditDefaultsOnly, Category="Weapon Scatter")
+	bool bUseScatter = false;
 };

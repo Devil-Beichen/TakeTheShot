@@ -7,9 +7,6 @@
 #include "BlasterTypes/CombatState.h"
 #include "CombatComponent.generated.h"
 
-// 追踪长度
-#define TRACE_LENGTH 80000.f
-
 class ABlasterCharacter;
 class ABlasterPlayerController;
 class AWeapon;
@@ -233,6 +230,10 @@ private:
 	// 开始的冲锋枪备用弹药
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 	int32 StartingSMGAmmo = 60;
+
+	// 开始的霰弹枪备用弹药
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+	int32 StartingShotgunAmmo = 20;
 
 	// 初始化携带弹药
 	void InitializeCarriedAmmo();

@@ -1,5 +1,8 @@
 #pragma once
 
+// 追踪长度
+#define TRACE_LENGTH 80000.f
+
 UENUM(BlueprintType)
 enum class EWeaponType:uint8
 {
@@ -11,6 +14,8 @@ enum class EWeaponType:uint8
 	EWT_Pistol UMETA(DisplayName = "Pistol"),
 	// 冲锋枪
 	EWT_SubmachineGun UMETA(DisplayName = "Submachine Gun"),
+	// 霰弹枪
+	EWT_Shotgun UMETA(DisplayName = "Shotgun"),
 	// 默认最大
 	EWT_MAX UMETA(DisplayName = "DefaultMAX"),
 };

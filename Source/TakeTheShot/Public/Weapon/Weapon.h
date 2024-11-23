@@ -110,7 +110,7 @@ public:
 	bool bAutomatic = false;
 
 	// 开火间隔
-	UPROPERTY(EditDefaultsOnly, Category=Combat, meta=(EditCondition = "bAutomatic == true", EditConditionHides))
+	UPROPERTY(EditDefaultsOnly, Category=Combat)
 	float FireDelay = 0.15f;
 
 	// 拾取武器的音效
