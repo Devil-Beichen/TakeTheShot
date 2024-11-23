@@ -27,7 +27,14 @@ protected:
 	 */
 	FVector TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget);
 
-private:
+	/**
+	 *	武器命中效果
+	 * @param TraceStart   追踪起点
+	 * @param HitTarget    命中点
+	 * @param OutHit       命中信息
+	 */
+	void WeaponTraceHit(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit);
+
 	// 伤害
 	UPROPERTY(EditDefaultsOnly)
 	float Damage = 20.f;
@@ -52,6 +59,7 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	USoundCue* HitSound;
 
+private:
 	/**
 	 *  带散点的命中追踪轨迹结束
 	 */

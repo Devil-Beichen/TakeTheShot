@@ -3,6 +3,7 @@
 
 #include "Weapon/HitScanWeapon.h"
 
+#include "Character/BlasterCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -31,83 +32,97 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 		FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
 		// 获取射击起点的位置
 		FVector Start = SocketTransform.GetLocation();
-		// 计算射击终点的位置，稍微远于目标以确保命中
-		FVector End = Start + (HitTarget - Start) * 1.25f;
 
 		// 用于存储射击线迹的结果
 		FHitResult FireHit;
-		// 如果世界对象存在
-		if (UWorld* World = GetWorld())
-		{
-			// 在起点和终点之间进行单次线迹测试，使用可见性通道
-			World->LineTraceSingleByChannel(
-				FireHit,
-				Start,
-				End,
-				ECC_Visibility
-			);
-			FVector BeamEnd = End;
-			// 如果线迹测试击中了某个物体
-			if (FireHit.bBlockingHit)
-			{
-				BeamEnd = FireHit.ImpactPoint;
-				// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
-				if (HasAuthority() && InstigatorController && FireHit.GetActor())
-				{
-					UE_LOG(LogTemp, Log, TEXT("击中了：%s - %f点伤害"), *FireHit.GetActor()->GetName(), Damage)
-					// 应用伤害给击中的对象
-					UGameplayStatics::ApplyDamage(
-						FireHit.GetActor(),
-						Damage,
-						InstigatorController,
-						this,
-						UDamageType::StaticClass()
-					);
-				}
 
-				// 如果有设置撞击粒子效果
-				if (ImpactParticles)
-				{
-					// 在撞击点生成粒子效果
-					UGameplayStatics::SpawnEmitterAtLocation(
-						World,
-						ImpactParticles,
-						BeamEnd,
-						FireHit.ImpactNormal.Rotation()
-					);
-				}
-				if (HitSound)
-				{
-					UGameplayStatics::PlaySoundAtLocation(
-						World,
-						HitSound,
-						BeamEnd
-					);
-				}
-				if (BeamParticles)
-				{
-					// 在起点生成拖尾特效
-					if (UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(World, BeamParticles, SocketTransform))
-					{
-						Beam->SetVectorParameter(FName("Target"), BeamEnd);
-					}
-				}
-			}
-			if (MuzzleFlash)
+		WeaponTraceHit(Start, HitTarget, FireHit);
+
+		// 如果线迹测试击中了某个物体
+		if (FireHit.bBlockingHit)
+		{
+			// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
+			if (HasAuthority() && InstigatorController && Cast<ABlasterCharacter>(FireHit.GetActor()))
 			{
-				UGameplayStatics::SpawnEmitterAtLocation(
-					World,
-					MuzzleFlash,
-					SocketTransform
+				UE_LOG(LogTemp, Log, TEXT("击中了：%s - %f点伤害"), *FireHit.GetActor()->GetName(), Damage)
+				// 应用伤害给击中的对象
+				UGameplayStatics::ApplyDamage(
+					FireHit.GetActor(),
+					Damage,
+					InstigatorController,
+					this,
+					UDamageType::StaticClass()
 				);
 			}
-			if (FireSound)
+
+			// 如果有设置撞击粒子效果
+			if (ImpactParticles)
+			{
+				// 在撞击点生成粒子效果
+				UGameplayStatics::SpawnEmitterAtLocation(
+					GetWorld(),
+					ImpactParticles,
+					FireHit.ImpactPoint,
+					FireHit.ImpactNormal.Rotation()
+				);
+			}
+			if (HitSound)
 			{
 				UGameplayStatics::PlaySoundAtLocation(
-					World,
-					FireSound,
-					Start
+					GetWorld(),
+					HitSound,
+					FireHit.ImpactPoint
 				);
+			}
+		}
+		if (MuzzleFlash)
+		{
+			UGameplayStatics::SpawnEmitterAttached(
+				MuzzleFlash,
+				GetWeaponMesh(),
+				FName(),
+				SocketTransform.GetLocation(),
+				FRotator(),
+				EAttachLocation::KeepWorldPosition
+			);
+		}
+		if (FireSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				GetWorld(),
+				FireSound,
+				Start
+			);
+		}
+	}
+}
+
+// 武器命中效果
+void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit)
+{
+	if (UWorld* World = GetWorld())
+	{
+		// 计算射击终点的位置，稍微远于目标以确保命中
+		FVector End = bUseScatter ? TraceEndWithScatter(TraceStart, HitTarget) : TraceStart + (HitTarget - TraceStart) * 1.25f;
+		// 在起点和终点之间进行单次线迹测试，使用可见性通道
+		World->LineTraceSingleByChannel(
+			OutHit,
+			TraceStart,
+			End,
+			ECC_Visibility
+		);
+		FVector BeamEnd = End;
+		// 如果线迹测试击中了某个物体
+		if (OutHit.bBlockingHit)
+		{
+			BeamEnd = OutHit.ImpactPoint;
+		}
+		if (BeamParticles)
+		{
+			// 在起点生成拖尾特效
+			if (UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(World, BeamParticles, TraceStart, FRotator::ZeroRotator, true))
+			{
+				Beam->SetVectorParameter(FName("Target"), BeamEnd);
 			}
 		}
 	}
@@ -125,14 +140,14 @@ FVector AHitScanWeapon::TraceEndWithScatter(const FVector& TraceStart, const FVe
 	FVector EndLoc = SphereCenter + Randvec;
 	FVector ToEndLoc = EndLoc - TraceStart;
 
-	DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
+	/*DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
 	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
 	DrawDebugLine(
 		GetWorld(),
 		TraceStart,
 		FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()),
 		FColor::Cyan,
-		true);
+		true);*/
 
 	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
 }
