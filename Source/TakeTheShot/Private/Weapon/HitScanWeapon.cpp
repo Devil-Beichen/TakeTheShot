@@ -6,6 +6,7 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Sound/SoundCue.h"
 
 // 当击中目标时调用此函数来处理命中扫描武器的射击逻辑
 void AHitScanWeapon::Fire(const FVector& HitTarget)
@@ -74,6 +75,14 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 						FireHit.ImpactNormal.Rotation()
 					);
 				}
+				if (HitSound)
+				{
+					UGameplayStatics::PlaySoundAtLocation(
+						World,
+						HitSound,
+						BeamEnd
+					);
+				}
 				if (BeamParticles)
 				{
 					// 在起点生成拖尾特效
@@ -82,6 +91,22 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 						Beam->SetVectorParameter(FName("Target"), BeamEnd);
 					}
 				}
+			}
+			if (MuzzleFlash)
+			{
+				UGameplayStatics::SpawnEmitterAtLocation(
+					World,
+					MuzzleFlash,
+					SocketTransform
+				);
+			}
+			if (FireSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(
+					World,
+					FireSound,
+					Start
+				);
 			}
 		}
 	}

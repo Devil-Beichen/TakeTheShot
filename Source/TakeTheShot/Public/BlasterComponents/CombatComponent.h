@@ -230,6 +230,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 	int32 StartingPistolAmmo = 30;
 
+	// 开始的冲锋枪备用弹药
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+	int32 StartingSMGAmmo = 60;
+
 	// 初始化携带弹药
 	void InitializeCarriedAmmo();
 

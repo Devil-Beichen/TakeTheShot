@@ -30,4 +30,16 @@ private:
 	// 拖尾特效
 	UPROPERTY(EditDefaultsOnly)
 	UParticleSystem* BeamParticles;
+
+	// 枪口特效
+	UPROPERTY(EditDefaultsOnly)
+	UParticleSystem* MuzzleFlash;
+
+	// 枪口音效
+	UPROPERTY(EditDefaultsOnly)
+	USoundCue* FireSound;
+
+	// 命中音效
+	UPROPERTY(EditDefaultsOnly)
+	USoundCue* HitSound;
 };

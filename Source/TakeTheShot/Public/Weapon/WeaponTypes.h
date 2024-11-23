@@ -9,6 +9,8 @@ enum class EWeaponType:uint8
 	EWT_RocketLauncher UMETA(DisplayName = "Rocket Launcher"),
 	// 手枪
 	EWT_Pistol UMETA(DisplayName = "Pistol"),
+	// 冲锋枪
+	EWT_SubmachineGun UMETA(DisplayName = "Submachine Gun"),
 	// 默认最大
 	EWT_MAX UMETA(DisplayName = "DefaultMAX"),
 };
