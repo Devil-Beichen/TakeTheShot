@@ -239,6 +239,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Combat)
 	int32 StartingSniperAmmo = 20;
 
+	// 开始的榴弹枪备用弹药
+	UPROPERTY(EditDefaultsOnly, Category = Combat)
+	int32 StartingGrenadeLauncherAmmo = 5;
+
 	// 初始化携带弹药
 	void InitializeCarriedAmmo();
 

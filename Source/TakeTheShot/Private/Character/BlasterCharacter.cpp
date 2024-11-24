@@ -358,6 +358,9 @@ void ABlasterCharacter::PlayReloadMontage_Implementation()
 			case EWeaponType::EWT_SniperRifle:
 				SectionName = FName("Rifle");
 				break;
+			case EWeaponType::EWT_GrenadeLauncher:
+				SectionName = FName("Rifle");
+				break;
 			default:
 				break;
 			}
@@ -611,6 +614,7 @@ void ABlasterCharacter::Aiming_Started()
 
 void ABlasterCharacter::Aiming_Completed()
 {
+	if (bDisableGameplay) return;
 	if (Combat)
 	{
 		Combat->SetAiming(false);
