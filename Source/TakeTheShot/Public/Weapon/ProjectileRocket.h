@@ -26,18 +26,6 @@ protected:
 	// 开始
 	virtual void BeginPlay() override;
 
-	// 销毁计时器结束
-	UFUNCTION()
-	void DestroyTimerFinished();
-
-	// 拖尾特效
-	UPROPERTY(EditDefaultsOnly)
-	class UNiagaraSystem* TrailSystem;
-
-	// 拖尾特效组件
-	UPROPERTY()
-	class UNiagaraComponent* TrailSystemComponent;
-
 	// 循环音效
 	UPROPERTY(EditDefaultsOnly)
 	USoundCue* ProjectileLoop;
@@ -50,17 +38,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	USoundAttenuation* LoopingSoundAttenuation;
 
+	// 火箭移动组件
 	UPROPERTY(VisibleAnywhere)
 	class URocketMovementComponent* RocketMovementComponent;
 
 private:
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* RocketMesh;
-
-	// 销毁计时器
-	FTimerHandle DestroyTimer;
-
-	// 销毁时间
-	UPROPERTY(EditDefaultsOnly)
-	float DestroyTime = 3.f;
 };

@@ -4,8 +4,6 @@
 #include "Weapon/ProjectileRocket.h"
 
 #include "NiagaraComponent.h"
-#include "NiagaraFunctionLibrary.h"
-#include "NiagaraSystemInstance.h"
 #include "NiagaraSystemInstanceController.h"
 #include "Components/AudioComponent.h"
 #include "Components/BoxComponent.h"
@@ -16,9 +14,9 @@
 
 AProjectileRocket::AProjectileRocket()
 {
-	RocketMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Rocket Mesh"));
-	RocketMesh->SetupAttachment(RootComponent);
-	RocketMesh->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Rocket Mesh"));
+	ProjectileMesh->SetupAttachment(RootComponent);
+	ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 
 	// 创建一个火箭弹移动组件，用于控制物体的移动和方向
 	RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponent>(TEXT("RocketMovementComponent"));
@@ -42,18 +40,8 @@ void AProjectileRocket::BeginPlay()
 		CollisionBox->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
 	}
 
-	if (TrailSystem)
-	{
-		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			TrailSystem,
-			GetRootComponent(),
-			FName(),
-			GetActorLocation(),
-			GetActorRotation(),
-			EAttachLocation::Type::KeepWorldPosition,
-			false
-		);
-	}
+	SpawnTrailSystem(); // 生成粒子系统
+
 	if (ProjectileLoop && LoopingSoundAttenuation)
 	{
 		ProjectileLoopComponent = UGameplayStatics::SpawnSoundAttached(
@@ -74,49 +62,21 @@ void AProjectileRocket::BeginPlay()
 	}
 }
 
-void AProjectileRocket::DestroyTimerFinished()
-{
-	Destroy();
-}
-
 void AProjectileRocket::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (OtherActor == GetOwner())
 	{
 		return;
 	}
-	if (const APawn* FiringPawn = GetInstigator(); FiringPawn && HasAuthority())
+	ExplodeDamage(); // 爆炸伤害
+
+	GeneratingEffects(); // 生成特效
+
+	StartDestroyTime(); // 销毁时间
+
+	if (ProjectileMesh)
 	{
-		if (AController* FiringController = FiringPawn->GetController())
-		{
-			UGameplayStatics::ApplyRadialDamageWithFalloff(
-				this, // 世界上下文
-				Damage, // 基础伤害
-				10.f, // 最小伤害
-				GetActorLocation(), // 中心起点
-				200.f, // 伤害内半径
-				500.f, // 伤害外半径
-				1.f, // 衰减指数
-				UDamageType::StaticClass(), // 伤害类型
-				TArray<AActor*>(), // 忽略的Actor
-				this, // 造成伤害的Actor
-				FiringController // 伤害发起者的控制器
-			);
-		}
-	}
-
-	GeneratingEffects();
-
-	GetWorldTimerManager().SetTimer(
-		DestroyTimer,
-		this,
-		&AProjectileRocket::DestroyTimerFinished,
-		DestroyTime
-	);
-
-	if (RocketMesh)
-	{
-		RocketMesh->SetVisibility(false);
+		ProjectileMesh->SetVisibility(false);
 	}
 
 	if (TrailSystemComponent && TrailSystemComponent->GetSystemInstanceController())

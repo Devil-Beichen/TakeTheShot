@@ -1,5 +1,6 @@
 ﻿#include "Weapon/Projectile.h"
 
+#include "NiagaraFunctionLibrary.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -49,6 +50,63 @@ void AProjectile::BeginPlay()
 	if (HasAuthority())
 	{
 		CollisionBox->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
+	}
+}
+
+// 启动定时器
+void AProjectile::StartDestroyTime()
+{
+	GetWorldTimerManager().SetTimer(
+		DestroyTimer,
+		this,
+		&AProjectile::DestroyTimerFinished,
+		DestroyTime
+	);
+}
+
+// 删除
+void AProjectile::DestroyTimerFinished()
+{
+	Destroy();
+}
+
+void AProjectile::SpawnTrailSystem()
+{
+	if (TrailSystem)
+	{
+		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			TrailSystem,
+			GetRootComponent(),
+			FName(),
+			GetActorLocation(),
+			GetActorRotation(),
+			EAttachLocation::Type::KeepWorldPosition,
+			false
+		);
+	}
+}
+
+// 爆炸伤害 
+void AProjectile::ExplodeDamage()
+{
+	if (const APawn* FiringPawn = GetInstigator(); FiringPawn && HasAuthority())
+	{
+		if (AController* FiringController = FiringPawn->GetController())
+		{
+			UGameplayStatics::ApplyRadialDamageWithFalloff(
+				this, // 世界上下文
+				Damage, // 基础伤害
+				10.f, // 最小伤害
+				GetActorLocation(), // 中心起点
+				DamageInnerRadius, // 伤害内半径
+				DamageOuterRadius, // 伤害外半径
+				1.f, // 衰减指数
+				UDamageType::StaticClass(), // 伤害类型
+				TArray<AActor*>(), // 忽略的Actor
+				this, // 造成伤害的Actor
+				FiringController // 伤害发起者的控制器
+			);
+		}
 	}
 }
 

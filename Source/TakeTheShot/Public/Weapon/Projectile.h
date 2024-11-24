@@ -24,13 +24,37 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	// 设置销毁计时器启动
+	void StartDestroyTime();
+
+	// 销毁计时器结束
+	void DestroyTimerFinished();
+
+	// 创建拖尾特效
+	void SpawnTrailSystem();
+
+	// 爆炸伤害
+	void ExplodeDamage();
+
 	// 抛射体组件
 	UPROPERTY(VisibleAnywhere, Category="Projectile")
 	class UProjectileMovementComponent* ProjectileMovementComponent;
 
+	// 抛洒物网格体
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* ProjectileMesh;
+
 	// 碰撞盒
 	UPROPERTY(EditAnywhere, Category="Projectile")
 	class UBoxComponent* CollisionBox;
+
+	// 拖尾特效
+	UPROPERTY(EditDefaultsOnly)
+	class UNiagaraSystem* TrailSystem;
+
+	// 拖尾特效组件
+	UPROPERTY()
+	class UNiagaraComponent* TrailSystemComponent;
 
 	/**
 	 * 处理Actor的碰撞事件。
@@ -54,6 +78,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float Damage = 10.f;
 
+	// 伤害内半径
+	UPROPERTY(EditDefaultsOnly)
+	float DamageInnerRadius = 200.f;
+	// 伤害外半径
+	UPROPERTY(EditDefaultsOnly)
+	float DamageOuterRadius = 500.f;
+
 private:
 	// 粒子特效
 	UPROPERTY(EditAnywhere, Category="Projectile")
@@ -62,6 +93,13 @@ private:
 	// 粒子特效组件
 	UPROPERTY()
 	UParticleSystemComponent* TracerComponent;
+
+	// 销毁计时器
+	FTimerHandle DestroyTimer;
+
+	// 销毁时间
+	UPROPERTY(EditDefaultsOnly)
+	float DestroyTime = 3.f;
 
 	// 命中特效
 	UPROPERTY(EditDefaultsOnly, Category="Projectile")
