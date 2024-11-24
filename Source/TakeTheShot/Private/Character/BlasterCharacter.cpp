@@ -148,7 +148,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Look);
 
 		/*绑定瞄准动作的触发事件和完成事件*/
-		EnhancedInputComponent->BindAction(AimingAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Aiming_Triggered);
+		EnhancedInputComponent->BindAction(AimingAction, ETriggerEvent::Started, this, &ABlasterCharacter::Aiming_Started);
 		EnhancedInputComponent->BindAction(AimingAction, ETriggerEvent::Completed, this, &ABlasterCharacter::Aiming_Completed);
 
 		// 绑定射击动作的触发事件
@@ -261,6 +261,17 @@ void ABlasterCharacter::MulticastElim_Implementation()
 
 	// 在位置生成一个消除机器人的效果
 	SpawnElimBot();
+
+	bool bHideSniperScope = IsLocallyControlled() &&
+		Combat &&
+		Combat->bAiming &&
+		Combat->EquippedWeapon &&
+		Combat->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle;
+	// 关闭武器瞄准
+	if (bHideSniperScope)
+	{
+		ShowSniperScopeWidget(false);
+	}
 }
 
 // 当消除时间结束时调用
@@ -587,7 +598,7 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 }
 
 // 当角色启用瞄准时调用此函数
-void ABlasterCharacter::Aiming_Triggered()
+void ABlasterCharacter::Aiming_Started()
 {
 	if (bDisableGameplay) return;
 	// 检查是否存在Combat组件，是否装备了武器，以及角色是否未在下落状态

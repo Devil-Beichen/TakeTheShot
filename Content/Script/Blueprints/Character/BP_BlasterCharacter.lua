@@ -1,3 +1,4 @@
+---@diagnostic disable: missing-parameter
 --
 -- DESCRIPTION
 --
@@ -62,9 +63,9 @@ end)]]
 -- function M:UserConstructionScript()
 -- end
 
-function M:ReceiveBeginPlay()
-   -- self:AddOverheadWidget()
-end
+--function M:ReceiveBeginPlay()
+-- self:AddOverheadWidget()
+--end
 
 -- function M:ReceiveEndPlay()
 -- end
@@ -102,6 +103,39 @@ function M:AddOverheadWidget()
     end
 end
 
+-- 瞄准镜
+-- 显示或隐藏狙击镜界面小部件
+-- bShowScope: 布尔值，决定是否显示狙击镜界面
+function M:ShowSniperScopeWidget(bShowScope)
+    -- 加载狙击镜界面的类
+    local WBP_SniperScopeClass = UE.UClass.Load("/Game/Blueprints/HUD/WBP_SniperSoope.WBP_SniperSoope_C")
+
+    -- 如果SniperScopeWidget属性为空，则创建一个新实例
+    if self.SniperScopeWidget then
+    else
+        self.SniperScopeWidget = UE.UWidgetBlueprintLibrary.Create(self, WBP_SniperScopeClass, nil)
+        self.SniperScopeWidget:AddToViewport()
+    end
+
+    -- 如果狙击镜界面小部件已存在，根据bShowScope参数决定其显示状态
+    if self.SniperScopeWidget then
+        if bShowScope then
+            -- 如果显示狙击镜界面，播放放大动画
+            self.SniperScopeWidget:PlayAnimation(self.SniperScopeWidget.ScopeZoomln, 0, 1,
+                UE.EUMGSequencePlayMode.Forward)
+            if self.SniperSound then
+                UE.UGameplayStatics.PlaySound2D(self, self.SniperSound)
+            end
+        else
+            -- 如果隐藏狙击镜界面，反向播放放大动画
+            self.SniperScopeWidget:PlayAnimation(self.SniperScopeWidget.ScopeZoomln, 0, 1,
+                UE.EUMGSequencePlayMode.Reverse)
+            if self.OutSniperSound then
+                UE.UGameplayStatics.PlaySound2D(self, self.OutSniperSound)
+            end
+        end
+    end
+end
 
 --- 绑定输入
 --function M:BindInput()
@@ -116,7 +150,8 @@ function M:AddMappingContext()
     -- 检查玩家控制器是否存在
     if PlayerController then
         -- 获取增强输入系统
-        EnhancedInput = UE.USubsystemBlueprintLibrary.GetLocalPlayerSubSystemFromPlayerController(PlayerController, UE.UEnhancedInputLocalPlayerSubsystem)
+        EnhancedInput = UE.USubsystemBlueprintLibrary.GetLocalPlayerSubSystemFromPlayerController(PlayerController,
+            UE.UEnhancedInputLocalPlayerSubsystem)
         -- 检查增强输入系统是否存在
         if EnhancedInput then
             -- 添加默认映射上下文
@@ -125,7 +160,6 @@ function M:AddMappingContext()
         end
     end
 end
-
 
 --- 移动持续按下
 -- 当移动触发时执行的操作
@@ -152,7 +186,6 @@ end
 --- 跳跃按下
 ------@param ActionValue FInputActionValue
 function M:Jump_Started(ActionValue)
-
     -- 检查是否具有控制器，如果没有，则不执行任何动作并退出当前函数
     if not self:GetController() then
         return
@@ -174,7 +207,6 @@ end
 --- 跳跃完成
 ------@param ActionValue FInputActionValue
 function M:Jump_Completed(ActionValue)
-
     -- 检查是否有控制器，如果没有，则不执行任何操作并退出函数
     if not self:GetController() then
         return

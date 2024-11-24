@@ -83,6 +83,10 @@ public:
 	UPROPERTY(Replicated)
 	bool bDisableGameplay = false;
 
+	// 显示瞄准镜
+	UFUNCTION(BlueprintImplementableEvent)
+	void ShowSniperScopeWidget(bool bShowScope);
+
 	/**
 	 * 接收伤害事件的回调函数。
 	 * 
@@ -229,9 +233,9 @@ protected:
 	UFUNCTION()
 	void Equip_Started();
 
-	// 瞄准持续按下事件
+	// 瞄准按下事件
 	UFUNCTION()
-	void Aiming_Triggered();
+	void Aiming_Started();
 
 	/**
 	 * 瞄准持续松开事件

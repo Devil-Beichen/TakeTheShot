@@ -539,9 +539,14 @@ void UCombatComponent::InterpFOV(float DeltaTime)
 // @param bIsAiming：布尔值，表示是否处于瞄准状态
 void UCombatComponent::SetAiming(const bool bIsAiming)
 {
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
 	bAiming = bIsAiming;
 	// 向服务器请求设置瞄准状态，确保服务器和客户端状态同步
 	ServerSetAiming(bAiming);
+	if (Character->IsLocallyControlled() && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle)
+	{
+		Character->ShowSniperScopeWidget(bIsAiming);
+	}
 }
 
 // 服务器端设置瞄准状态的函数，用于同步客户端和服务器端的状态
