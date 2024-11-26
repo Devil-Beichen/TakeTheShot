@@ -62,6 +62,8 @@ AWeapon::AWeapon()
 	PickupWidget->SetupAttachment(RootComponent);
 	// 设置默认的自定义通道
 	WeaponMesh->SetCustomDepthStencilValue(1);
+	// 标记渲染状态Dirty
+	WeaponMesh->MarkRenderStateDirty();
 }
 
 void AWeapon::BeginPlay()
