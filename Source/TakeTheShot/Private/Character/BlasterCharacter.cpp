@@ -377,6 +377,13 @@ void ABlasterCharacter::FinishReload()
 	Combat->FinishReload();
 }
 
+void ABlasterCharacter::Shell()
+{
+	if (Combat == nullptr) return;
+
+	Combat->ShotgunShellReload();
+}
+
 void ABlasterCharacter::PlayHitReactMontage()
 {
 	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;

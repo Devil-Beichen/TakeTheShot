@@ -40,6 +40,9 @@ public:
 	*/
 	void FireButtonPressed(const bool bPressed);
 
+	// 跳到霰弹枪的装填结束动画
+	void JumpToShotgunEnd();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -69,7 +72,7 @@ protected:
 	 *                        该参数通过网络传输，确保在服务器和客户端之间同步射击目标
 	 */
 	UFUNCTION(Server, Reliable)
-	void ServerFire(const FVector_NetQuantize& TraceHitTarget) const;
+	void ServerFire(const FVector_NetQuantize& TraceHitTarget) ;
 
 	/**
 	 * 网络多播函数，用于可靠地发送射击指令
@@ -78,7 +81,7 @@ protected:
 	 * @param TraceHitTarget 射击命中的目标位置，使用FVector_NetQuantize格式来优化网络传输
 	 */
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastFire(const FVector_NetQuantize& TraceHitTarget) const;
+	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
 
 	/**
 	 * 根据十字准星的位置进行光线追踪，并更新命中结果。
@@ -110,6 +113,9 @@ protected:
 
 	// 完成装填
 	void FinishReload();
+
+	// 处理霰弹枪的弹药加载
+	void ShotgunShellReload();
 
 	// 获取当前角色的弹药数量
 	int32 AmountToReload();
@@ -256,6 +262,9 @@ private:
 
 	// 完成重新换弹
 	void UpdateAmmoValues();
+
+	// 更新霰弹枪的弹药值
+	void UpdateShotgunAmmoValues();
 
 public:
 };

@@ -127,6 +127,10 @@ void AWeapon::SpendRound()
 // 当剩余子弹数量发生变化时回调函数 只会在客户端执行
 void AWeapon::OnRep_Ammo()
 {
+	if (BlasterOwnerCharacter && BlasterOwnerCharacter->GetCombat() && IsFull())
+	{
+		BlasterOwnerCharacter->GetCombat()->JumpToShotgunEnd(); // 播放弹夹装填动画
+	}
 	SetHUDAmmo();
 }
 

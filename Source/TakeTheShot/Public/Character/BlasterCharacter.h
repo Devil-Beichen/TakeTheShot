@@ -60,6 +60,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void FinishReload();
 
+	// 霰弹枪单次换弹
+	UFUNCTION(Blueprintable)
+	void Shell();
+
 	// 播放被命中重播蒙太奇
 	void PlayHitReactMontage();
 

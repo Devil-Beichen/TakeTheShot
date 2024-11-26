@@ -176,6 +176,7 @@ void UCombatComponent::HandleReload()
 	Character->PlayReloadMontage();
 }
 
+// 完成重新装填
 void UCombatComponent::FinishReload()
 {
 	if (Character == nullptr) return;
@@ -190,6 +191,26 @@ void UCombatComponent::FinishReload()
 	}
 }
 
+// 霰弹枪弹药填充逻辑
+void UCombatComponent::ShotgunShellReload()
+{
+	if (Character && Character->HasAuthority())
+	{
+		UpdateShotgunAmmoValues();
+	}
+}
+
+// 跳转到霰弹枪装填结束部分
+void UCombatComponent::JumpToShotgunEnd()
+{
+	// 跳转到霰弹枪装填结束部分
+	if (UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance())
+	{
+		AnimInstance->Montage_JumpToSection(FName("ShotgunEnd"));
+	}
+}
+
+// 确定需要重新装填的弹药数量
 int32 UCombatComponent::AmountToReload()
 {
 	if (EquippedWeapon == nullptr) return 0;
@@ -210,6 +231,7 @@ int32 UCombatComponent::AmountToReload()
 	return 0;
 }
 
+// 更新携带的弹药数量
 void UCombatComponent::UpdateAmmoValues()
 {
 	if (Character == nullptr || EquippedWeapon == nullptr) return;
@@ -229,6 +251,32 @@ void UCombatComponent::UpdateAmmoValues()
 	// 将装备的武器的弹药数量增加（负数表示减少，这里实际上是增加武器内的弹药）
 	EquippedWeapon->AddAmmo(-ReloadAmount);
 	UpdateCarriedAmmo();
+}
+
+// 更新携带的弹药数量
+void UCombatComponent::UpdateShotgunAmmoValues()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+
+	// 检查携带的弹药中是否包含当前装备武器的类型
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		// 减少携带弹药中对应类型的数量
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= 1;
+		// 更新携带的该类型弹药数量
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+	EquippedWeapon->AddAmmo(-1); // 负数表示减少，这里实际上是增加武器内的弹药
+	UpdateCarriedAmmo(); // 更新携带的弹药数量
+
+	// 可以再次开火
+	bCanFire = true;
+
+	// 检查武器是否已满
+	if (EquippedWeapon->IsFull() || CarriedAmmo == 0)
+	{
+		JumpToShotgunEnd();
+	}
 }
 
 // 当开火按钮被按下时，处理相关逻辑
@@ -301,6 +349,7 @@ void UCombatComponent::FireTimerFinished()
 bool UCombatComponent::CanFire()
 {
 	if (EquippedWeapon == nullptr) return false;
+	if (!EquippedWeapon->IsAmmoEmpty() && bCanFire && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun) return true;
 	return !EquippedWeapon->IsAmmoEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 }
 
@@ -308,6 +357,15 @@ bool UCombatComponent::CanFire()
 void UCombatComponent::OnRep_CarriedAmmo()
 {
 	UpdateCarriedAmmo();
+	// 可以跳到霰弹枪装弹结束
+	bool bJumpToShotgunEnd = CombatState == ECombatState::ECS_Reloading &&
+		EquippedWeapon != nullptr &&
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun &&
+		CarriedAmmo == 0;
+	if (bJumpToShotgunEnd)
+	{
+		JumpToShotgunEnd();
+	}
 }
 
 // 更新携带的弹药数量
@@ -333,17 +391,29 @@ void UCombatComponent::InitializeCarriedAmmo()
 }
 
 // 服务器端开火处理，用于同步所有客户端的开火动作
-void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget) const
+void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
 	// 调用多播开火函数，实现所有客户端的同时开火效果
 	MulticastFire(TraceHitTarget);
 }
 
 // 多播开火实现，用于实际播放角色开火动画和执行武器开火逻辑
-void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget) const
+void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
 	// 如果没有装备武器，则不执行任何操作
 	if (EquippedWeapon == nullptr) return;
+	// 如果当前武器类型是霰弹枪，则执行霰弹枪开火逻辑
+	if (Character && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+	{
+		// 播放角色开火动画，参数bAiming表示是否瞄准状态
+		Character->PlayFireMontage(bAiming);
+
+		// 调用装备武器的开火函数，实现实际开火逻辑
+		EquippedWeapon->Fire(TraceHitTarget);
+		CombatState = ECombatState::ECS_Unoccupied; // 设置当前武器状态为非繁忙状态
+
+		return;
+	}
 
 	// 如果角色存在
 	if (Character && CombatState == ECombatState::ECS_Unoccupied)

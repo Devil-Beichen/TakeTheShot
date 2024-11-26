@@ -230,15 +230,14 @@ public:
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	// 获取瞄准时放大视野的插值速度
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
-
 	// 子弹为空
 	FORCEINLINE bool IsAmmoEmpty() const { return Ammo <= 0; }
+	// 弹匣已满
+	FORCEINLINE bool IsFull() const { return Ammo == MagCapacity; }
 	// 获取武器类型
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	// 获取剩余子弹
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	// 获取弹匣容量
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
-	// 弹匣已满
-	FORCEINLINE bool IsFull() const { return Ammo == MagCapacity; }
 };
