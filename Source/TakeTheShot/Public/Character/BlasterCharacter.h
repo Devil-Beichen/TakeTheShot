@@ -70,6 +70,13 @@ public:
 	// 播放淘汰蒙太奇
 	void PlayElimMontage();
 
+	// 播放投掷手榴弹蒙太奇
+	void PlayThrowGrenadeMontage();
+
+	// 投掷手榴弹结束
+	UFUNCTION(Blueprintable)
+	void ThrowGrenadeFinished();
+
 	// 重写角色移动通知
 	virtual void OnRep_ReplicatedMovement() override;
 
@@ -177,6 +184,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Reload = nullptr;
 
+	// 定义一个UInputAction类型的动作，用于处理投掷手榴弹操作
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* ThrowGrenadeAction = nullptr;
+
 	// 增强输入子系统
 	UPROPERTY()
 	UEnhancedInputLocalPlayerSubsystem* EnhancedSubsystem = nullptr;
@@ -262,6 +273,10 @@ protected:
 	// 重装填按钮按下动作
 	UFUNCTION()
 	void ReloadButtonPressed();
+
+	// 投掷手榴弹按下动作
+	UFUNCTION()
+	void ThrowGrenadeStarted();
 
 #pragma endregion
 
@@ -382,6 +397,10 @@ private:
 	// 角色被淘汰 Montage 动画
 	UPROPERTY(EditDefaultsOnly, Category=Combat)
 	UAnimMontage* ElimMontage = nullptr;
+
+	// 投掷手榴弹蒙太奇动画
+	UPROPERTY(EditDefaultsOnly, Category=Combat)
+	UAnimMontage* ThrowGrenadeMontage = nullptr;
 
 	// 如果接近相机就隐藏角色
 	void HideCameraIfCharacterClose();

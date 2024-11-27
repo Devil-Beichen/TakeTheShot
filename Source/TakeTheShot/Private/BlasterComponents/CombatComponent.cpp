@@ -72,6 +72,9 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	// 检查角色和待装备的武器是否为空，如果为空则不执行任何操作
 	if (Character == nullptr || WeaponToEquip == nullptr) return;
+	// 检查当前战斗状态是否为非空闲状态，如果是，则不执行
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->SetOwner(nullptr);
@@ -137,7 +140,7 @@ void UCombatComponent::SetEquippedWeaponState()
 // 重新装填逻辑
 void UCombatComponent::Reload()
 {
-	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading && !EquippedWeapon->IsFull())
+	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied && !EquippedWeapon->IsFull())
 	{
 		ServerReload();
 	}
@@ -165,6 +168,13 @@ void UCombatComponent::OnRep_CombatState()
 		if (bFireButtonPressed)
 		{
 			Fire();
+		}
+		break;
+	case ECombatState::ECS_ThrowingGrenade:
+		// 播放远程武器的抛射动画
+		if (Character && !Character->IsLocallyControlled())
+		{
+			Character->PlayThrowGrenadeMontage();
 		}
 		break;
 	}
@@ -210,6 +220,12 @@ void UCombatComponent::JumpToShotgunEnd()
 	}
 }
 
+// 抛射手雷完成
+void UCombatComponent::ThrowGrenadeFinished()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
+}
+
 // 确定需要重新装填的弹药数量
 int32 UCombatComponent::AmountToReload()
 {
@@ -229,6 +245,32 @@ int32 UCombatComponent::AmountToReload()
 	}
 
 	return 0;
+}
+
+// 投掷手雷
+void UCombatComponent::ThrowGrenade()
+{
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+	if (Character)
+	{
+		Character->PlayThrowGrenadeMontage();
+	}
+	// 投掷手雷
+	if (Character && !Character->HasAuthority())
+	{
+		ServerThrowGrenade();
+	}
+}
+
+// 服务端投掷手雷
+void UCombatComponent::ServerThrowGrenade_Implementation()
+{
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+	if (Character)
+	{
+		Character->PlayThrowGrenadeMontage();
+	}
 }
 
 // 更新携带的弹药数量

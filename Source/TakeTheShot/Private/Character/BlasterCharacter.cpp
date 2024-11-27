@@ -157,6 +157,9 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 		// 绑定重装动作的开始事件
 		EnhancedInputComponent->BindAction(Reload, ETriggerEvent::Started, this, &ABlasterCharacter::ReloadButtonPressed);
+
+		// 绑定投掷手雷动作的开始事件
+		EnhancedInputComponent->BindAction(ThrowGrenadeAction, ETriggerEvent::Started, this, &ABlasterCharacter::ThrowGrenadeStarted);
 	}
 }
 
@@ -410,6 +413,27 @@ void ABlasterCharacter::PlayElimMontage()
 	}
 }
 
+// 抛掷 手榴弹 动画
+void ABlasterCharacter::PlayThrowGrenadeMontage()
+{
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		if (ThrowGrenadeMontage)
+		{
+			AnimInstance->Montage_Play(ThrowGrenadeMontage);
+		}
+	}
+}
+
+// 抛掷手榴弹结束
+void ABlasterCharacter::ThrowGrenadeFinished()
+{
+	if (Combat)
+	{
+		Combat->ThrowGrenadeFinished();
+	}
+}
+
 void ABlasterCharacter::Destroyed()
 {
 	// 如果ElimBotComponent存在
@@ -646,12 +670,23 @@ void ABlasterCharacter::Fire_Completed()
 	}
 }
 
+// 重新装填按下
 void ABlasterCharacter::ReloadButtonPressed()
 {
 	if (bDisableGameplay) return;
 	if (Combat && Combat->EquippedWeapon)
 	{
 		Combat->Reload();
+	}
+}
+
+// 投掷 Grenade 按钮按下
+void ABlasterCharacter::ThrowGrenadeStarted()
+{
+	if (bDisableGameplay) return;
+	if (Combat)
+	{
+		Combat->ThrowGrenade();
 	}
 }
 

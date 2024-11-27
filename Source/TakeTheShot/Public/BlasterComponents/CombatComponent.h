@@ -43,6 +43,9 @@ public:
 	// 跳到霰弹枪的装填结束动画
 	void JumpToShotgunEnd();
 
+	// 投掷手雷完成
+	void ThrowGrenadeFinished();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -72,7 +75,7 @@ protected:
 	 *                        该参数通过网络传输，确保在服务器和客户端之间同步射击目标
 	 */
 	UFUNCTION(Server, Reliable)
-	void ServerFire(const FVector_NetQuantize& TraceHitTarget) ;
+	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
 
 	/**
 	 * 网络多播函数，用于可靠地发送射击指令
@@ -119,6 +122,13 @@ protected:
 
 	// 获取当前角色的弹药数量
 	int32 AmountToReload();
+
+	// 投掷手雷
+	void ThrowGrenade();
+
+	// 服务器投掷手雷
+	UFUNCTION(Server, Reliable)
+	void ServerThrowGrenade();
 
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
