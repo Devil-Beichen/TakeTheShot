@@ -75,15 +75,72 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// 检查当前战斗状态是否为非空闲状态，如果是，则不执行
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
 
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->SetOwner(nullptr);
-		EquippedWeapon->Dropped();
-	}
+	DropEquippedWeapon();
 
 	// 将待装备的武器设置为当前装备的武器
 	EquippedWeapon = WeaponToEquip;
 	SetEquippedWeaponState();
+}
+
+// 丢弃装备的武器
+void UCombatComponent::DropEquippedWeapon()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->Dropped();
+	}
+}
+
+// 将Actor绑定到的右手上
+void UCombatComponent::AttachActorToRightHand(AActor* ActorToAttach)
+{
+	if (Character == nullptr || Character->GetMesh() == nullptr || ActorToAttach == nullptr) return;
+	// 尝试找到角色右手的插槽，如果找到，则将武器装备到该插槽
+	if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket")))
+	{
+		HandSocket->AttachActor(ActorToAttach, Character->GetMesh());
+	}
+}
+
+// 将指定的Actor装备到角色的左手上
+// 参数 ActorToAttach: 需要装备到左手的Actor，例如武器或者其他装备
+void UCombatComponent::AttachActorToLeftHand(AActor* ActorToAttach)
+{
+	// 如果角色、角色的网格、要装备的Actor或装备的武器为空，则直接返回
+	if (Character == nullptr || Character->GetMesh() == nullptr || ActorToAttach == nullptr || EquippedWeapon == nullptr) return;
+
+	// 判断当前装备的武器类型是否为手枪或冲锋枪，如果是，则使用PistolSocket，否则使用LeftHandSocket
+	bool bUsePistolSocket = EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Pistol || EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SubmachineGun;
+
+	// 尝试找到角色左手的插槽，如果找到，则将武器装备到该插槽
+	if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(bUsePistolSocket ? FName("PistolSocket") : FName("LeftHandSocket")))
+	{
+		HandSocket->AttachActor(ActorToAttach, Character->GetMesh());
+	}
+}
+
+
+// 播放装备武器的音效
+void UCombatComponent::PlayEquipWeaponSound()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr || EquippedWeapon->EquipSound) return;
+
+	// 播放装备武器的音效
+	UGameplayStatics::PlaySoundAtLocation(
+		this,
+		EquippedWeapon->EquipSound,
+		Character->GetActorLocation()
+	);
+}
+
+// 重新装填空武器
+void UCombatComponent::ReloadEmptyWeapon()
+{
+	// 检查装备的武器当前弹药是否为空
+	if (EquippedWeapon && EquippedWeapon->IsAmmoEmpty())
+	{
+		Reload();
+	}
 }
 
 // 当装备的武器发生变化时调用此函数
@@ -99,11 +156,8 @@ void UCombatComponent::SetEquippedWeaponState()
 {
 	// 设置武器状态为已装备
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	// 尝试找到角色右手的插槽，如果找到，则将武器装备到该插槽
-	if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket")))
-	{
-		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
-	}
+	// 将武器装备到角色的右手上
+	AttachActorToRightHand(EquippedWeapon);
 
 	// 设置武器的所有者(只会在服务端设置)
 	if (Character->HasAuthority())
@@ -113,22 +167,19 @@ void UCombatComponent::SetEquippedWeaponState()
 	// 设置弹药信息
 	EquippedWeapon->SetHUDAmmo();
 
+	// 更新弹药数量
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
 	{
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
 
+	// 更新弹药数量
 	UpdateCarriedAmmo();
 
 	// 播放装备武器的音效
-	if (EquippedWeapon->EquipSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			this,
-			EquippedWeapon->EquipSound,
-			Character->GetActorLocation()
-		);
-	}
+	PlayEquipWeaponSound();
+
+	ReloadEmptyWeapon(); // 重新装填空武器
 
 	// 禁用角色的移动方向与旋转方向的自动对齐
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -175,7 +226,10 @@ void UCombatComponent::OnRep_CombatState()
 		if (Character && !Character->IsLocallyControlled())
 		{
 			Character->PlayThrowGrenadeMontage();
+			AttachActorToLeftHand(EquippedWeapon);
 		}
+		break;
+	case ECombatState::ECS_MAX:
 		break;
 	}
 }
@@ -224,6 +278,7 @@ void UCombatComponent::JumpToShotgunEnd()
 void UCombatComponent::ThrowGrenadeFinished()
 {
 	CombatState = ECombatState::ECS_Unoccupied;
+	AttachActorToRightHand(EquippedWeapon);
 }
 
 // 确定需要重新装填的弹药数量
@@ -255,6 +310,7 @@ void UCombatComponent::ThrowGrenade()
 	if (Character)
 	{
 		Character->PlayThrowGrenadeMontage();
+		AttachActorToLeftHand(EquippedWeapon);
 	}
 	// 投掷手雷
 	if (Character && !Character->HasAuthority())
@@ -270,6 +326,7 @@ void UCombatComponent::ServerThrowGrenade_Implementation()
 	if (Character)
 	{
 		Character->PlayThrowGrenadeMontage();
+		AttachActorToLeftHand(EquippedWeapon);
 	}
 }
 
@@ -371,20 +428,16 @@ void UCombatComponent::StartFireTimer()
 // 开火定时器完成
 void UCombatComponent::FireTimerFinished()
 {
-	bCanFire = true;
-
 	if (EquippedWeapon == nullptr)return;
+	bCanFire = true;
 
 	if (bFireButtonPressed && EquippedWeapon->bAutomatic)
 	{
 		Fire();
 	}
 
-	// 检查弹药是否为空
-	if (EquippedWeapon->IsAmmoEmpty())
-	{
-		Reload();
-	}
+	// 重新装填空武器
+	ReloadEmptyWeapon();
 }
 
 // 可以开火
@@ -413,6 +466,7 @@ void UCombatComponent::OnRep_CarriedAmmo()
 // 更新携带的弹药数量
 void UCombatComponent::UpdateCarriedAmmo()
 {
+	if (EquippedWeapon == nullptr) return;
 	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
 	if (Controller)
 	{

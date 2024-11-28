@@ -46,6 +46,21 @@ public:
 	// 投掷手雷完成
 	void ThrowGrenadeFinished();
 
+	// 丢弃装备的武器
+	void DropEquippedWeapon();
+
+	// 将Actor绑定到的右手上
+	void AttachActorToRightHand(AActor* ActorToAttach);
+
+	// 将Actor绑定到的左手上
+	void AttachActorToLeftHand(AActor* ActorToAttach);
+
+	// 播放装备武器的音效
+	void PlayEquipWeaponSound();
+
+	// 重新装填空武器
+	void ReloadEmptyWeapon();
+
 protected:
 	virtual void BeginPlay() override;
 
