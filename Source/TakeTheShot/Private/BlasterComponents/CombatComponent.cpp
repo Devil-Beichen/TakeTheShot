@@ -8,6 +8,7 @@
 #include "Net/UnrealNetwork.h"
 #include "PlayerController/BlasterPlayerController.h"
 #include "Sound/SoundCue.h"
+#include "Weapon/Projectile.h"
 #include "Weapon/Weapon.h"
 
 
@@ -143,6 +144,15 @@ void UCombatComponent::ReloadEmptyWeapon()
 	}
 }
 
+// 显示或隐藏手雷
+void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade)
+{
+	if (Character && Character->GetAttachedGrenade())
+	{
+		Character->GetAttachedGrenade()->SetVisibility(bShowGrenade);
+	}
+}
+
 // 当装备的武器发生变化时调用此函数
 void UCombatComponent::OnRep_EquippedWeapon()
 {
@@ -223,11 +233,13 @@ void UCombatComponent::OnRep_CombatState()
 		break;
 	case ECombatState::ECS_ThrowingGrenade:
 		// 播放远程武器的抛射动画
-		if (Character && !Character->IsLocallyControlled())
+		/*if (Character && !Character->IsLocallyControlled())
 		{
 			Character->PlayThrowGrenadeMontage();
 			AttachActorToLeftHand(EquippedWeapon);
-		}
+			ShowAttachedGrenade(true);
+		}*/
+		ThrowGrenadeSet();
 		break;
 	case ECombatState::ECS_MAX:
 		break;
@@ -305,29 +317,78 @@ int32 UCombatComponent::AmountToReload()
 // 投掷手雷
 void UCombatComponent::ThrowGrenade()
 {
-	if (CombatState != ECombatState::ECS_Unoccupied) return;
-	CombatState = ECombatState::ECS_ThrowingGrenade;
-	if (Character)
+	if (CombatState != ECombatState::ECS_Unoccupied || EquippedWeapon == nullptr || Character == nullptr) return;
+
+	// 检查是否为本地玩家
+	if (!Character->HasAuthority())
 	{
-		Character->PlayThrowGrenadeMontage();
-		AttachActorToLeftHand(EquippedWeapon);
-	}
-	// 投掷手雷
-	if (Character && !Character->HasAuthority())
-	{
+		// 发送投掷手雷的请求
 		ServerThrowGrenade();
+	}
+	else
+	{
+		// 投掷手雷设置
+		ThrowGrenadeSet();
 	}
 }
 
-// 服务端投掷手雷
-void UCombatComponent::ServerThrowGrenade_Implementation()
+// 投掷手雷设置
+void UCombatComponent::ThrowGrenadeSet()
 {
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 	if (Character)
 	{
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLeftHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
 	}
+}
+
+// 发射手雷
+void UCombatComponent::LaunchGrenade()
+{
+	ShowAttachedGrenade(false);
+	if (Character && Character->IsLocallyControlled())
+	{
+		ServerLaunchGrenade(HitTarget);
+	}
+}
+
+// 发送投掷手雷的请求
+void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuantize& Target)
+{
+	// 检查角色、权限、手榴弹类和附加的手榴弹是否存在
+	if (Character && GrenadeClass && Character->GetAttachedGrenade())
+	{
+		// 获取手榴弹的初始位置
+		const FVector StartingLocation = Character->GetAttachedGrenade()->GetComponentLocation();
+
+		// 计算从初始位置到目标位置的向量
+		FVector ToTarget = Target - StartingLocation;
+		// 设置演员的生成参数
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = Character;
+		SpawnParams.Instigator = Character;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		// 获取当前世界对象
+		if (UWorld* World = GetWorld())
+		{
+			// 在指定位置和旋转处生成手榴弹类的实例
+			World->SpawnActor<AProjectile>(
+				GrenadeClass,
+				StartingLocation,
+				ToTarget.Rotation(),
+				SpawnParams
+			);
+		}
+	}
+}
+
+// 服务端投掷手雷
+void UCombatComponent::ServerThrowGrenade_Implementation()
+{
+	ThrowGrenadeSet();
 }
 
 // 更新携带的弹药数量

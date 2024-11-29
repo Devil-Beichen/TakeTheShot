@@ -73,6 +73,10 @@ public:
 	// 播放投掷手榴弹蒙太奇
 	void PlayThrowGrenadeMontage();
 
+	// 发射手雷
+	UFUNCTION(Blueprintable)
+	void LaunchGrenade();
+
 	// 投掷手榴弹结束
 	UFUNCTION(Blueprintable)
 	void ThrowGrenadeFinished();
@@ -544,6 +548,13 @@ private:
 	UPROPERTY()
 	class ABlasterPlayerState* BlasterPlayerState = nullptr;
 
+	/**
+	 * 手榴弹
+	 */
+	// 附加手榴弹模型
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* AttachedGrenade;
+
 #pragma endregion
 
 public:
@@ -581,4 +592,6 @@ public:
 	FORCEINLINE UCombatComponent* GetCombat() const { return Combat; }
 	// 获取是否禁用游戏部分功能
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
+	// 获取附加的手榴弹
+	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
 };

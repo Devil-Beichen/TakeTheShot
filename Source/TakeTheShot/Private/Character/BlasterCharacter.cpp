@@ -77,6 +77,12 @@ ABlasterCharacter::ABlasterCharacter()
 	NetUpdateFrequency = 66.f;
 	// 定义最小网络更新频率，确保在任何情况下更新频率都不会低于此值
 	MinNetUpdateFrequency = 33.f;
+
+	// 创建一个默认的静态网格体组件，用于表示角色携带的 Grenade
+	AttachedGrenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AttachedGrenade"));
+	// 将新创建的静态网格体组件附加到角色的网格体上，
+	AttachedGrenade->SetupAttachment(GetMesh(), FName("GrenadeSocket"));
+	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -104,6 +110,10 @@ void ABlasterCharacter::BeginPlay()
 		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
 	}
 	Initialize();
+	if (AttachedGrenade)
+	{
+		AttachedGrenade->SetVisibility(false);
+	}
 }
 
 // 初始化
@@ -422,6 +432,15 @@ void ABlasterCharacter::PlayThrowGrenadeMontage()
 		{
 			AnimInstance->Montage_Play(ThrowGrenadeMontage);
 		}
+	}
+}
+
+// 发射手雷
+void ABlasterCharacter::LaunchGrenade()
+{
+	if (Combat)
+	{
+		Combat->LaunchGrenade();
 	}
 }
 

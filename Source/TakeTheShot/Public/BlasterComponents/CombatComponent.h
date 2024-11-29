@@ -61,6 +61,9 @@ public:
 	// 重新装填空武器
 	void ReloadEmptyWeapon();
 
+	// 显示或隐藏手雷
+	void ShowAttachedGrenade(bool bShowGrenade);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -144,6 +147,20 @@ protected:
 	// 服务器投掷手雷
 	UFUNCTION(Server, Reliable)
 	void ServerThrowGrenade();
+
+	// 手雷类
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class AProjectile> GrenadeClass;
+
+	// 投掷手雷设置
+	void ThrowGrenadeSet();
+
+	// 发射手雷
+	void LaunchGrenade();
+
+	// 服务器发射手雷
+	UFUNCTION(Server, Reliable)
+	void ServerLaunchGrenade(const FVector_NetQuantize& Target);
 
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
