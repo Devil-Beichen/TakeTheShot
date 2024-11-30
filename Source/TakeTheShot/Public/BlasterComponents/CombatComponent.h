@@ -308,5 +308,22 @@ private:
 	// 更新霰弹枪的弹药值
 	void UpdateShotgunAmmoValues();
 
+	// 携带的手雷
+	UPROPERTY(ReplicatedUsing = OnRep_Grenades)
+	int32 Grenades = 4;
+
+	// 回调手雷数量改变
+	UFUNCTION()
+	void OnRep_Grenades();
+
+	// 最大携带的手雷
+	UPROPERTY(EditDefaultsOnly)
+	int32 MaxGrenades = 4;
+
+	// 更新HUD上的手雷数量
+	void UpdateHUDGrenades();
+
 public:
+	// 获取携带的手雷
+	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 };

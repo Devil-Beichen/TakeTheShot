@@ -54,6 +54,9 @@ public:
 	// 设置HUD上的公告倒计时
 	void SetHUDAnnouncementCountdown(float CountdownTime);
 
+	// 设置携带的手雷
+	void SetHUDGrenades(const int32 Grenades);
+
 	// 重写拥有pawn
 	virtual void OnPossess(APawn* InPawn) override;
 
@@ -134,12 +137,11 @@ protected:
 	UFUNCTION(Client, Reliable)
 	void ClientJoinMidGame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
 
-
 private:
 	// HUD
 	UPROPERTY()
 	class ABlasterHUD* BlasterHUD = nullptr;
-	
+
 	// 游戏模式
 	UPROPERTY()
 	class ABlasterGameMode* BlasterGameMode;
@@ -182,9 +184,13 @@ private:
 	// UI是否已经初始化
 	bool bInitializeCharacterOverlay = false;
 
+	// HUD血量
 	float HUDHealth;
 	float HUDMaxHealth;
 
+	// HUD分数
 	float HUDScore;
 	int32 HUDDefeats;
+
+	int32 HUDGrenades;
 };

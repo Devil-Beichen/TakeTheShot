@@ -45,4 +45,8 @@ public:
 	// 倒计时
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* MatchCountdownText;
+
+	// 手雷数量
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* GrenadesText;
 };

@@ -486,13 +486,14 @@ void ABlasterCharacter::Destroyed()
 // - DamageCauser: 造成伤害的角色对象
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
+	// 如果已经死亡就返回
+	if (bEliminate == true) return;
+
 	// 添加日志记录，记录每次调用的详细信息
 	UE_LOG(LogTemp, Log, TEXT("%s 收到了 %f点伤害，调用者: %s, 损伤来源: %s"),
 	       *this->GetName(), Damage,
 	       InstigatorController ? *InstigatorController->GetName() : TEXT("None"),
 	       DamageCauser ? *DamageCauser->GetName() : TEXT("None"));
-	// 如果已经死亡就返回
-	if (bEliminate == true) return;
 
 	// 更新生命值，并确保它不会超过最大值或低于0
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);

@@ -25,10 +25,11 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	// 指定EquippedWeapon属性需要在服务器和客户端之间同步复制
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
-	// 指定Aiming属性需要在服务器和客户端之间同步复制
+	// 指定属性需要在服务器和客户端之间同步复制
 	DOREPLIFETIME(UCombatComponent, bAiming);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 	DOREPLIFETIME(UCombatComponent, CombatState);
+	DOREPLIFETIME(UCombatComponent, Grenades);
 }
 
 void UCombatComponent::BeginPlay()
@@ -286,13 +287,6 @@ void UCombatComponent::JumpToShotgunEnd()
 	}
 }
 
-// 抛射手雷完成
-void UCombatComponent::ThrowGrenadeFinished()
-{
-	CombatState = ECombatState::ECS_Unoccupied;
-	AttachActorToRightHand(EquippedWeapon);
-}
-
 // 确定需要重新装填的弹药数量
 int32 UCombatComponent::AmountToReload()
 {
@@ -317,6 +311,7 @@ int32 UCombatComponent::AmountToReload()
 // 投掷手雷
 void UCombatComponent::ThrowGrenade()
 {
+	if (Grenades == 0) return;
 	if (CombatState != ECombatState::ECS_Unoccupied || EquippedWeapon == nullptr || Character == nullptr) return;
 
 	// 检查是否为本地玩家
@@ -332,16 +327,22 @@ void UCombatComponent::ThrowGrenade()
 	}
 }
 
+// 服务端投掷手雷
+void UCombatComponent::ServerThrowGrenade_Implementation()
+{
+	if (Grenades == 0) return;
+	ThrowGrenadeSet();
+}
+
 // 投掷手雷设置
 void UCombatComponent::ThrowGrenadeSet()
 {
+	if (Character == nullptr) return;
 	CombatState = ECombatState::ECS_ThrowingGrenade;
-	if (Character)
-	{
-		Character->PlayThrowGrenadeMontage();
-		AttachActorToLeftHand(EquippedWeapon);
-		ShowAttachedGrenade(true);
-	}
+
+	Character->PlayThrowGrenadeMontage();
+	AttachActorToLeftHand(EquippedWeapon);
+	ShowAttachedGrenade(true);
 }
 
 // 发射手雷
@@ -381,14 +382,35 @@ void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuant
 				ToTarget.Rotation(),
 				SpawnParams
 			);
+
+			// 减少手榴弹数量 只会在服务端减少手雷
+			Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
+			UpdateHUDGrenades();
 		}
 	}
 }
 
-// 服务端投掷手雷
-void UCombatComponent::ServerThrowGrenade_Implementation()
+// 更新携带的弹药数量
+void UCombatComponent::OnRep_Grenades()
 {
-	ThrowGrenadeSet();
+	UpdateHUDGrenades();
+}
+
+// 更新HUD 的手雷
+void UCombatComponent::UpdateHUDGrenades()
+{
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDGrenades(Grenades);
+	}
+}
+
+// 抛射手雷完成
+void UCombatComponent::ThrowGrenadeFinished()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
+	AttachActorToRightHand(EquippedWeapon);
 }
 
 // 更新携带的弹药数量
@@ -545,6 +567,9 @@ void UCombatComponent::InitializeCarriedAmmo()
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_Shotgun, StartingShotgunAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_SniperRifle, StartingSniperAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_GrenadeLauncher, StartingGrenadeLauncherAmmo);
+
+	// 更新携带的手雷
+	UpdateHUDGrenades();
 }
 
 // 服务器端开火处理，用于同步所有客户端的开火动作
