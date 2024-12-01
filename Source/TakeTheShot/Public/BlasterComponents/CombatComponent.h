@@ -162,6 +162,10 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerLaunchGrenade(const FVector_NetQuantize& Target);
 
+public:
+	// 拾取弹药
+	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
+
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
 	UPROPERTY()
@@ -262,6 +266,10 @@ private:
 
 	// 携带弹药的哈希表
 	TMap<EWeaponType, int32> CarriedAmmoMap;
+
+	// 最大携带弹药
+	UPROPERTY(EditDefaultsOnly)
+	int32 MaxCarriedAmmo = 500;
 
 	// 开始的步枪备用弹药
 	UPROPERTY(EditDefaultsOnly, Category = Combat)

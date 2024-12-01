@@ -42,6 +42,10 @@ protected:
 		bool bFromSweep,
 		const FHitResult& SweepResult);
 
+	// 旋转速度
+	UPROPERTY(EditDefaultsOnly)
+	float BaseTurnRate = 45.f;
+
 private:
 	// 拾取球体组件
 	UPROPERTY(EditDefaultsOnly)

@@ -355,6 +355,23 @@ void UCombatComponent::LaunchGrenade()
 	}
 }
 
+// 拾取弹药
+void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
+{
+	// 检查弹药类型
+	if (CarriedAmmoMap.Contains(WeaponType))
+	{
+		// 添加弹药数量
+		CarriedAmmoMap[WeaponType] = FMath::Clamp(CarriedAmmoMap[WeaponType] + AmmoAmount, 0, MaxCarriedAmmo);
+		// 更新弹药数量
+		UpdateCarriedAmmo();
+	}
+	if (EquippedWeapon && EquippedWeapon->IsAmmoEmpty() && EquippedWeapon->GetWeaponType() == WeaponType)
+	{
+		Reload();
+	}
+}
+
 // 发送投掷手雷的请求
 void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuantize& Target)
 {
@@ -435,7 +452,7 @@ void UCombatComponent::UpdateAmmoValues()
 	UpdateCarriedAmmo();
 }
 
-// 更新携带的弹药数量
+// 更新携带的霰弹枪弹药数量
 void UCombatComponent::UpdateShotgunAmmoValues()
 {
 	if (Character == nullptr || EquippedWeapon == nullptr) return;
@@ -550,6 +567,12 @@ void UCombatComponent::OnRep_CarriedAmmo()
 void UCombatComponent::UpdateCarriedAmmo()
 {
 	if (EquippedWeapon == nullptr) return;
+
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+
 	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
 	if (Controller)
 	{
