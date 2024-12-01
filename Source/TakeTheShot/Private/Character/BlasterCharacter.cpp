@@ -7,6 +7,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "TakeTheShot.h"
 #include "BlasterComponents/CombatComponent.h"
+#include "BlasterComponents/BuffComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
@@ -72,6 +73,12 @@ ABlasterCharacter::ABlasterCharacter()
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
 	// 设置战斗组件为复制，使其在服务器和客户端之间同步
 	Combat->SetIsReplicated(true);
+
+	/**
+	 * 创建并初始化一个 buff 组件，用于处理 buff 相关逻辑
+	 */
+	Buff = CreateDefaultSubobject<UBuffComponent>(TEXT("BuffComponent"));
+	Buff->SetIsReplicated(true);
 
 	// 定义网络更新频率，用于控制数据同步的速率
 	NetUpdateFrequency = 66.f;
@@ -173,12 +180,17 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	}
 }
 
+// 初始化角色组件
 void ABlasterCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	if (Combat)
 	{
 		Combat->Character = this;
+	}
+	if (Buff)
+	{
+		Buff->Character = this;
 	}
 }
 
