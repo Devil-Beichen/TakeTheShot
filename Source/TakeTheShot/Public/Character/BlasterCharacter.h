@@ -594,6 +594,8 @@ public:
 	FORCEINLINE ECombatState GetCombatState() const { return Combat == nullptr ? ECombatState::ECS_MAX : Combat->CombatState; }
 	// 获取角色的武器组件
 	FORCEINLINE UCombatComponent* GetCombat() const { return Combat; }
+	// 获取角色的buff组件
+	FORCEINLINE UBuffComponent* GetBuff() const { return Buff; }
 	// 获取是否禁用游戏部分功能
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 	// 获取附加的手榴弹
