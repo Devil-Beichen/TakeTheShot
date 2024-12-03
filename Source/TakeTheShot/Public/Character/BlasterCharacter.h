@@ -473,9 +473,12 @@ private:
 	UPROPERTY(ReplicatedUsing= "OnRep_Health", VisibleAnywhere, Category="Player Stats")
 	float Health = 100.f;
 
-	// 回调当前生命值
+	/**
+	 * 当角色的生命值发生变化时调用此函数，用于处理相关的逻辑
+	 * @param LastHealth	上一次的生命值
+	 */
 	UFUNCTION()
-	void OnRep_Health();
+	void OnRep_Health(float LastHealth);
 
 	// 玩家控制器
 	UPROPERTY()
@@ -588,6 +591,8 @@ public:
 	FORCEINLINE bool IsEliminate() const { return bEliminate; }
 	// 获取角色的生命值
 	FORCEINLINE float GetHealth() const { return Health; }
+	// 设置角色的生命值
+	FORCEINLINE void SetHealth(float Amount) { Health = Amount; };
 	// 获取角色的最大生命值
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 	// 获取角色的武器状态

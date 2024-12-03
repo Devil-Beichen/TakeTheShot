@@ -875,11 +875,14 @@ void ABlasterCharacter::RotateInPlace(float DeltaTime)
 	}
 }
 
-
-void ABlasterCharacter::OnRep_Health()
+// 当角色的生命值发生变化时调用此函数，用于处理相关的逻辑
+void ABlasterCharacter::OnRep_Health(float LastHealth)
 {
 	UpdateHUDHealth();
-	PlayHitReactMontage();
+	if (Health < LastHealth)
+	{
+		PlayHitReactMontage();
+	}
 }
 
 void ABlasterCharacter::UpdateDissolveMaterial(const float DissolveValue)

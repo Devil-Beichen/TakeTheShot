@@ -25,13 +25,30 @@ public:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	/**
+	 * 恢复生命
+	 * @param HealAmount	恢复的总生命值 
+	 * @param HealingTime	恢复持续的时间
+	 */
+	void Heal(float HealAmount, float HealingTime);
+
 protected:
 	virtual void BeginPlay() override;
+
+	// 治疗增加
+	void HealRampUp(float DetaTime);
 
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
 	UPROPERTY()
 	ABlasterCharacter* Character = nullptr;
+
+	// 用于记录是否正在恢复生命
+	bool bHealing = false;
+	// 目前恢复的速率
+	float HealingRate = 0.f;
+	// 还需要恢复的
+	float AmountToHeal = 0.f;
 
 public:
 };
