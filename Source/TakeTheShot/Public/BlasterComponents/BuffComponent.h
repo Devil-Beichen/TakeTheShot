@@ -43,6 +43,16 @@ public:
 	// 设置初始速度
 	void SetInitialSpeeds(float BaseSpeed, float CrouchSpeed);
 
+	// 设置初始跳跃速度
+	void SetInitialJumpVelocity(float BaseJumpVelocity);
+
+	/**
+	*	跳跃BUFF
+	* @param BuffJumpVelocity		跳跃速度
+	* @param BuffTime				buff持续时间
+	*/
+	void BuffJump(float BuffJumpVelocity, float BuffTime);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -95,6 +105,32 @@ private:
 	 * @param bAccelebuff		是否是加速buff
 	 */
 	void SetSpeed(float BaseSpeed, float CrouchSpeed, bool bAccelebuff = true);
+
+	/**
+	 *  跳跃相关的BUFF
+	 */
+
+	// 跳跃buff的定时器
+	FTimerHandle JumpBuffTimer;
+
+	// 重置跳跃
+	void ResetJump();
+
+	// 初始跳跃速度
+	float InitialJumpVelocity = 0.f;
+
+	/**
+	 * 设置跳跃速度
+	 * @param BuffJumpVelocity 	跳跃速度
+	 */
+	void SetJumpVelocity(float BuffJumpVelocity);
+
+	/**
+	 * 
+	 * @param BuffJumpVelocity 	跳跃速度
+	 */
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastJumpVelocity(float BuffJumpVelocity);
 
 public:
 };

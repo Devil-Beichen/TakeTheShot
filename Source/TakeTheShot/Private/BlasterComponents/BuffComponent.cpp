@@ -94,3 +94,47 @@ void UBuffComponent::SetSpeed(float BaseSpeed, float CrouchSpeed, bool bAccelebu
 		Character->bIsSlowWalk = false;
 	}
 }
+
+// 初始化跳跃速度
+void UBuffComponent::SetInitialJumpVelocity(float BaseJumpVelocity)
+{
+	InitialJumpVelocity = BaseJumpVelocity;
+}
+
+// 跳跃 buff
+void UBuffComponent::BuffJump(float BuffJumpVelocity, float BuffTime)
+{
+	if (Character == nullptr) return;
+
+	Character->GetWorldTimerManager().SetTimer(
+		JumpBuffTimer,
+		this,
+		&UBuffComponent::ResetJump,
+		BuffTime
+	);
+
+	SetJumpVelocity(BuffJumpVelocity);
+	MulticastJumpVelocity(BuffJumpVelocity);
+}
+
+// 重置跳跃速度
+void UBuffComponent::ResetJump()
+{
+	SetJumpVelocity(InitialJumpVelocity);
+	MulticastJumpVelocity(InitialJumpVelocity);
+}
+
+// 设置跳跃速度
+void UBuffComponent::SetJumpVelocity(float BuffJumpVelocity)
+{
+	if (Character && Character->GetCharacterMovement())
+	{
+		Character->GetCharacterMovement()->JumpZVelocity = BuffJumpVelocity;
+	}
+}
+
+// 多播设置跳跃速度
+void UBuffComponent::MulticastJumpVelocity_Implementation(float BuffJumpVelocity)
+{
+	SetJumpVelocity(BuffJumpVelocity);
+}
