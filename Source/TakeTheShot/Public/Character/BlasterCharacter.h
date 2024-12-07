@@ -124,6 +124,8 @@ public:
 
 	// 更新生命值
 	void UpdateHUDHealth();
+	// 更新护盾值
+	void UpdateHUDShield();
 
 	// 初始化HUD
 	void PollInit();
@@ -482,6 +484,24 @@ private:
 	 */
 	UFUNCTION()
 	void OnRep_Health(float LastHealth);
+
+	/**
+	 *  角色的护盾相关
+	 */
+	// 最大护盾值
+	UPROPERTY(EditDefaultsOnly, Category="Player Stats")
+	float MaxShield = 100.f;
+
+	// 当前护盾值
+	UPROPERTY(ReplicatedUsing= "OnRep_Shield", VisibleAnywhere, Category="Player Stats")
+	float Shield = 100.f;
+
+	/**
+	 * 当角色的护盾值发生变化时调用此函数，用于处理相关的逻辑
+	 * @param LastShield	上一次的护盾值
+	 */
+	UFUNCTION()
+	void OnRep_Shield(float LastShield);
 
 	// 玩家控制器
 	UPROPERTY()

@@ -26,6 +26,14 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* HealthText;
 
+	// 护盾
+	UPROPERTY(meta=(BindWidget))
+	class UProgressBar* ShieldBar;
+
+	// 当前护盾文本
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* ShieldText;
+
 	// 分数
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* ScoreAmount;

@@ -97,6 +97,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(ABlasterCharacter, Health);
+	DOREPLIFETIME(ABlasterCharacter, Shield);
 	DOREPLIFETIME(ABlasterCharacter, bDisableGameplay);
 }
 
@@ -131,6 +132,8 @@ void ABlasterCharacter::Initialize()
 	AddDefaultMappingContext();
 
 	UpdateHUDHealth();
+	
+	UpdateHUDShield();
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -815,6 +818,7 @@ bool ABlasterCharacter::IsAiming() const
 	return (Combat && Combat->bAiming);
 }
 
+// 更新HUD上的生命值
 void ABlasterCharacter::UpdateHUDHealth()
 {
 	// 将控制器转换为BlasterPlayerController类型，并更新生命值
@@ -823,6 +827,18 @@ void ABlasterCharacter::UpdateHUDHealth()
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+// 更新HUD上的护盾值
+void ABlasterCharacter::UpdateHUDShield()
+{
+	// 将控制器转换为BlasterPlayerController类型，并更新生命值
+	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->SetHUDShield(Shield, MaxShield);
 	}
 }
 
@@ -892,6 +908,16 @@ void ABlasterCharacter::OnRep_Health(float LastHealth)
 {
 	UpdateHUDHealth();
 	if (Health < LastHealth)
+	{
+		PlayHitReactMontage();
+	}
+}
+
+// 当角色的护盾值发生变化时调用此函数，用于处理相关的逻辑
+void ABlasterCharacter::OnRep_Shield(float LastShield)
+{
+	UpdateHUDShield();
+	if (Shield < LastShield)
 	{
 		PlayHitReactMontage();
 	}

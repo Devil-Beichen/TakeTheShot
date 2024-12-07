@@ -23,6 +23,13 @@ public:
 	void SetHUDHealth(const float Health, const float MaxHealth);
 
 	/**
+	 * 设置护盾
+	 * @param Shield		当前护盾
+	 * @param MaxShield		最大护盾
+	 */
+	void SetHUDShield(const float Shield, const float MaxShield);
+
+	/**
 	 * 设置HUD（Heads-Up Display）中的分数显示
 	 * 
 	 * @param Score 要设置的分数值，用于更新HUD中的显示内容
@@ -187,6 +194,10 @@ private:
 	// HUD血量
 	float HUDHealth;
 	float HUDMaxHealth;
+
+	// HUD护盾
+	float HUDShield;
+	float HUDMaxShield;
 
 	// HUD分数
 	float HUDScore;
