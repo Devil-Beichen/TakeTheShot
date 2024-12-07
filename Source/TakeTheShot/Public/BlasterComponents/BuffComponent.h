@@ -33,6 +33,13 @@ public:
 	void Heal(float HealAmount, float HealingTime);
 
 	/**
+	 *	恢复护盾
+	 * @param ShieldAmount		回复的总护盾值
+	 * @param ReplenishTime 	回复持续的时间
+	 */
+	void ShieldReplenish(float ShieldAmount, float ReplenishTime);
+
+	/**
 	 *  获得速度buff
 	 * @param BuffBaseSpeed		基础速度
 	 * @param BuffCrouchSpeed	蹲下的速度
@@ -59,6 +66,9 @@ protected:
 	// 治疗增加
 	void HealRampUp(float DetaTime);
 
+	// 护盾增加
+	void ShieldRampUp(float DetaTime);
+
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
 	UPROPERTY()
@@ -74,6 +84,18 @@ private:
 	float HealingRate = 0.f;
 	// 还需要恢复的
 	float AmountToHeal = 0.f;
+
+	/**
+	 *  护盾相关的BUFF
+	 */
+
+	// 用于记录是否正在回复护盾
+	bool bReplenishingShield = false;
+
+	// 目前回复的速率
+	float ShieldRelenishRate = 0.f;
+	// 还需要恢复的
+	float ShieldRelenishAmount = 0.f;
 
 	/**
 	 * 速度相关的BUFF

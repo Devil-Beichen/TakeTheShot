@@ -494,7 +494,7 @@ private:
 
 	// 当前护盾值
 	UPROPERTY(ReplicatedUsing= "OnRep_Shield", VisibleAnywhere, Category="Player Stats")
-	float Shield = 100.f;
+	float Shield = 0.f;
 
 	/**
 	 * 当角色的护盾值发生变化时调用此函数，用于处理相关的逻辑
@@ -612,12 +612,21 @@ public:
 
 	// 获取角色是否被淘汰
 	FORCEINLINE bool IsEliminate() const { return bEliminate; }
+
 	// 获取角色的生命值
 	FORCEINLINE float GetHealth() const { return Health; }
-	// 设置角色的生命值
-	FORCEINLINE void SetHealth(float Amount) { Health = Amount; };
 	// 获取角色的最大生命值
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
+	// 设置角色的生命值
+	FORCEINLINE void SetHealth(float Amount) { Health = Amount; };
+
+	// 获取角色的护盾值
+	FORCEINLINE float GetShield() const { return Shield; }
+	// 获取角色最大护盾值
+	FORCEINLINE float GetMaxShield() const { return MaxShield; }
+	// 设置角色的护盾值
+	FORCEINLINE void SetShield(float Amount) { Shield = Amount; };
+
 	// 获取角色的武器状态
 	FORCEINLINE ECombatState GetCombatState() const { return Combat == nullptr ? ECombatState::ECS_MAX : Combat->CombatState; }
 	// 获取角色的武器组件

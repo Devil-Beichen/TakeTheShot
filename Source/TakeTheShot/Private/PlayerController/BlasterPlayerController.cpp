@@ -141,14 +141,14 @@ void ABlasterPlayerController::PollInit()
 			CharacterOverlay = BlasterHUD->CharacterOverlay;
 			if (CharacterOverlay)
 			{
-				SetHUDHealth(HUDHealth, HUDMaxHealth);
-				SetHUDShield(HUDShield, HUDMaxShield);
-				SetHUDScore(HUDScore);
-				SetHUDDefeats(HUDDefeats);
+				if (bInitializeHealth) { SetHUDHealth(HUDHealth, HUDMaxHealth); }
+				if (bInitializeShield) { SetHUDShield(HUDShield, HUDMaxShield); }
+				if (bInitializeScore) { SetHUDScore(HUDScore); }
+				if (bInitializeDefeat) { SetHUDDefeats(HUDDefeats); }
 				ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetPawn());
 				if (BlasterCharacter && BlasterCharacter->GetCombat())
 				{
-					SetHUDGrenades(BlasterCharacter->GetCombat()->GetGrenades());
+					if (bInitializeGrenade) { SetHUDGrenades(BlasterCharacter->GetCombat()->GetGrenades()); }
 				}
 			}
 		}
@@ -290,7 +290,7 @@ void ABlasterPlayerController::SetHUDHealth(const float Health, const float MaxH
 	}
 	else
 	{
-		bInitializeCharacterOverlay = true;
+		bInitializeHealth = true;
 		HUDHealth = Health;
 		HUDMaxHealth = MaxHealth;
 	}
@@ -321,12 +321,13 @@ void ABlasterPlayerController::SetHUDShield(const float Shield, const float MaxS
 	}
 	else
 	{
-		bInitializeCharacterOverlay = true;
+		bInitializeShield = true;
 		HUDShield = Shield;
 		HUDMaxShield = MaxShield;
 	}
 }
 
+// 设置分数
 void ABlasterPlayerController::SetHUDScore(const float Score)
 {
 	// 检查BlasterHUD是否为空，如果为空则重新获取一个
@@ -343,11 +344,12 @@ void ABlasterPlayerController::SetHUDScore(const float Score)
 	}
 	else
 	{
-		bInitializeCharacterOverlay = true;
+		bInitializeScore = true;
 		HUDScore = Score;
 	}
 }
 
+// 设置死亡
 void ABlasterPlayerController::SetHUDDefeats(const int32 Defeats)
 {
 	// 检查BlasterHUD是否为空，如果为空则重新获取一个
@@ -364,7 +366,7 @@ void ABlasterPlayerController::SetHUDDefeats(const int32 Defeats)
 	}
 	else
 	{
-		bInitializeCharacterOverlay = true;
+		bInitializeDefeat = true;
 		HUDDefeats = Defeats;
 	}
 }
@@ -472,7 +474,7 @@ void ABlasterPlayerController::SetHUDGrenades(const int32 Grenades)
 	}
 	else
 	{
-		bInitializeCharacterOverlay = true;
+		bInitializeGrenade = true;
 		HUDGrenades = Grenades;
 	}
 }

@@ -188,20 +188,29 @@ private:
 	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay;
 
-	// UI是否已经初始化
-	bool bInitializeCharacterOverlay = false;
-
+	// 初始化血量
+	bool bInitializeHealth = false;
 	// HUD血量
 	float HUDHealth;
 	float HUDMaxHealth;
 
+	// 初始化护盾
+	bool bInitializeShield = false;
 	// HUD护盾
 	float HUDShield;
 	float HUDMaxShield;
 
+	// 初始化分数
+	bool bInitializeScore = false;
 	// HUD分数
 	float HUDScore;
+
+	// 初始化死亡次数
+	bool bInitializeDefeat = false;
 	int32 HUDDefeats;
 
+	// 初始化手雷数量
+	bool bInitializeGrenade = false;
+	// HUD携带的手雷数量
 	int32 HUDGrenades;
 };

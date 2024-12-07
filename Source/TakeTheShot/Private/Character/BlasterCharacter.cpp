@@ -132,7 +132,7 @@ void ABlasterCharacter::Initialize()
 	AddDefaultMappingContext();
 
 	UpdateHUDHealth();
-	
+
 	UpdateHUDShield();
 }
 
@@ -515,11 +515,30 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	       *this->GetName(), Damage,
 	       InstigatorController ? *InstigatorController->GetName() : TEXT("None"),
 	       DamageCauser ? *DamageCauser->GetName() : TEXT("None"));
+	// 实际收到的伤害
+	float DamageToHealth = Damage;
+	if (Shield > 0.f)
+	{
+		if (Shield >= Damage)
+		{
+			Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);
+			DamageToHealth = 0.f;
+		}
+		else
+		{
+			// 伤害减去护盾
+			DamageToHealth = FMath::Clamp(DamageToHealth - Shield, 0.f, Damage);
+			// 护盾归零
+			Shield = 0.f;
+		}
+	}
 
 	// 更新生命值，并确保它不会超过最大值或低于0
-	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
 	// 更新HUD上的生命值显示
 	UpdateHUDHealth();
+	// 更新HUD上的护盾值显示
+	UpdateHUDShield();
 
 	// 如果生命值为0，则角色死亡
 	if (Health == 0.f)

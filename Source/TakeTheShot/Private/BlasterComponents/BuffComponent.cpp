@@ -21,6 +21,7 @@ void UBuffComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	HealRampUp(DeltaTime);
+	ShieldRampUp(DeltaTime);
 }
 
 // 恢复生命
@@ -31,11 +32,19 @@ void UBuffComponent::Heal(float HealAmount, float HealingTime)
 	AmountToHeal += HealAmount;
 }
 
+// 盾牌回复
+void UBuffComponent::ShieldReplenish(float ShieldAmount, float ReplenishTime)
+{
+	bReplenishingShield = true;
+	ShieldRelenishRate = ShieldAmount / ReplenishTime;
+	ShieldRelenishAmount += ShieldAmount;
+}
+
 // 治疗增加
 void UBuffComponent::HealRampUp(float DetaTime)
 {
 	if (!bHealing || Character == nullptr || Character->IsEliminate()) return;
-	// 没帧治愈的血量
+	// 每帧治愈的血量
 	const float HealThisFrame = HealingRate * DetaTime;
 	Character->SetHealth(FMath::Clamp(Character->GetHealth() + HealThisFrame, 0.f, Character->GetMaxHealth()));
 	AmountToHeal -= HealThisFrame;
@@ -44,6 +53,23 @@ void UBuffComponent::HealRampUp(float DetaTime)
 	{
 		bHealing = false;
 		AmountToHeal = 0.f;
+	}
+}
+
+// 护盾回复
+void UBuffComponent::ShieldRampUp(float DetaTime)
+{
+	if (!bReplenishingShield || Character == nullptr || Character->IsEliminate()) return;
+
+	// 每帧回复的护盾
+	const float ReplenishThisFrame = ShieldRelenishRate * DetaTime;
+	Character->SetShield(FMath::Clamp(Character->GetShield() + ReplenishThisFrame, 0.f, Character->GetMaxShield()));
+	ShieldRelenishAmount -= ReplenishThisFrame;
+	Character->UpdateHUDShield();
+	if (ShieldRelenishAmount <= 0.f || Character->GetShield() >= Character->GetMaxShield())
+	{
+		bReplenishingShield = false;
+		ShieldRelenishAmount = 0.f;
 	}
 }
 
