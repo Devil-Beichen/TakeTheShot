@@ -17,8 +17,6 @@ class TAKETHESHOT_API AHealthPickup : public APickup
 public:
 	AHealthPickup();
 
-	virtual void Destroyed() override;
-
 protected:
 	virtual void BeginPlay() override;
 
@@ -48,14 +46,6 @@ private:
 	// 回复时间
 	UPROPERTY(EditAnywhere)
 	float HealingTime = 5.f;
-
-	// 显示特效
-	UPROPERTY(VisibleAnywhere)
-	class UNiagaraComponent* PickupEffectComponents;
-
-	// 拾取特效
-	UPROPERTY(EditAnywhere)
-	class UNiagaraSystem* PickupEffect;
 
 public:
 };

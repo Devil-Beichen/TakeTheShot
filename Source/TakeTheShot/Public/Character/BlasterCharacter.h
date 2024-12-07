@@ -334,6 +334,9 @@ public:
 	UPROPERTY()
 	bool bIsSlowWalk = false;
 
+	// 设置前的速度
+	float WalkSpeed = 0.f;
+
 	// 慢走速度
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Move, meta=(AllowPrivateAccess = "true"))
 	float SlowWalkSpeed = 100.f;

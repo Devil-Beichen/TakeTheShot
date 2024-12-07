@@ -32,6 +32,17 @@ public:
 	 */
 	void Heal(float HealAmount, float HealingTime);
 
+	/**
+	 *  获得速度buff
+	 * @param BuffBaseSpeed		基础速度
+	 * @param BuffCrouchSpeed	蹲下的速度
+	 * @param BuffTime			buff持续时间
+	 */
+	void BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime);
+
+	// 设置初始速度
+	void SetInitialSpeeds(float BaseSpeed, float CrouchSpeed);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -43,12 +54,47 @@ private:
 	UPROPERTY()
 	ABlasterCharacter* Character = nullptr;
 
+	/**
+	 * 生命相关的BUFF
+	 */
+
 	// 用于记录是否正在恢复生命
 	bool bHealing = false;
 	// 目前恢复的速率
 	float HealingRate = 0.f;
 	// 还需要恢复的
 	float AmountToHeal = 0.f;
+
+	/**
+	 * 速度相关的BUFF
+	 */
+
+	// 速度Buff的定时器
+	FTimerHandle SpeedBuffTime;
+
+	// 重置速度
+	void ResetSpeeds();
+
+	// 加速buff
+	bool bAccelerationbuff = false;
+
+	// 初始基础速度
+	float InitialBaseSpeed = 0.f;
+
+	// 初始蹲下速度
+	float InitialCrouchSpeed = 0.f;
+
+	// 多播设置速度
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastSpeedBuff(float BuffBaseSpeed, float BuffCrouchSpeed, bool bAccelebuff = true);
+
+	/**
+	 * 
+	 * @param BaseSpeed			基础速度
+	 * @param CrouchSpeed 		蹲下的速度
+	 * @param bAccelebuff		是否是加速buff
+	 */
+	void SetSpeed(float BaseSpeed, float CrouchSpeed, bool bAccelebuff = true);
 
 public:
 };

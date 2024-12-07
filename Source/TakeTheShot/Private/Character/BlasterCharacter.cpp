@@ -191,6 +191,10 @@ void ABlasterCharacter::PostInitializeComponents()
 	if (Buff)
 	{
 		Buff->Character = this;
+		// 设置初始速度
+		Buff->SetInitialSpeeds(
+			GetCharacterMovement()->MaxWalkSpeed,
+			GetCharacterMovement()->MaxWalkSpeedCrouched);
 	}
 }
 
@@ -638,12 +642,18 @@ void ABlasterCharacter::MulticastSlowStarted_Implementation()
 	if (bIsSlowWalk == false)
 	{
 		bIsSlowWalk = true;
+		if (Buff)
+		{
+			// 如果是在加速的时候获得的
+			WalkSpeed = Buff->bAccelerationbuff ? GetCharacterMovement()->MaxWalkSpeed : Buff->InitialBaseSpeed;
+		}
+
 		GetCharacterMovement()->MaxWalkSpeed = SlowWalkSpeed;
 	}
 	else
 	{
 		bIsSlowWalk = false;
-		GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	}
 }
 

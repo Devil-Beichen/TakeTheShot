@@ -3,8 +3,6 @@
 
 #include "Pickups/HealthPickup.h"
 
-#include "NiagaraComponent.h"
-#include "NiagaraFunctionLibrary.h"
 #include "Character/BlasterCharacter.h"
 #include "BlasterComponents/BuffComponent.h"
 
@@ -12,10 +10,7 @@
 AHealthPickup::AHealthPickup()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	// 开启同步
 	bReplicates = true;
-	PickupEffectComponents = CreateDefaultSubobject<UNiagaraComponent>(TEXT("PickupEffectComponents"));
-	PickupEffectComponents->SetupAttachment(RootComponent);
 }
 
 void AHealthPickup::BeginPlay()
@@ -23,7 +18,7 @@ void AHealthPickup::BeginPlay()
 	Super::BeginPlay();
 }
 
-// 
+// 重叠事件
 void AHealthPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
@@ -33,17 +28,4 @@ void AHealthPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AA
 		BlasterCharacter->GetBuff()->Heal(HealAmount, HealingTime);
 		Destroy();
 	}
-}
-
-void AHealthPickup::Destroyed()
-{
-	if (PickupEffect)
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			this,
-			PickupEffect,
-			GetActorLocation()
-		);
-	}
-	Super::Destroyed();
 }

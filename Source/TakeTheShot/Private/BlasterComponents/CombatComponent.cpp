@@ -125,14 +125,15 @@ void UCombatComponent::AttachActorToLeftHand(AActor* ActorToAttach)
 // 播放装备武器的音效
 void UCombatComponent::PlayEquipWeaponSound()
 {
-	if (Character == nullptr || EquippedWeapon == nullptr || EquippedWeapon->EquipSound) return;
-
-	// 播放装备武器的音效
-	UGameplayStatics::PlaySoundAtLocation(
-		this,
-		EquippedWeapon->EquipSound,
-		Character->GetActorLocation()
-	);
+	if (Character && EquippedWeapon && EquippedWeapon->EquipSound)
+	{
+		// 播放装备武器的音效
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			EquippedWeapon->EquipSound,
+			Character->GetActorLocation()
+		);
+	}
 }
 
 // 重新装填空武器

@@ -3,6 +3,7 @@
 
 #include "BlasterComponents/BuffComponent.h"
 #include "Character/BlasterCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 UBuffComponent::UBuffComponent()
@@ -43,5 +44,53 @@ void UBuffComponent::HealRampUp(float DetaTime)
 	{
 		bHealing = false;
 		AmountToHeal = 0.f;
+	}
+}
+
+// 初始化基础速度
+void UBuffComponent::SetInitialSpeeds(float BaseSpeed, float CrouchSpeed)
+{
+	InitialBaseSpeed = BaseSpeed;
+	InitialCrouchSpeed = CrouchSpeed;
+}
+
+// 获得速度 buff
+void UBuffComponent::BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime)
+{
+	if (Character == nullptr) return;
+	Character->GetWorldTimerManager().SetTimer(
+		SpeedBuffTime,
+		this,
+		&UBuffComponent::ResetSpeeds,
+		BuffTime
+	);
+	SetSpeed(BuffBaseSpeed, BuffCrouchSpeed); // 在服务器上设置速度(是加速)
+	MulticastSpeedBuff(BuffBaseSpeed, BuffCrouchSpeed); // 多播设置速度(是加速)
+}
+
+// 重置速度
+void UBuffComponent::ResetSpeeds()
+{
+	SetSpeed(InitialBaseSpeed, InitialCrouchSpeed, false); // 不是加速
+	MulticastSpeedBuff(InitialBaseSpeed, InitialCrouchSpeed, false);
+}
+
+// 多播设置速度
+void UBuffComponent::MulticastSpeedBuff_Implementation(float BuffBaseSpeed, float BuffCrouchSpeed, bool bAccelebuff)
+{
+	SetSpeed(BuffBaseSpeed, BuffCrouchSpeed, bAccelebuff);
+}
+
+// 设置速度
+void UBuffComponent::SetSpeed(float BaseSpeed, float CrouchSpeed, bool bAccelebuff)
+{
+	if (Character == nullptr || Character->GetCharacterMovement() == nullptr || Character->IsEliminate()) return;
+	bAccelerationbuff = bAccelebuff;
+	Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
+	if (bAccelebuff)
+	{
+		// 如果在加速的情况下就取消慢速
+		Character->bIsSlowWalk = false;
 	}
 }
