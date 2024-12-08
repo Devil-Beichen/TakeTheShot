@@ -117,6 +117,9 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	class USoundCue* EquipSound;
 
+	// 删除武器
+	bool bDestroyWeapon = false;
+
 protected:
 	virtual void BeginPlay() override;
 

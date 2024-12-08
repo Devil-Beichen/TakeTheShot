@@ -111,6 +111,12 @@ void ABlasterCharacter::OnRep_ReplicatedMovement()
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (HasAuthority())
+	{
+		SpawnDefaultWeapon(); // 生成默认武器
+	}
+
 	// 如果当前角色具有权威性（即服务器端），则注册一个事件处理函数
 	if (HasAuthority())
 	{
@@ -129,11 +135,13 @@ void ABlasterCharacter::Initialize()
 {
 	RunSpeed = GetCharacterMovement()->MaxWalkSpeed;
 
-	AddDefaultMappingContext();
+	AddDefaultMappingContext(); // 添加默认的输入映射上下文
 
-	UpdateHUDHealth();
+	UpdateHUDHealth(); // 更新 HUD 的健康值
 
-	UpdateHUDShield();
+	UpdateHUDShield(); // 更新 HUD 的护盾值
+
+	UpdateHUDAmmo(); // 更新 HUD 的弹药数量
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -237,11 +245,19 @@ void ABlasterCharacter::RemoveMappingContext() const
 	}
 }
 
+// 角色被消除
 void ABlasterCharacter::Elim()
 {
 	if (Combat && Combat->EquippedWeapon)
 	{
-		Combat->EquippedWeapon->Dropped();
+		if (Combat->EquippedWeapon->bDestroyWeapon)
+		{
+			Combat->EquippedWeapon->Destroy();
+		}
+		else
+		{
+			Combat->EquippedWeapon->Dropped();
+		}
 	}
 
 	MulticastElim();
@@ -858,6 +874,40 @@ void ABlasterCharacter::UpdateHUDShield()
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDShield(Shield, MaxShield);
+	}
+}
+
+// 更新HUD上的弹药信息
+void ABlasterCharacter::UpdateHUDAmmo()
+{
+	// 将控制器转换为BlasterPlayerController类型，并更新生命值
+	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+
+	// 如果存在控制器和战斗组件，则更新HUD上的弹药信息
+	if (BlasterPlayerController && Combat && Combat->EquippedWeapon)
+	{
+		BlasterPlayerController->SetHUDCarriedAmmo(Combat->CarriedAmmo);
+		BlasterPlayerController->SetHUDWeaponAmmo(Combat->EquippedWeapon->GetAmmo());
+	}
+}
+
+// 创建默认武器
+void ABlasterCharacter::SpawnDefaultWeapon()
+{
+	if (DefaultWeaponClass && HasAuthority() && !bEliminate)
+	{
+		ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+		UWorld* World = GetWorld();
+		if (BlasterGameMode && World)
+		{
+			// 创建默认武器
+			AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeaponClass);
+			StartingWeapon->bDestroyWeapon = true;
+			if (Combat)
+			{
+				Combat->EquipWeapon(StartingWeapon);
+			}
+		}
 	}
 }
 

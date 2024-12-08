@@ -141,10 +141,18 @@ void ABlasterPlayerController::PollInit()
 			CharacterOverlay = BlasterHUD->CharacterOverlay;
 			if (CharacterOverlay)
 			{
+				// 初始化血量
 				if (bInitializeHealth) { SetHUDHealth(HUDHealth, HUDMaxHealth); }
+				// 初始化护盾
 				if (bInitializeShield) { SetHUDShield(HUDShield, HUDMaxShield); }
+				// 初始化分数
 				if (bInitializeScore) { SetHUDScore(HUDScore); }
+				// 初始化死亡
 				if (bInitializeDefeat) { SetHUDDefeats(HUDDefeats); }
+				// 初始化武器弹药
+				if (bInitializeWeaponAmmo) { SetHUDWeaponAmmo(HUDWeaponAmmo); }
+				// 初始化携带弹药
+				if (bInitializeCarriedAmmo) { SetHUDCarriedAmmo(HUDCarriedAmmo); }
 				ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetPawn());
 				if (BlasterCharacter && BlasterCharacter->GetCombat())
 				{
@@ -386,8 +394,14 @@ void ABlasterPlayerController::SetHUDWeaponAmmo(const int32 Ammo)
 		const FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		BlasterHUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
 	}
+	else
+	{
+		bInitializeWeaponAmmo = true;
+		HUDWeaponAmmo = Ammo;
+	}
 }
 
+// 设置携带弹药
 void ABlasterPlayerController::SetHUDCarriedAmmo(const int32 Ammo)
 {
 	// 检查BlasterHUD是否为空，如果为空则重新获取一个
@@ -401,6 +415,11 @@ void ABlasterPlayerController::SetHUDCarriedAmmo(const int32 Ammo)
 	{
 		const FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		BlasterHUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+	else
+	{
+		bInitializeCarriedAmmo = true;
+		HUDCarriedAmmo = Ammo;
 	}
 }
 

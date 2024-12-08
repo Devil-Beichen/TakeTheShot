@@ -213,4 +213,12 @@ private:
 	bool bInitializeGrenade = false;
 	// HUD携带的手雷数量
 	int32 HUDGrenades;
+
+	// 初始化备用弹药
+	float HUDCarriedAmmo;
+	bool bInitializeCarriedAmmo = false;
+
+	// 初始化武器弹药
+	float HUDWeaponAmmo;
+	bool bInitializeWeaponAmmo = false;
 };

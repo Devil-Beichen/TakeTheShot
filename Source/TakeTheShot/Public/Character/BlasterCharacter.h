@@ -126,12 +126,17 @@ public:
 	void UpdateHUDHealth();
 	// 更新护盾值
 	void UpdateHUDShield();
+	// 更新HUD的弹药数量
+	void UpdateHUDAmmo();
 
 	// 初始化HUD
 	void PollInit();
 
 	// 旋转角色
 	void RotateInPlace(float DeltaTime);
+
+	// 生成默认武器
+	void SpawnDefaultWeapon();
 
 protected:
 	virtual void BeginPlay() override;
@@ -584,6 +589,14 @@ private:
 	// 附加手榴弹模型
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* AttachedGrenade;
+
+	/**
+	 * 默认武器
+	 */
+
+	// 默认武器
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AWeapon> DefaultWeaponClass;
 
 #pragma endregion
 
