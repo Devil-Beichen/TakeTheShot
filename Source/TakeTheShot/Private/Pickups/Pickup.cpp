@@ -41,6 +41,18 @@ APickup::APickup()
 void APickup::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// 绑定重叠函数的定时器
+	GetWorldTimerManager().SetTimer(
+		BindOverlapTimer,
+		this,
+		&APickup::BindOverlapTimerFinished,
+		BindOverlapTime);
+}
+
+// 绑定重叠函数的定时器完成，绑定重叠碰撞
+void APickup::BindOverlapTimerFinished()
+{
 	if (HasAuthority())
 	{
 		OverlapSphere->OnComponentBeginOverlap.AddDynamic(this, &APickup::OnSphereOverlap);
@@ -51,6 +63,7 @@ void APickup::BeginPlay()
 void APickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 }
+
 
 void APickup::Tick(float DeltaTime)
 {
