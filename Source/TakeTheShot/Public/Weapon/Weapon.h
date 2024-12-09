@@ -17,6 +17,9 @@ enum class EWeaponState :uint8
 	//  装备已丢弃。指示装备已被丢弃。
 	EWS_Dropped UMETA(DisplayName = "Dropped"),
 
+	// 装备到副武器
+	EWS_EquippedSecondary UMETA(DisplayName = "EquippedSecondary"),
+
 	// 装备穿戴状态的最大数量。这是一个占位符值，用来指示枚举的结束。
 	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
@@ -52,7 +55,7 @@ public:
 	 * 
 	 * @param bShowWidget 指示PickupWidget是否应被激活的布尔值。true表示激活，false表示关闭。
 	 */
-	void ShowPickupWidget(const bool bShowWidget) const;
+	void ShowPickupWidget(const bool bShowWidget);
 
 	/**
 	 * 向指定的目标位置发射火球	是可以重写的。
@@ -116,6 +119,9 @@ public:
 	// 拾取武器的音效
 	UPROPERTY(EditDefaultsOnly)
 	class USoundCue* EquipSound;
+
+	// 开启自定义深度
+	void EnableCustomDepth(const bool bEnable);
 
 	// 删除武器
 	bool bDestroyWeapon = false;

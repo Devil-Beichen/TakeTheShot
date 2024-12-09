@@ -808,6 +808,7 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 	}
 }
 
+// 设置重叠武器
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
 	// 如果存在重叠的武器对象是本地控制的
@@ -828,7 +829,8 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 	}
 }
 
-void ABlasterCharacter::OnRep_OverlappingWeapon(const AWeapon* LastWeapon) const
+// 设置重叠武器回调
+void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon) const
 {
 	// 如果上一个被触及的武器（LastWeapon）存在，则将其拾取提示设置为false，表示隐藏拾取提示
 	if (LastWeapon)
@@ -843,11 +845,13 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(const AWeapon* LastWeapon) const
 	}
 }
 
+// 判断当前角色是否装备了武器
 bool ABlasterCharacter::IsWeaponEquipped() const
 {
 	return (Combat && Combat->EquippedWeapon);
 }
 
+// 判断当前角色是否瞄准
 bool ABlasterCharacter::IsAiming() const
 {
 	return (Combat && Combat->bAiming);
@@ -1008,6 +1012,7 @@ void ABlasterCharacter::StartDissolve()
 	}
 }
 
+// 获取当前装备的武器
 AWeapon* ABlasterCharacter::GetEquippedWeapon() const
 {
 	if (Combat == nullptr) return nullptr;

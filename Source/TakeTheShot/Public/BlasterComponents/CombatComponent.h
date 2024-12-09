@@ -55,14 +55,22 @@ public:
 	// 将Actor绑定到的左手上
 	void AttachActorToLeftHand(AActor* ActorToAttach);
 
+	// 将Actor绑定到背包上
+	void AttachActorToBackpack(AActor* ActorToAttach);
+
 	// 播放装备武器的音效
-	void PlayEquipWeaponSound();
+	void PlayEquipWeaponSound(AWeapon* WeaponToEquip);
 
 	// 重新装填空武器
 	void ReloadEmptyWeapon();
 
 	// 显示或隐藏手雷
 	void ShowAttachedGrenade(bool bShowGrenade);
+
+	// 装备主武器
+	void EquipPrimaryWeapon(AWeapon* WeaponToEquip);
+	// 装备副武器
+	void EquipSecondaryWeapon(AWeapon* WeaponToEquip);
 
 protected:
 	virtual void BeginPlay() override;
@@ -82,8 +90,15 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
+	// 副武器发生变化的时候
+	UFUNCTION()
+	void OnRep_SecondaryWeapon();
+
 	// 设置当前装备的武器的状态
 	void SetEquippedWeaponState();
+
+	// 设置副武器的状态
+	void SetSecondaryWeaponState();
 
 	/**
 	 * 服务器端发射函数
@@ -180,8 +195,12 @@ private:
 	class ABlasterHUD* HUD = nullptr;
 
 	// 定义一个指向当前装备武器的指针，用于在角色中引用和操作武器实例
-	UPROPERTY(ReplicatedUsing="OnRep_EquippedWeapon")
+	UPROPERTY(ReplicatedUsing = "OnRep_EquippedWeapon")
 	AWeapon* EquippedWeapon = nullptr;
+
+	// 定义一个指向副武器的指针，用于在角色中引用和操作副武器实例
+	UPROPERTY(ReplicatedUsing = "OnRep_SecondaryWeapon")
+	AWeapon* SecondaryWeapon = nullptr;
 
 	// 定义一个布尔变量，用于指示角色是否正在瞄准
 	UPROPERTY(Replicated)

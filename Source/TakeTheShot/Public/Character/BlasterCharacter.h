@@ -366,7 +366,7 @@ private:
 	 * 
 	 */
 	UFUNCTION()
-	void OnRep_OverlappingWeapon(const AWeapon* LastWeapon) const;
+	void OnRep_OverlappingWeapon(AWeapon* LastWeapon) const;
 
 	/**	使用VisibleAnywhere宏声明一个全局可见的属性
 	*	这里声明了一个指向CombatComponent的指针，用于管理游戏中的战斗相关逻辑

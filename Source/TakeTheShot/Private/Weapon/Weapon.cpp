@@ -66,6 +66,15 @@ AWeapon::AWeapon()
 	WeaponMesh->MarkRenderStateDirty();
 }
 
+// 启用或禁用自定义深度
+void AWeapon::EnableCustomDepth(const bool bEnable)
+{
+	if (WeaponMesh)
+	{
+		WeaponMesh->SetRenderCustomDepth(bEnable);
+	}
+}
+
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
@@ -105,6 +114,7 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	DOREPLIFETIME(AWeapon, Ammo);
 }
 
+// 当角色的拥有者发生变化时回调函数
 void AWeapon::OnRep_Owner()
 {
 	Super::OnRep_Owner();
@@ -115,7 +125,11 @@ void AWeapon::OnRep_Owner()
 	}
 	else
 	{
-		SetHUDAmmo();
+		BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(Owner) : BlasterOwnerCharacter;
+		if (BlasterOwnerCharacter && BlasterOwnerCharacter->GetEquippedWeapon() && BlasterOwnerCharacter->GetEquippedWeapon() == this)
+		{
+			SetHUDAmmo();
+		}
 	}
 }
 
@@ -149,6 +163,7 @@ void AWeapon::SetHUDAmmo()
 	}
 }
 
+// 设置武器的状态
 void AWeapon::SetWeaponState(const EWeaponState State)
 {
 	WeaponState = State;
@@ -161,6 +176,7 @@ void AWeapon::OnRep_WeaponState()
 	WeaponStateSet();
 }
 
+// 设置武器的状态
 void AWeapon::WeaponStateSet()
 {
 	switch (WeaponState)
@@ -197,11 +213,31 @@ void AWeapon::WeaponStateSet()
 		WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Block);
 		WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 		WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+		WeaponMesh->SetCustomDepthStencilValue(1);
+		break;
+	case EWeaponState::EWS_EquippedSecondary:
+		ShowPickupWidget(false);
+		if (HasAuthority())
+		{
+			// 将武器的碰撞检查关闭（只在服务器调用）
+			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		if (WeaponType == EWeaponType::EWT_SubmachineGun)
+		{
+			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+			WeaponMesh->SetEnableGravity(true);
+			WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Ignore);
+		}
 		break;
 	}
 }
 
-void AWeapon::ShowPickupWidget(const bool bShowWidget) const
+// 显示或隐藏物品获取提示
+void AWeapon::ShowPickupWidget(const bool bShowWidget)
 {
 	// 根据传入的参数bShowWidget来设置物品获取提示的可见性和武器模型的自定义深度渲染状态
 	// 这里主要处理的是UI提示和渲染效果的开关，以便在不同的游戏情境下提供更合适的视觉反馈
@@ -210,7 +246,7 @@ void AWeapon::ShowPickupWidget(const bool bShowWidget) const
 		// 设置物品获取提示的可见性
 		PickupWidget->SetVisibility(bShowWidget);
 		// 根据物品获取提示的可见性状态，设置武器模型的自定义深度渲染
-		WeaponMesh->SetRenderCustomDepth(bShowWidget);
+		EnableCustomDepth(bShowWidget);
 	}
 }
 
