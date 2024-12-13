@@ -163,6 +163,15 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex);
 
+	// 武器状态设置
+	virtual void OnWeaponStateSet();
+	// 武器装备
+	virtual void OnEquipped();
+	// 武器丢弃
+	virtual void OnDropped();
+	// 装备副武器
+	virtual void OnEquippedSecondary();
+
 private:
 	// 武器模型组件，用于可视化展示武器
 	// 类型为USkeletalMeshComponent，允许在任何地方可见
@@ -225,9 +234,6 @@ private:
 public:
 	// 设置武器状态
 	void SetWeaponState(const EWeaponState State);
-
-	// 武器状态设置
-	void WeaponStateSet();
 
 	// 获取球形组件
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }

@@ -248,6 +248,8 @@ void ABlasterCharacter::RemoveMappingContext() const
 // 角色被消除
 void ABlasterCharacter::Elim()
 {
+	RemoveDefaultWeapons();
+
 	if (Combat && Combat->EquippedWeapon)
 	{
 		if (Combat->EquippedWeapon->bDestroyWeapon)
@@ -258,6 +260,11 @@ void ABlasterCharacter::Elim()
 		{
 			Combat->EquippedWeapon->Dropped();
 		}
+	}
+	// 角色被消除时，如果装备了副武器，则将其丢弃
+	if (Combat && Combat->SecondaryWeapon)
+	{
+		Combat->SecondaryWeapon->Dropped();
 	}
 
 	MulticastElim();
@@ -898,20 +905,42 @@ void ABlasterCharacter::UpdateHUDAmmo()
 // 创建默认武器
 void ABlasterCharacter::SpawnDefaultWeapon()
 {
+	// 如果默认武器类存在，并且当前对象有权限，并且不是淘汰状态
 	if (DefaultWeaponClass && HasAuthority() && !bEliminate)
 	{
+		// 获取当前游戏模式并转换为ABlasterGameMode类型
 		ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+		// 获取当前世界对象
 		UWorld* World = GetWorld();
+		// 如果游戏模式和世界对象都有效
 		if (BlasterGameMode && World)
 		{
 			// 创建默认武器
 			AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeaponClass);
+			// 设置武器的销毁标志为true，表示这把武器在一定条件下需要被销毁
 			StartingWeapon->bDestroyWeapon = true;
+			// 如果当前对象的战斗组件存在
 			if (Combat)
 			{
+				// 让战斗组件装备新创建的武器
 				Combat->EquipWeapon(StartingWeapon);
 			}
 		}
+	}
+}
+
+// 删除默认生成的武器
+void ABlasterCharacter::RemoveDefaultWeapons()
+{
+	if (!Combat) return;
+
+	if (Combat->EquippedWeapon && Combat->EquippedWeapon->bDestroyWeapon)
+	{
+		Combat->EquippedWeapon->Destroy();
+	}
+	if (Combat->SecondaryWeapon && Combat->SecondaryWeapon->bDestroyWeapon)
+	{
+		Combat->SecondaryWeapon->Destroy();
 	}
 }
 

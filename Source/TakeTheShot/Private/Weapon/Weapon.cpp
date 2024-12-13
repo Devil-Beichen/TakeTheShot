@@ -163,79 +163,6 @@ void AWeapon::SetHUDAmmo()
 	}
 }
 
-// 设置武器的状态
-void AWeapon::SetWeaponState(const EWeaponState State)
-{
-	WeaponState = State;
-	WeaponStateSet();
-}
-
-// 当武器状态发生变化时调用的函数
-void AWeapon::OnRep_WeaponState()
-{
-	WeaponStateSet();
-}
-
-// 设置武器的状态
-void AWeapon::WeaponStateSet()
-{
-	switch (WeaponState)
-	{
-	case EWeaponState::EWS_Equipped:
-		// 隐藏武器的拾取提示，因为已经装备完毕
-		ShowPickupWidget(false);
-		if (HasAuthority())
-		{
-			// 将武器的碰撞检查关闭（只在服务器调用）
-			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		}
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-		if (WeaponType == EWeaponType::EWT_SubmachineGun)
-		{
-			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-			WeaponMesh->SetEnableGravity(true);
-			WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Ignore);
-		}
-
-		break;
-	case EWeaponState::EWS_Dropped:
-		if (HasAuthority())
-		{
-			// 将武器的碰撞检查开启（只在服务器调用）
-			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		}
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
-		WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Block);
-		WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-		WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-		WeaponMesh->SetCustomDepthStencilValue(1);
-		break;
-	case EWeaponState::EWS_EquippedSecondary:
-		ShowPickupWidget(false);
-		if (HasAuthority())
-		{
-			// 将武器的碰撞检查关闭（只在服务器调用）
-			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		}
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-		if (WeaponType == EWeaponType::EWT_SubmachineGun)
-		{
-			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-			WeaponMesh->SetEnableGravity(true);
-			WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Ignore);
-		}
-		break;
-	}
-}
-
 // 显示或隐藏物品获取提示
 void AWeapon::ShowPickupWidget(const bool bShowWidget)
 {
@@ -250,6 +177,102 @@ void AWeapon::ShowPickupWidget(const bool bShowWidget)
 	}
 }
 
+// 设置武器的状态
+void AWeapon::SetWeaponState(const EWeaponState State)
+{
+	WeaponState = State;
+	OnWeaponStateSet();
+}
+
+// 当武器状态发生变化时调用的函数
+void AWeapon::OnRep_WeaponState()
+{
+	OnWeaponStateSet();
+}
+
+// 设置武器的状态
+void AWeapon::OnWeaponStateSet()
+{
+	switch (WeaponState)
+	{
+	case EWeaponState::EWS_Initial:
+		break;
+	case EWeaponState::EWS_Equipped:
+		OnEquipped();
+		break;
+	case EWeaponState::EWS_Dropped:
+		OnDropped();
+		break;
+	case EWeaponState::EWS_EquippedSecondary:
+		OnEquippedSecondary();
+		break;
+	case EWeaponState::EWS_MAX:
+		break;
+	}
+}
+
+// 当武器被装备时调用的函数
+void AWeapon::OnEquipped()
+{
+	// 隐藏武器的拾取提示，因为已经装备完毕
+	ShowPickupWidget(false);
+
+	if (HasAuthority())
+	{
+		// 将武器的碰撞检查关闭（只在服务器调用）
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	WeaponMesh->SetSimulatePhysics(false);
+	WeaponMesh->SetEnableGravity(false);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if (WeaponType == EWeaponType::EWT_SubmachineGun)
+	{
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Ignore);
+	}
+}
+
+// 武器丢弃
+void AWeapon::OnDropped()
+{
+	if (HasAuthority())
+	{
+		// 将武器的碰撞检查开启（只在服务器调用）
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	WeaponMesh->SetSimulatePhysics(true);
+	WeaponMesh->SetEnableGravity(true);
+	WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Block);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	WeaponMesh->SetCustomDepthStencilValue(1);
+}
+
+// 装备副武器
+void AWeapon::OnEquippedSecondary()
+{
+	ShowPickupWidget(false);
+	if (HasAuthority())
+	{
+		// 将武器的碰撞检查关闭（只在服务器调用）
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	WeaponMesh->SetSimulatePhysics(false);
+	WeaponMesh->SetEnableGravity(false);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if (WeaponType == EWeaponType::EWT_SubmachineGun)
+	{
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Ignore);
+	}
+}
+
+// 射击
 void AWeapon::Fire(const FVector& HitTarget)
 {
 	if (FireAnimation)
