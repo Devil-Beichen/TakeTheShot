@@ -3,6 +3,13 @@
 // 追踪长度
 #define TRACE_LENGTH 80000.f
 
+// 自定义深度 - 交互物品
+#define CUSTOM_DEPTH_INTERITEM 1
+// 自定义深度 - 拾取物品
+#define CUSTOM_DEPTH_PICKUPITEMS 2
+// 自定义深度 - 副武器
+#define CUSTOM_DEPTH_SUBWEAPON 3
+
 UENUM(BlueprintType)
 enum class EWeaponType:uint8
 {

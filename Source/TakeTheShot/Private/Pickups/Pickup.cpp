@@ -8,6 +8,7 @@
 #include "Sound/SoundCue.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Weapon/WeaponTypes.h"
 
 
 APickup::APickup()
@@ -31,7 +32,7 @@ APickup::APickup()
 
 	PickupMesh->SetRelativeScale3D(FVector(5.f, 5.f, 5.f));
 	PickupMesh->SetRenderCustomDepth(true);
-	PickupMesh->SetCustomDepthStencilValue(2);
+	PickupMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_PICKUPITEMS);
 	PickupMesh->MarkRenderStateDirty();
 
 	PickupEffectComponents = CreateDefaultSubobject<UNiagaraComponent>(TEXT("PickupEffectComponents"));

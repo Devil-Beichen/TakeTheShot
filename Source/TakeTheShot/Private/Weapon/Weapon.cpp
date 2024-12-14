@@ -61,7 +61,7 @@ AWeapon::AWeapon()
 	// 附加到根组件上
 	PickupWidget->SetupAttachment(RootComponent);
 	// 设置默认的自定义通道
-	WeaponMesh->SetCustomDepthStencilValue(1);
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_INTERITEM);
 	// 标记渲染状态Dirty
 	WeaponMesh->MarkRenderStateDirty();
 }
@@ -200,11 +200,11 @@ void AWeapon::OnWeaponStateSet()
 	case EWeaponState::EWS_Equipped:
 		OnEquipped();
 		break;
-	case EWeaponState::EWS_Dropped:
-		OnDropped();
-		break;
 	case EWeaponState::EWS_EquippedSecondary:
 		OnEquippedSecondary();
+		break;
+	case EWeaponState::EWS_Dropped:
+		OnDropped();
 		break;
 	case EWeaponState::EWS_MAX:
 		break;
@@ -216,39 +216,20 @@ void AWeapon::OnEquipped()
 {
 	// 隐藏武器的拾取提示，因为已经装备完毕
 	ShowPickupWidget(false);
-
-	if (HasAuthority())
-	{
-		// 将武器的碰撞检查关闭（只在服务器调用）
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
+	// 关闭碰撞检测
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// 关闭物理模拟
 	WeaponMesh->SetSimulatePhysics(false);
+	// 关闭物理
 	WeaponMesh->SetEnableGravity(false);
-	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	// 如果武器类型为冲锋枪，则开启物理模拟
 	if (WeaponType == EWeaponType::EWT_SubmachineGun)
 	{
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Ignore);
 	}
-}
-
-// 武器丢弃
-void AWeapon::OnDropped()
-{
-	if (HasAuthority())
-	{
-		// 将武器的碰撞检查开启（只在服务器调用）
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	}
-	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	WeaponMesh->SetSimulatePhysics(true);
-	WeaponMesh->SetEnableGravity(true);
-	WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Block);
-	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-	WeaponMesh->SetCustomDepthStencilValue(1);
 }
 
 // 装备副武器
@@ -270,6 +251,34 @@ void AWeapon::OnEquippedSecondary()
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Ignore);
 	}
+}
+
+// 丢弃武器
+void AWeapon::Dropped()
+{
+	// 将武器从父组件中分离（即从装备者身上分离）
+	WeaponMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	SetWeaponState(EWeaponState::EWS_Dropped);
+	SetOwner(nullptr);
+	BlasterOwnerCharacter = nullptr;
+	BlasterOwnerController = nullptr;
+}
+
+// 武器丢弃
+void AWeapon::OnDropped()
+{
+	if (HasAuthority())
+	{
+		// 将武器的碰撞检查开启（只在服务器调用）
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	WeaponMesh->SetSimulatePhysics(true);
+	WeaponMesh->SetEnableGravity(true);
+	WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Block);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_INTERITEM);
 }
 
 // 射击
@@ -296,17 +305,6 @@ void AWeapon::Fire(const FVector& HitTarget)
 		}
 	}
 	SpendRound();
-}
-
-// 丢弃武器
-void AWeapon::Dropped()
-{
-	// 将武器从父组件中分离（即从装备者身上分离）
-	WeaponMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-	SetWeaponState(EWeaponState::EWS_Dropped);
-	SetOwner(nullptr);
-	BlasterOwnerCharacter = nullptr;
-	BlasterOwnerController = nullptr;
 }
 
 void AWeapon::AddAmmo(int AmmoToAdd)

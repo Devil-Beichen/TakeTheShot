@@ -90,12 +90,12 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
+	// 设置当前装备的武器的状态
+	void SetEquippedWeaponState();
+
 	// 副武器发生变化的时候
 	UFUNCTION()
 	void OnRep_SecondaryWeapon();
-
-	// 设置当前装备的武器的状态
-	void SetEquippedWeaponState();
 
 	// 设置副武器的状态
 	void SetSecondaryWeaponState();

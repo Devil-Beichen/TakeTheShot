@@ -14,12 +14,10 @@ enum class EWeaponState :uint8
 	EWS_Initial UMETA(DisplayName = "Initial State"),
 	//  装备已装备。指示装备已装备到角色身上。
 	EWS_Equipped UMETA(DisplayName = "Equipped"),
-	//  装备已丢弃。指示装备已被丢弃。
-	EWS_Dropped UMETA(DisplayName = "Dropped"),
-
 	// 装备到副武器
 	EWS_EquippedSecondary UMETA(DisplayName = "EquippedSecondary"),
-
+	//  装备已丢弃。指示装备已被丢弃。
+	EWS_Dropped UMETA(DisplayName = "Dropped"),
 	// 装备穿戴状态的最大数量。这是一个占位符值，用来指示枚举的结束。
 	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
@@ -129,6 +127,17 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	// 武器状态设置
+	virtual void OnWeaponStateSet();
+	// 武器装备
+	virtual void OnEquipped();
+
+	// 装备副武器
+	virtual void OnEquippedSecondary();
+
+	// 武器丢弃
+	virtual void OnDropped();
+
 	/**
 	 * 当角色的碰撞球体与另一个演员的碰撞体发生重叠时，此函数将被调用。
 	 * 
@@ -162,15 +171,6 @@ protected:
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex);
-
-	// 武器状态设置
-	virtual void OnWeaponStateSet();
-	// 武器装备
-	virtual void OnEquipped();
-	// 武器丢弃
-	virtual void OnDropped();
-	// 装备副武器
-	virtual void OnEquippedSecondary();
 
 private:
 	// 武器模型组件，用于可视化展示武器

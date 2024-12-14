@@ -78,6 +78,12 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// 检查当前战斗状态是否为非空闲状态，如果是，则不执行
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
 
+	// 设置武器的所有者(只会在服务端设置)
+	if (Character->HasAuthority())
+	{
+		WeaponToEquip->SetOwner(Character);
+	}
+
 	// 如果当前装备的武器为空，则将待装备的武器设置为当前装备的武器
 	if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr)
 	{
@@ -111,15 +117,6 @@ void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
 	SetEquippedWeaponState();
 }
 
-// 装备副武器
-void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip)
-{
-	if (WeaponToEquip == nullptr) return;
-	// 设置副武器
-	SecondaryWeapon = WeaponToEquip;
-	SetSecondaryWeaponState();
-}
-
 // 当装备的武器发生变化时调用此函数
 void UCombatComponent::OnRep_EquippedWeapon()
 {
@@ -128,25 +125,16 @@ void UCombatComponent::OnRep_EquippedWeapon()
 	SetEquippedWeaponState();
 }
 
-// 当装备的副武器发生变化时调用此函数
-void UCombatComponent::OnRep_SecondaryWeapon()
-{
-	SetSecondaryWeaponState();
-}
-
 // 设置当前装备的武器的状态
 void UCombatComponent::SetEquippedWeaponState()
 {
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+
 	// 设置武器状态为已装备
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	// 将武器装备到角色的右手上
 	AttachActorToRightHand(EquippedWeapon);
 
-	// 设置武器的所有者(只会在服务端设置)
-	if (Character->HasAuthority())
-	{
-		EquippedWeapon->SetOwner(Character);
-	}
 	// 设置弹药信息
 	EquippedWeapon->SetHUDAmmo();
 
@@ -171,6 +159,21 @@ void UCombatComponent::SetEquippedWeaponState()
 	Character->bUseControllerRotationYaw = true;
 }
 
+// 装备副武器
+void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip)
+{
+	if (WeaponToEquip == nullptr) return;
+	// 设置副武器
+	SecondaryWeapon = WeaponToEquip;
+	SetSecondaryWeaponState();
+}
+
+// 当装备的副武器发生变化时调用此函数
+void UCombatComponent::OnRep_SecondaryWeapon()
+{
+	SetSecondaryWeaponState();
+}
+
 // 设置副武器的状态
 void UCombatComponent::SetSecondaryWeaponState()
 {
@@ -180,19 +183,13 @@ void UCombatComponent::SetSecondaryWeaponState()
 	// 将待装备的武器设置为副武器
 	AttachActorToBackpack(SecondaryWeapon);
 
-	// 设置武器的所有者(只会在服务端设置)
-	if (Character->HasAuthority())
-	{
-		SecondaryWeapon->SetOwner(Character);
-	}
-
 	// 播放装备武器的音效
 	PlayEquipWeaponSound(SecondaryWeapon);
 
-	// 启用自定义深度
+	// 如果是本地的就设置自定义深度渲染状态
 	if (SecondaryWeapon->GetWeaponMesh() && Character->IsLocallyControlled())
 	{
-		SecondaryWeapon->GetWeaponMesh()->SetCustomDepthStencilValue(2);
+		SecondaryWeapon->GetWeaponMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_SUBWEAPON);
 		SecondaryWeapon->GetWeaponMesh()->MarkRenderStateDirty();
 		SecondaryWeapon->EnableCustomDepth(true);
 	}
