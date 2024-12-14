@@ -138,8 +138,11 @@ public:
 	// 生成默认武器
 	void SpawnDefaultWeapon();
 
-	// 删除默认生成的武器
-	void RemoveDefaultWeapons();
+	// 丢弃或销毁武器
+	void DropOrDestroyWeapon(AWeapon* Weapon);
+
+	// 丢弃或销毁所有武器
+	void DropOrDestrouWeapons();
 
 protected:
 	virtual void BeginPlay() override;

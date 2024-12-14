@@ -84,15 +84,65 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 		WeaponToEquip->SetOwner(Character);
 	}
 
-	// 如果当前装备的武器为空，则将待装备的武器设置为当前装备的武器
-	if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr)
+	// 判断副武器是否为空，并且主武器是有效的
+	if (SecondaryWeapon == nullptr && EquippedWeapon)
 	{
-		EquipSecondaryWeapon(WeaponToEquip);
+		// 将待装备的武器设置为副武器
+		SecondaryWeapon = EquippedWeapon;
+		// 副武器的状态
+		SecondaryWeaponStatus();
+
+		// 将待装备的武器设置为当前装备的武器
+		EquippedWeapon = WeaponToEquip;
+		// 设置装备主武器的状态
+		SetEquippedWeaponState();
 	}
 	else
 	{
-		EquipPrimaryWeapon(WeaponToEquip);
+		// 如果当前装备的武器为空，则将待装备的武器设置为当前装备的武器
+		if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr)
+		{
+			EquipSecondaryWeapon(WeaponToEquip);
+		}
+		else
+		{
+			EquipPrimaryWeapon(WeaponToEquip);
+		}
 	}
+}
+
+// 切换武器
+void UCombatComponent::SwapWeapons()
+{
+	AWeapon* TempWeapon = EquippedWeapon;
+	EquippedWeapon = SecondaryWeapon;
+	SecondaryWeapon = TempWeapon;
+
+	/**
+	 * 设置主武器状态
+	 */
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	// 将武器装备到角色的右手上
+	AttachActorToRightHand(EquippedWeapon);
+	// 设置弹药信息
+	EquippedWeapon->SetHUDAmmo();
+	// 更新弹药数量
+	UpdateCarriedAmmo();
+	// 播放装备武器的音效
+	PlayEquipWeaponSound(EquippedWeapon);
+	// 重新装填空武器
+	ReloadEmptyWeapon();
+
+	/**
+	 * 设置副武器状态
+	 */
+	SecondaryWeaponStatus();
+}
+
+// 检查是否应该切换武器
+bool UCombatComponent::ShouldSwapWeapons() const
+{
+	return (EquippedWeapon != nullptr && SecondaryWeapon != nullptr && CombatState == ECombatState::ECS_Unoccupied);
 }
 
 // 丢弃装备的武器
@@ -139,12 +189,6 @@ void UCombatComponent::SetEquippedWeaponState()
 	EquippedWeapon->SetHUDAmmo();
 
 	// 更新弹药数量
-	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
-	{
-		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
-	}
-
-	// 更新弹药数量
 	UpdateCarriedAmmo();
 
 	// 播放装备武器的音效
@@ -179,13 +223,19 @@ void UCombatComponent::SetSecondaryWeaponState()
 {
 	if (Character == nullptr || SecondaryWeapon == nullptr) return;
 
-	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
-	// 将待装备的武器设置为副武器
-	AttachActorToBackpack(SecondaryWeapon);
+	// 副武器状态
+	SecondaryWeaponStatus();
 
 	// 播放装备武器的音效
 	PlayEquipWeaponSound(SecondaryWeapon);
+}
 
+// 副武器状态
+void UCombatComponent::SecondaryWeaponStatus()
+{
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	// 将待装备的武器设置为副武器
+	AttachActorToBackpack(SecondaryWeapon);
 	// 如果是本地的就设置自定义深度渲染状态
 	if (SecondaryWeapon->GetWeaponMesh() && Character->IsLocallyControlled())
 	{
@@ -638,6 +688,7 @@ void UCombatComponent::UpdateCarriedAmmo()
 {
 	if (EquippedWeapon == nullptr) return;
 
+	// 获取携带的弹药数量
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
 	{
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];

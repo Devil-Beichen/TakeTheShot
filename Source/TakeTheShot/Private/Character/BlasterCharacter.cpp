@@ -248,26 +248,11 @@ void ABlasterCharacter::RemoveMappingContext() const
 // 角色被消除
 void ABlasterCharacter::Elim()
 {
-	RemoveDefaultWeapons();
-
-	if (Combat && Combat->EquippedWeapon)
-	{
-		if (Combat->EquippedWeapon->bDestroyWeapon)
-		{
-			Combat->EquippedWeapon->Destroy();
-		}
-		else
-		{
-			Combat->EquippedWeapon->Dropped();
-		}
-	}
-	// 角色被消除时，如果装备了副武器，则将其丢弃
-	if (Combat && Combat->SecondaryWeapon)
-	{
-		Combat->SecondaryWeapon->Dropped();
-	}
-
+	// 销毁武器
+	DropOrDestrouWeapons();
+	// 多播淘汰
 	MulticastElim();
+
 	GetWorldTimerManager().SetTimer
 	(
 		ElimTime,
@@ -456,6 +441,7 @@ void ABlasterCharacter::PlayHitReactMontage()
 	}
 }
 
+// 淘汰动画
 void ABlasterCharacter::PlayElimMontage()
 {
 	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
@@ -712,11 +698,22 @@ void ABlasterCharacter::Equip_Started()
 	ServerEquipButtonPressed();
 }
 
+// 服务器调用，确保所有客户端都能正确地接收到装备按钮按下的消息并做出相应调整。
 void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 {
+	// 如果战斗组件有效
 	if (Combat)
 	{
-		Combat->EquipWeapon(OverlappingWeapon);
+		// 如果有重叠的武器，则装备该武器
+		if (OverlappingWeapon)
+		{
+			Combat->EquipWeapon(OverlappingWeapon);
+		}
+		// 如果重叠武器无效并且用于副武器，就进行武器交互
+		else if (Combat->ShouldSwapWeapons())
+		{
+			Combat->SwapWeapons();
+		}
 	}
 }
 
@@ -930,17 +927,34 @@ void ABlasterCharacter::SpawnDefaultWeapon()
 }
 
 // 删除默认生成的武器
-void ABlasterCharacter::RemoveDefaultWeapons()
+void ABlasterCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
 {
-	if (!Combat) return;
+	if (Weapon == nullptr) return;
 
-	if (Combat->EquippedWeapon && Combat->EquippedWeapon->bDestroyWeapon)
+	// 如果武器的销毁标志为true，则直接销毁武器，否则将其丢弃
+	if (Weapon->bDestroyWeapon)
 	{
-		Combat->EquippedWeapon->Destroy();
+		Weapon->Destroy();
 	}
-	if (Combat->SecondaryWeapon && Combat->SecondaryWeapon->bDestroyWeapon)
+	else
 	{
-		Combat->SecondaryWeapon->Destroy();
+		Weapon->Dropped();
+	}
+}
+
+// 删除或者丢弃丢弃所有武器
+void ABlasterCharacter::DropOrDestrouWeapons()
+{
+	if (Combat)
+	{
+		if (Combat->EquippedWeapon)
+		{
+			DropOrDestroyWeapon(Combat->EquippedWeapon);
+		}
+		if (Combat->SecondaryWeapon)
+		{
+			DropOrDestroyWeapon(Combat->SecondaryWeapon);
+		}
 	}
 }
 

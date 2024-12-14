@@ -30,6 +30,9 @@ public:
 	UFUNCTION()
 	void EquipWeapon(AWeapon* WeaponToEquip);
 
+	// 切换武器
+	void SwapWeapons();
+
 	// 重新装填
 	void Reload();
 
@@ -99,6 +102,9 @@ protected:
 
 	// 设置副武器的状态
 	void SetSecondaryWeaponState();
+
+	// 副武器状态
+	void SecondaryWeaponStatus();
 
 	/**
 	 * 服务器端发射函数
@@ -353,4 +359,7 @@ private:
 public:
 	// 获取携带的手雷
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
+
+	// 是否应该切换武器
+	bool ShouldSwapWeapons() const;
 };
