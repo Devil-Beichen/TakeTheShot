@@ -613,22 +613,59 @@ void UCombatComponent::Fire()
 	if (CanFire())
 	{
 		bCanFire = false;
-		// 调用服务器端开火函数
-		ServerFire(HitTarget);
-		// 如果是本地玩家，则调用本地开火函数
-		if (!Character->HasAuthority())
-		{
-			LocalFire(HitTarget);
-		}
-
-
 		if (EquippedWeapon)
 		{
 			CrosshairShootingFactor = 1.75f;
+
+			// 根据武器类型进行开火
+			switch (EquippedWeapon->FireType)
+			{
+			case EFireType::EFT_Projectile:
+				FireProjectileWeapon();
+				break;
+			case EFireType::EFT_HitScan:
+				FireHitScanWeapon();
+				break;
+			case EFireType::EFT_Shotgun:
+				FireShotgun();
+				break;
+			case EFireType::EWS_MAX:
+				break;
+			}
 		}
 
 		StartFireTimer();
 	}
+}
+
+// 发送开火请求（发射子弹类的武器）
+void UCombatComponent::FireProjectileWeapon()
+{
+	// 如果是本地玩家，则调用本地开火函数
+	if (!Character->HasAuthority())LocalFire(HitTarget);
+
+	// 调用服务器端开火函数
+	ServerFire(HitTarget);
+}
+
+// 发送开火请求（发射射线的武器）
+void UCombatComponent::FireHitScanWeapon()
+{
+	if (EquippedWeapon && Character)
+	{
+		HitTarget = EquippedWeapon->bUseScatter ? EquippedWeapon->TraceEndWithScatter(HitTarget) : HitTarget;
+
+		// 如果是本地玩家，则调用本地开火函数
+		if (!Character->HasAuthority())LocalFire(HitTarget);
+
+		// 调用服务器端开火函数
+		ServerFire(HitTarget);
+	}
+}
+
+// 发送开火请求（霰弹枪）
+void UCombatComponent::FireShotgun()
+{
 }
 
 // 本地开火

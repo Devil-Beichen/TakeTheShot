@@ -9,11 +9,9 @@
 #include "Sound/SoundCue.h"
 
 
-// Sets default values
 AShotgun::AShotgun()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	FireType = EFireType::EFT_Shotgun;
 }
 
 void AShotgun::Fire(const FVector& HitTarget)

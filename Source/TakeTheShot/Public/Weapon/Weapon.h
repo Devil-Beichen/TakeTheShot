@@ -7,6 +7,7 @@
 #include "Weapon/WeaponTypes.h"
 #include "Weapon.generated.h"
 
+// 武器状态枚举
 UENUM(BlueprintType)
 enum class EWeaponState :uint8
 {
@@ -19,6 +20,20 @@ enum class EWeaponState :uint8
 	//  装备已丢弃。指示装备已被丢弃。
 	EWS_Dropped UMETA(DisplayName = "Dropped"),
 	// 装备穿戴状态的最大数量。这是一个占位符值，用来指示枚举的结束。
+	EWS_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
+// 开火类型枚举
+UENUM(BlueprintType)
+enum class EFireType : uint8
+{
+	// 命中扫描
+	EFT_HitScan UMETA(DisplayName = "Hit Scan Weapon"),
+	// 发射子弹
+	EFT_Projectile UMETA(DisplayName = "Projectile Weapon"),
+	// 霰弹
+	EFT_Shotgun UMETA(DisplayName = "Shotgun Weapon"),
+
 	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
@@ -35,7 +50,6 @@ class TAKETHESHOT_API AWeapon : public AActor
 
 public:
 	AWeapon();
-	virtual void Tick(float DeltaTime) override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -69,6 +83,13 @@ public:
 
 	// 添加子弹
 	void AddAmmo(int AmmoToAdd);
+
+	/**
+	* 随机散射命中点
+	* @param HitTarget    命中点
+	* @return 
+	*/
+	FVector TraceEndWithScatter(const FVector& HitTarget);
 
 	/**
  *	武器准星的纹理资源
@@ -123,6 +144,25 @@ public:
 
 	// 删除武器
 	bool bDestroyWeapon = false;
+
+	// 武器开火类型
+	EFireType FireType;
+
+	// 是否使用散射
+	UPROPERTY(EditDefaultsOnly, Category="Weapon Scatter")
+	bool bUseScatter = false;
+
+	/**
+	*  带散点的命中追踪轨迹结束
+	*/
+
+	// 命中追踪轨迹结束
+	UPROPERTY(EditDefaultsOnly, Category="Weapon Scatter")
+	float DistanceToShere = 800.f;
+
+	// 命中球体半径
+	UPROPERTY(EditDefaultsOnly, Category="Weapon Scatter")
+	float SphereRadius = 75.f;
 
 protected:
 	virtual void BeginPlay() override;

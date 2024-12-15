@@ -7,6 +7,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "PlayerController/BlasterPlayerController.h"
 #include "Weapon/Casing.h"
@@ -14,7 +15,6 @@
 
 AWeapon::AWeapon()
 {
-	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 
 	// 设置网格组件的复制模式为 replication
@@ -97,11 +97,6 @@ void AWeapon::BeginPlay()
 	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);
 
 	ShowPickupWidget(false);
-}
-
-void AWeapon::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }
 
 void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -304,10 +299,43 @@ void AWeapon::Fire(const FVector& HitTarget)
 	}
 }
 
+// 添加子弹
 void AWeapon::AddAmmo(int AmmoToAdd)
 {
 	Ammo = FMath::Clamp(Ammo - AmmoToAdd, 0, MagCapacity);
 	SetHUDAmmo();
+}
+
+// 随机散射命中点
+FVector AWeapon::TraceEndWithScatter(const FVector& HitTarget)
+{
+	// 尝试获取武器网格上的"MuzzleFlash"插槽，并确保控制器已初始化
+	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
+	if (MuzzleFlashSocket == nullptr) return FVector();
+
+	// 获取插槽的变换
+	FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
+	// 获取射击起点的位置
+	FVector Start = SocketTransform.GetLocation();
+
+	// 获取从发射点到命中目标的向量
+	FVector ToTargetNormalized = (HitTarget - Start).GetSafeNormal();
+	// 球的中心点
+	FVector SphereCenter = Start + ToTargetNormalized * DistanceToShere;
+	FVector Randvec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
+	FVector EndLoc = SphereCenter + Randvec;
+	FVector ToEndLoc = EndLoc - Start;
+
+	/*DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
+	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
+	DrawDebugLine(
+		GetWorld(),
+		TraceStart,
+		FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()),
+		FColor::Cyan,
+		true);*/
+
+	return FVector(Start + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

@@ -253,6 +253,15 @@ private:
 	// 开火
 	void Fire();
 
+	// 发送开火请求（发射子弹类的武器）
+	void FireProjectileWeapon();
+
+	// 发送开火请求（发射射线的武器）
+	void FireHitScanWeapon();
+
+	// 发送开火请求（霰弹枪）
+	void FireShotgun();
+
 	// 本地发射
 	void LocalFire(const FVector_NetQuantize& TraceHitTarget);
 

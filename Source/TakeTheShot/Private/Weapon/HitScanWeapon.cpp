@@ -6,9 +6,13 @@
 #include "Character/BlasterCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
+
+AHitScanWeapon::AHitScanWeapon()
+{
+	FireType = EFireType::EFT_HitScan;
+}
 
 // 当击中目标时调用此函数来处理命中扫描武器的射击逻辑
 void AHitScanWeapon::Fire(const FVector& HitTarget)
@@ -103,7 +107,8 @@ void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& Hi
 	if (UWorld* World = GetWorld())
 	{
 		// 计算射击终点的位置，稍微远于目标以确保命中
-		FVector End = bUseScatter ? TraceEndWithScatter(TraceStart, HitTarget) : TraceStart + (HitTarget - TraceStart) * 1.25f;
+		FVector End = TraceStart + (HitTarget - TraceStart) * 1.25f;
+
 		// 在起点和终点之间进行单次线迹测试，使用可见性通道
 		World->LineTraceSingleByChannel(
 			OutHit,
@@ -117,6 +122,10 @@ void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& Hi
 		{
 			BeamEnd = OutHit.ImpactPoint;
 		}
+
+		// 绘制命中点
+		DrawDebugSphere(World, BeamEnd, 15.f, 12, FColor(243, 156, 18), true, 5);
+
 		if (BeamParticles)
 		{
 			// 在起点生成拖尾特效
@@ -126,28 +135,4 @@ void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& Hi
 			}
 		}
 	}
-}
-
-// 散弹枪的命中扫描武器的 Fire 函数
-FVector AHitScanWeapon::TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget)
-{
-	// 获取从发射点到命中目标的向量
-	FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
-
-	// 球的中心点
-	FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToShere;
-	FVector Randvec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
-	FVector EndLoc = SphereCenter + Randvec;
-	FVector ToEndLoc = EndLoc - TraceStart;
-
-	/*DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
-	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
-	DrawDebugLine(
-		GetWorld(),
-		TraceStart,
-		FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()),
-		FColor::Cyan,
-		true);*/
-
-	return FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
 }

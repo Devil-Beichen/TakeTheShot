@@ -4,13 +4,12 @@
 #include "Weapon/ProjectileWeapon.h"
 
 #include "Engine/SkeletalMeshSocket.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Weapon/Projectile.h"
 
 
 AProjectileWeapon::AProjectileWeapon()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	FireType = EFireType::EFT_Projectile;
 }
 
 // AProjectileWeapon::Fire - 向指定目标发射子弹
@@ -39,16 +38,16 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 		// 根据向量计算目标的旋转角度
 		const FRotator TargetRotation = ToTarget.Rotation();
 
-		// 在本地客户端上绘制调试线
+		// 在本地和远程客户端上绘制调试信息
 		/*if (InstigatorPawn->IsLocallyControlled())
 		{
-			UKismetSystemLibrary::DrawDebugLine(this, SocketTransform.GetLocation(), HitTarget, FLinearColor::Red, 2.f, 5.f);
-			UKismetSystemLibrary::DrawDebugSphere(this, SocketTransform.GetLocation(), 15.f, 12, FLinearColor::Green, 1.f, 1.f);
+			DrawDebugLine(World, SocketTransform.GetLocation(), HitTarget, FColor::Red, true, 2.f, 5.f);
+			DrawDebugSphere(World, SocketTransform.GetLocation(), 15.f, 12, FColor(0.f, 255.f, 0.f), true, 1.f, 1.f);
 		}
 		if (InstigatorPawn->HasAuthority())
 		{
-			UKismetSystemLibrary::DrawDebugLine(this, SocketTransform.GetLocation(), HitTarget, FLinearColor::Yellow, 2.f, 5.f);
-			UKismetSystemLibrary::DrawDebugSphere(this, SocketTransform.GetLocation(), 15.f, 12, FLinearColor::White, 1.f, 1.f);
+			DrawDebugLine(World, SocketTransform.GetLocation(), HitTarget, FColor::Yellow, true, 2.f, 5.f);
+			DrawDebugSphere(World, SocketTransform.GetLocation(), 15.f, 12, FColor::White, true, 1.f, 1.f);
 		}*/
 
 		// 设置生成参数
