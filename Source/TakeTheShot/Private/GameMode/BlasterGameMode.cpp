@@ -32,7 +32,7 @@ void ABlasterGameMode::BeginPlay()
 	{
 		bLevelTimeInit = true;
 		LevelStartingTime = GetWorld()->GetTimeSeconds();
-		GEngine->AddOnScreenDebugMessage(-1, 120, FColor::Orange, FString::Printf(TEXT("游戏模式...关卡启动的时间为%f"), LevelStartingTime));
+		// GEngine->AddOnScreenDebugMessage(-1, 120, FColor::Orange, FString::Printf(TEXT("游戏模式...关卡启动的时间为%f"), LevelStartingTime));
 	}
 }
 

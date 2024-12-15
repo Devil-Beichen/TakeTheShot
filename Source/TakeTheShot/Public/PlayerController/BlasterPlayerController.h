@@ -144,6 +144,18 @@ protected:
 	UFUNCTION(Client, Reliable)
 	void ClientJoinMidGame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime);
 
+	// 显示延迟
+	void ShowPingDisplay();
+
+	// 检查延迟
+	void CheckPing(float DeltaSeconds);
+
+	// 显示高延迟
+	void HighPingWarning();
+
+	// 停止显示高延迟
+	void StopHighPingWarning();
+
 private:
 	// HUD
 	UPROPERTY()
@@ -221,4 +233,22 @@ private:
 	// 初始化武器弹药
 	float HUDWeaponAmmo;
 	bool bInitializeWeaponAmmo = false;
+
+	// 高延迟提示的时间
+	float HighPingRunningTime = 0.f;
+
+	// 高延迟提示的持续时间
+	UPROPERTY(EditDefaultsOnly, Category = Time)
+	float HighPingDuration = 5.f;
+
+	// 高延迟动画的持续时间
+	float PingAnimationRunningTime = 0.f;
+
+	// 检查延迟的频率
+	UPROPERTY(EditDefaultsOnly, Category = Time)
+	float CheckPingFrequency = 20.f;
+
+	// 高延迟的阈值
+	UPROPERTY(EditDefaultsOnly, Category = Time)
+	float HighPingThreshold = 50.f;
 };

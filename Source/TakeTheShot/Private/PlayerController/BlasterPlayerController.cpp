@@ -14,6 +14,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "BlasterComponents/CombatComponent.h"
+#include "Components/Image.h"
 #include "GameState/BlasterGameState.h"
 #include "PlayerState/BlasterPlayerState.h"
 
@@ -50,6 +51,10 @@ void ABlasterPlayerController::Tick(float DeltaSeconds)
 	CheckTimeSync(DeltaSeconds);
 	PollInit();
 	SetHUDTime();
+
+	ShowPingDisplay();
+
+	CheckPing(DeltaSeconds);
 }
 
 // 玩家被控制的回调函数
@@ -86,9 +91,9 @@ void ABlasterPlayerController::SetHUDTime()
 		TimeLeft = CooldownTime + MatchTime + WarmupTime - GetServerTime() + LevelStartingTime;
 	}
 
-	GEngine->AddOnScreenDebugMessage(2, 0.1, HasAuthority() ? FColor::Blue : FColor::Green,
+	/*GEngine->AddOnScreenDebugMessage(2, 0.1, HasAuthority() ? FColor::Blue : FColor::Green,
 	                                 FString::Printf(TEXT("预热时间 %f \n 服务器时间 %f \n 关卡开始时间%f \n 倒计时时间%f"),
-	                                                 WarmupTime, GetServerTime(), LevelStartingTime, TimeLeft));
+	                                                 WarmupTime, GetServerTime(), LevelStartingTime, TimeLeft));*/
 
 	// 计算剩余秒数
 	uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
@@ -174,6 +179,113 @@ void ABlasterPlayerController::CheckTimeSync(float DeltaSeconds)
 	}
 }
 
+// 显示Ping
+void ABlasterPlayerController::ShowPingDisplay()
+{
+	// 检查BlasterHUD是否为空，如果为空则重新获取一个
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	// 检查BlasterHUD及其相关元素是否已正确初始化
+	const bool bHUDValid = BlasterHUD &&
+		BlasterHUD->CharacterOverlay &&
+		BlasterHUD->CharacterOverlay->PingText;
+	if (bHUDValid)
+	{
+		if (PlayerState)
+		{
+			// 计算健康百分比并更新健康条
+			const float Ping = PlayerState->GetPingInMilliseconds();
+			// 计算颜色
+			float Alpha = FMath::GetMappedRangeValueClamped(FVector2d(30.f, 60.f), FVector2d(0.f, 1.f), Ping);
+			// 颜色
+			FLinearColor Color = FLinearColor::Green + Alpha * (FLinearColor::Red - FLinearColor::Green);
+			// 设置颜色
+			BlasterHUD->CharacterOverlay->PingText->SetColorAndOpacity(Color);
+
+			// 显示Ping
+			const FString PingText = FString::Printf(TEXT("Ping : %d"), FMath::RoundToInt32(Ping));
+			BlasterHUD->CharacterOverlay->PingText->SetText(FText::FromString(PingText));
+		}
+	}
+}
+
+// 检查玩家是否处于高延迟状态
+void ABlasterPlayerController::CheckPing(float DeltaSeconds)
+{
+	HighPingRunningTime += DeltaSeconds;
+	if (HighPingRunningTime >= CheckPingFrequency)
+	{
+		if (PlayerState)
+		{
+			// 检查玩家是否处于高延迟状态
+			if (PlayerState->GetPingInMilliseconds() > HighPingThreshold)
+			{
+				HighPingWarning();
+				PingAnimationRunningTime = 0.f;
+			}
+		}
+		HighPingRunningTime = 0.f;
+	}
+	bool bHighPingAnimaionPlaying = BlasterHUD &&
+		BlasterHUD->CharacterOverlay &&
+		BlasterHUD->CharacterOverlay->HighPingAnimation &&
+		BlasterHUD->CharacterOverlay->IsAnimationPlaying(BlasterHUD->CharacterOverlay->HighPingAnimation);
+	if (bHighPingAnimaionPlaying)
+	{
+		PingAnimationRunningTime += DeltaSeconds;
+		if (PingAnimationRunningTime > HighPingDuration)
+		{
+			StopHighPingWarning();
+		}
+	}
+}
+
+// 高延迟警告
+void ABlasterPlayerController::HighPingWarning()
+{
+	// 检查BlasterHUD是否为空，如果为空则重新获取一个
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	// 检查BlasterHUD及其相关元素是否已正确初始化
+	const bool bHUDValid = BlasterHUD &&
+		BlasterHUD->CharacterOverlay &&
+		BlasterHUD->CharacterOverlay->HighPingImage &&
+		BlasterHUD->CharacterOverlay->HighPingAnimation &&
+		BlasterHUD->CharacterOverlay->PingText;
+	if (bHUDValid)
+	{
+		BlasterHUD->CharacterOverlay->HighPingImage->SetOpacity(1.f);
+		BlasterHUD->CharacterOverlay->PingText->SetOpacity(0.f);
+		BlasterHUD->CharacterOverlay->PlayAnimation(
+			BlasterHUD->CharacterOverlay->HighPingAnimation,
+			0.f,
+			5);
+	}
+}
+
+// 停止高延迟警告
+void ABlasterPlayerController::StopHighPingWarning()
+{
+	// 检查BlasterHUD是否为空，如果为空则重新获取一个
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	// 检查BlasterHUD及其相关元素是否已正确初始化
+	const bool bHUDValid = BlasterHUD &&
+		BlasterHUD->CharacterOverlay &&
+		BlasterHUD->CharacterOverlay->HighPingImage &&
+		BlasterHUD->CharacterOverlay->HighPingAnimation &&
+		BlasterHUD->CharacterOverlay->PingText;
+	if (bHUDValid)
+	{
+		BlasterHUD->CharacterOverlay->HighPingImage->SetOpacity(0.f);
+		BlasterHUD->CharacterOverlay->PingText->SetOpacity(1.f);
+		if (BlasterHUD->CharacterOverlay->IsAnimationPlaying(BlasterHUD->CharacterOverlay->HighPingAnimation))
+		{
+			BlasterHUD->CharacterOverlay->StopAnimation(BlasterHUD->CharacterOverlay->HighPingAnimation);
+		}
+	}
+}
+
 // 服务器检查比赛状态
 void ABlasterPlayerController::ServerCheckMatchState_Implementation()
 {
@@ -229,7 +341,7 @@ void ABlasterPlayerController::ClientJoinMidGame_Implementation(FName StateOfMat
 			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
-	GEngine->AddOnScreenDebugMessage(-1, 30, HasAuthority() ? FColor::Red : FColor::Yellow, FString::Printf(TEXT("%s的关卡开始时间 %f"), *GetName(), LevelStartingTime));
+	// GEngine->AddOnScreenDebugMessage(-1, 30, HasAuthority() ? FColor::Red : FColor::Yellow, FString::Printf(TEXT("%s的关卡开始时间 %f"), *GetName(), LevelStartingTime));
 }
 
 // 服务端时间同步回调函数

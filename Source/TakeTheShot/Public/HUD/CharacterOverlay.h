@@ -8,6 +8,8 @@
 
 
 class UTextBlock;
+class UProgressBar;
+class UImage;
 
 /**
  * 角色属性的UI
@@ -20,7 +22,7 @@ class TAKETHESHOT_API UCharacterOverlay : public UUserWidget
 public:
 	// 血条
 	UPROPERTY(meta=(BindWidget))
-	class UProgressBar* HealthBar;
+	UProgressBar* HealthBar;
 
 	// 当前血量文本
 	UPROPERTY(meta=(BindWidget))
@@ -28,7 +30,7 @@ public:
 
 	// 护盾
 	UPROPERTY(meta=(BindWidget))
-	class UProgressBar* ShieldBar;
+	UProgressBar* ShieldBar;
 
 	// 当前护盾文本
 	UPROPERTY(meta=(BindWidget))
@@ -57,4 +59,16 @@ public:
 	// 手雷数量
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* GrenadesText;
+
+	// 高延迟图形
+	UPROPERTY(meta=(BindWidget))
+	UImage* HighPingImage;
+
+	// 高延迟动画
+	UPROPERTY(meta=(BindWidgetAnim), Transient) // Transient 属性是暂态的，这意味着它不会被保存或加载。以这种方式标记的属性将在加载时被零填充。
+	UWidgetAnimation* HighPingAnimation;
+
+	// 延迟
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* PingText;
 };
