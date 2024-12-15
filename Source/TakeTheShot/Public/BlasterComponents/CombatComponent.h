@@ -107,25 +107,6 @@ protected:
 	void SecondaryWeaponStatus();
 
 	/**
-	 * 服务器端发射函数
-	 * 该函数通过网络可靠地发送一个射击动作，指定射击的目标点
-	 * 
-	 * @param TraceHitTarget 射击射中目标的位置，以网络量化向量表示
-	 *                        该参数通过网络传输，确保在服务器和客户端之间同步射击目标
-	 */
-	UFUNCTION(Server, Reliable)
-	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
-
-	/**
-	 * 网络多播函数，用于可靠地发送射击指令
-	 * 该函数通过网络将射击目标的位置通知给所有订阅此事件的客户端
-	 * 
-	 * @param TraceHitTarget 射击命中的目标位置，使用FVector_NetQuantize格式来优化网络传输
-	 */
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
-
-	/**
 	 * 根据十字准星的位置进行光线追踪，并更新命中结果。
 	 * 
 	 * 该函数主要用于游戏或其他需要光线追踪的场景中，通过十字准星的位置向场景发射一条光线，
@@ -271,6 +252,28 @@ private:
 	void StartFireTimer();
 	// 开火
 	void Fire();
+
+	// 本地发射
+	void LocalFire(const FVector_NetQuantize& TraceHitTarget);
+
+	/**
+	* 服务器端发射函数
+	* 该函数通过网络可靠地发送一个射击动作，指定射击的目标点
+	* 
+	 * @param TraceHitTarget 射击射中目标的位置，以网络量化向量表示
+	*                        该参数通过网络传输，确保在服务器和客户端之间同步射击目标
+	*/
+	UFUNCTION(Server, Reliable)
+	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
+
+	/**
+	 * 网络多播函数，用于可靠地发送射击指令
+	 * 该函数通过网络将射击目标的位置通知给所有订阅此事件的客户端
+	 * 
+	 * @param TraceHitTarget 射击命中的目标位置，使用FVector_NetQuantize格式来优化网络传输
+	 */
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
 
 	// 开火定时器结束
 	void FireTimerFinished();

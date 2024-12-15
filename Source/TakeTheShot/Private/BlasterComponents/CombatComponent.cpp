@@ -622,7 +622,8 @@ void UCombatComponent::Fire()
 		bCanFire = false;
 		// 调用服务器端开火函数
 		ServerFire(HitTarget);
-
+		// 本地开火
+		LocalFire(HitTarget);
 		if (EquippedWeapon)
 		{
 			CrosshairShootingFactor = 1.75f;
@@ -630,6 +631,50 @@ void UCombatComponent::Fire()
 
 		StartFireTimer();
 	}
+}
+
+// 本地开火
+void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
+{
+	// 如果没有装备武器，则不执行任何操作
+	if (EquippedWeapon == nullptr) return;
+	// 如果当前武器类型是霰弹枪，则执行霰弹枪开火逻辑
+	if (Character && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+	{
+		// 播放角色开火动画，参数bAiming表示是否瞄准状态
+		Character->PlayFireMontage(bAiming);
+
+		// 调用装备武器的开火函数，实现实际开火逻辑
+		EquippedWeapon->Fire(TraceHitTarget);
+		CombatState = ECombatState::ECS_Unoccupied; // 设置当前武器状态为非繁忙状态
+		return;
+	}
+
+	// 如果角色存在
+	if (Character && CombatState == ECombatState::ECS_Unoccupied)
+	{
+		// 播放角色开火动画，参数bAiming表示是否瞄准状态
+		Character->PlayFireMontage(bAiming);
+
+		// 调用装备武器的开火函数，实现实际开火逻辑
+		EquippedWeapon->Fire(TraceHitTarget);
+	}
+}
+
+// 服务器端开火处理，用于同步所有客户端的开火动作
+void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	// 调用多播开火函数，实现所有客户端的同时开火效果
+	MulticastFire(TraceHitTarget);
+}
+
+// 多播开火实现，用于实际播放角色开火动画和执行武器开火逻辑
+void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	// 如果角色是本地控制且不是服务端，则不执行任何操作
+	if (Character && Character->IsLocallyControlled() && !Character->HasAuthority()) return;
+
+	LocalFire(TraceHitTarget);
 }
 
 // 开火定时器开始
@@ -714,42 +759,6 @@ void UCombatComponent::InitializeCarriedAmmo()
 
 	// 更新携带的手雷
 	UpdateHUDGrenades();
-}
-
-// 服务器端开火处理，用于同步所有客户端的开火动作
-void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
-{
-	// 调用多播开火函数，实现所有客户端的同时开火效果
-	MulticastFire(TraceHitTarget);
-}
-
-// 多播开火实现，用于实际播放角色开火动画和执行武器开火逻辑
-void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
-{
-	// 如果没有装备武器，则不执行任何操作
-	if (EquippedWeapon == nullptr) return;
-	// 如果当前武器类型是霰弹枪，则执行霰弹枪开火逻辑
-	if (Character && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
-	{
-		// 播放角色开火动画，参数bAiming表示是否瞄准状态
-		Character->PlayFireMontage(bAiming);
-
-		// 调用装备武器的开火函数，实现实际开火逻辑
-		EquippedWeapon->Fire(TraceHitTarget);
-		CombatState = ECombatState::ECS_Unoccupied; // 设置当前武器状态为非繁忙状态
-
-		return;
-	}
-
-	// 如果角色存在
-	if (Character && CombatState == ECombatState::ECS_Unoccupied)
-	{
-		// 播放角色开火动画，参数bAiming表示是否瞄准状态
-		Character->PlayFireMontage(bAiming);
-
-		// 调用装备武器的开火函数，实现实际开火逻辑
-		EquippedWeapon->Fire(TraceHitTarget);
-	}
 }
 
 // 在玩家的十字准星下进行线迹追踪，以检测是否击中了目标

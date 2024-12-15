@@ -236,6 +236,7 @@ void ABlasterPlayerController::CheckPing(float DeltaSeconds)
 		if (PingAnimationRunningTime > HighPingDuration)
 		{
 			StopHighPingWarning();
+			BlasterHUD->CharacterOverlay->PingText->SetRenderOpacity(1.f);
 		}
 	}
 }
@@ -254,8 +255,8 @@ void ABlasterPlayerController::HighPingWarning()
 		BlasterHUD->CharacterOverlay->PingText;
 	if (bHUDValid)
 	{
-		BlasterHUD->CharacterOverlay->HighPingImage->SetOpacity(1.f);
-		BlasterHUD->CharacterOverlay->PingText->SetOpacity(0.f);
+		BlasterHUD->CharacterOverlay->HighPingImage->SetRenderOpacity(1.f);
+		BlasterHUD->CharacterOverlay->PingText->SetRenderOpacity(0.f);
 		BlasterHUD->CharacterOverlay->PlayAnimation(
 			BlasterHUD->CharacterOverlay->HighPingAnimation,
 			0.f,
@@ -277,8 +278,8 @@ void ABlasterPlayerController::StopHighPingWarning()
 		BlasterHUD->CharacterOverlay->PingText;
 	if (bHUDValid)
 	{
-		BlasterHUD->CharacterOverlay->HighPingImage->SetOpacity(0.f);
-		BlasterHUD->CharacterOverlay->PingText->SetOpacity(1.f);
+		BlasterHUD->CharacterOverlay->HighPingImage->SetRenderOpacity(0.f);
+		BlasterHUD->CharacterOverlay->PingText->SetRenderOpacity(1.f);
 		if (BlasterHUD->CharacterOverlay->IsAnimationPlaying(BlasterHUD->CharacterOverlay->HighPingAnimation))
 		{
 			BlasterHUD->CharacterOverlay->StopAnimation(BlasterHUD->CharacterOverlay->HighPingAnimation);

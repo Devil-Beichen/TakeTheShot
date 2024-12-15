@@ -84,19 +84,17 @@ void AWeapon::BeginPlay()
 	 * 这里的目的是让AreaSphere对Pawn类型的对象只进行碰撞检测，而不进行碰撞响应，
 	 * 也就是说，Pawn可以穿过AreaSphere，但AreaSphere不会对Pawn产生碰撞效果。
 	 */
-	if (HasAuthority())
-	{
-		// 启用碰撞检测和物理碰撞
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		// 对于Pawn类型的对象，设置碰撞响应为重叠，即不产生碰撞效果
-		AreaSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 
-		// 添加一个事件监听器，当AreaSphere与Pawn类型对象发生重叠时，调用OnSphereOverlap函数
-		// OnSphereOverlap函数用于处理武器的拾取逻辑
-		AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSphereOverlap);
+	// 启用碰撞检测和物理碰撞
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	// 对于Pawn类型的对象，设置碰撞响应为重叠，即不产生碰撞效果
+	AreaSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 
-		AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);
-	}
+	// 添加一个事件监听器，当AreaSphere与Pawn类型对象发生重叠时，调用OnSphereOverlap函数
+	// OnSphereOverlap函数用于处理武器的拾取逻辑
+	AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnSphereOverlap);
+
+	AreaSphere->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnSphereEndOverlap);
 
 	ShowPickupWidget(false);
 }
@@ -267,11 +265,7 @@ void AWeapon::Dropped()
 // 武器丢弃
 void AWeapon::OnDropped()
 {
-	if (HasAuthority())
-	{
-		// 将武器的碰撞检查开启（只在服务器调用）
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	}
+	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	WeaponMesh->SetSimulatePhysics(true);
 	WeaponMesh->SetEnableGravity(true);
@@ -304,7 +298,10 @@ void AWeapon::Fire(const FVector& HitTarget)
 			}
 		}
 	}
-	SpendRound();
+	if (HasAuthority())
+	{
+		SpendRound();
+	}
 }
 
 void AWeapon::AddAmmo(int AmmoToAdd)
