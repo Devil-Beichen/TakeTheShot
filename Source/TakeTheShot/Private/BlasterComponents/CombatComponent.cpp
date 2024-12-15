@@ -353,13 +353,6 @@ void UCombatComponent::OnRep_CombatState()
 		}
 		break;
 	case ECombatState::ECS_ThrowingGrenade:
-		// 播放远程武器的抛射动画
-		/*if (Character && !Character->IsLocallyControlled())
-		{
-			Character->PlayThrowGrenadeMontage();
-			AttachActorToLeftHand(EquippedWeapon);
-			ShowAttachedGrenade(true);
-		}*/
 		ThrowGrenadeSet();
 		break;
 	case ECombatState::ECS_MAX:
@@ -622,8 +615,13 @@ void UCombatComponent::Fire()
 		bCanFire = false;
 		// 调用服务器端开火函数
 		ServerFire(HitTarget);
-		// 本地开火
-		LocalFire(HitTarget);
+		// 如果是本地玩家，则调用本地开火函数
+		if (!Character->HasAuthority())
+		{
+			LocalFire(HitTarget);
+		}
+
+
 		if (EquippedWeapon)
 		{
 			CrosshairShootingFactor = 1.75f;

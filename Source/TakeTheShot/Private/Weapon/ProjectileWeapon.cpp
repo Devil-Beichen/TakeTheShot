@@ -40,7 +40,7 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 		const FRotator TargetRotation = ToTarget.Rotation();
 
 		// 在本地客户端上绘制调试线
-		if (InstigatorPawn->IsLocallyControlled())
+		/*if (InstigatorPawn->IsLocallyControlled())
 		{
 			UKismetSystemLibrary::DrawDebugLine(this, SocketTransform.GetLocation(), HitTarget, FLinearColor::Red, 2.f, 5.f);
 			UKismetSystemLibrary::DrawDebugSphere(this, SocketTransform.GetLocation(), 15.f, 12, FLinearColor::Green, 1.f, 1.f);
@@ -49,7 +49,7 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 		{
 			UKismetSystemLibrary::DrawDebugLine(this, SocketTransform.GetLocation(), HitTarget, FLinearColor::Yellow, 2.f, 5.f);
 			UKismetSystemLibrary::DrawDebugSphere(this, SocketTransform.GetLocation(), 15.f, 12, FLinearColor::White, 1.f, 1.f);
-		}
+		}*/
 
 		// 设置生成参数
 		FActorSpawnParameters SpawnParams;

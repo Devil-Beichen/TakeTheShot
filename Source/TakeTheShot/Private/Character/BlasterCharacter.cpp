@@ -520,7 +520,7 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	if (bEliminate == true) return;
 
 	// 添加日志记录，记录每次调用的详细信息
-	UE_LOG(LogTemp, Log, TEXT("%s 收到了 %f点伤害，调用者: %s, 损伤来源: %s"),
+	UE_LOG(LogTemp, Log, TEXT("%s 受到了 %f点伤害，调用者: %s, 损伤来源: %s"),
 	       *this->GetName(), Damage,
 	       InstigatorController ? *InstigatorController->GetName() : TEXT("None"),
 	       DamageCauser ? *DamageCauser->GetName() : TEXT("None"));
@@ -794,20 +794,36 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 	if (Distance < CameraThreshold)
 	{
 		GetMesh()->SetVisibility(false);
-		// 如果存在战斗状态，并且装备了武器，同时武器的网格模型存在，则设置武器模型为不可见。
-		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
+		if (Combat)
 		{
-			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+			// 如果存在装备的武器，则设置其网格模型为不可见。
+			if (Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
+			{
+				Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+			}
+			// 同理，如果存在副武器，也设置其网格模型为不可见。
+			if (Combat->SecondaryWeapon && Combat->SecondaryWeapon->GetWeaponMesh())
+			{
+				Combat->SecondaryWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+			}
 		}
 	}
 	else
 	{
 		// 如果距离大于等于阈值，恢复角色模型的可见性。
 		GetMesh()->SetVisibility(true);
-		// 同样地，如果存在战斗状态且装备了武器，则恢复武器模型的可见性。
-		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
+		if (Combat)
 		{
-			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+			// 如果存在装备的武器，则设置其网格模型为不可见。
+			if (Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
+			{
+				Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+			}
+			// 同理，如果存在副武器，也设置其网格模型为不可见。
+			if (Combat->SecondaryWeapon && Combat->SecondaryWeapon->GetWeaponMesh())
+			{
+				Combat->SecondaryWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+			}
 		}
 	}
 }
