@@ -284,6 +284,17 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
 
+	// 服务器发送霰弹枪的开火请求
+	UFUNCTION(Server, Reliable)
+	void ServerShotgunFier(const TArray<FVector_NetQuantize>& TraceHitTargets);
+
+	// 霰弹枪多播函数
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastShotgunFier(const TArray<FVector_NetQuantize>& TraceHitTargets);
+
+	// 本地霰弹枪开火
+	void LocalShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTarget);
+
 	// 开火定时器结束
 	void FireTimerFinished();
 

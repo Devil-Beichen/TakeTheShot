@@ -314,17 +314,17 @@ FVector AWeapon::TraceEndWithScatter(const FVector& HitTarget)
 	if (MuzzleFlashSocket == nullptr) return FVector();
 
 	// 获取插槽的变换
-	FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
+	const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
 	// 获取射击起点的位置
-	FVector Start = SocketTransform.GetLocation();
+	const FVector Start = SocketTransform.GetLocation();
 
 	// 获取从发射点到命中目标的向量
-	FVector ToTargetNormalized = (HitTarget - Start).GetSafeNormal();
+	const FVector ToTargetNormalized = (HitTarget - Start).GetSafeNormal();
 	// 球的中心点
-	FVector SphereCenter = Start + ToTargetNormalized * DistanceToShere;
-	FVector Randvec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
-	FVector EndLoc = SphereCenter + Randvec;
-	FVector ToEndLoc = EndLoc - Start;
+	const FVector SphereCenter = Start + ToTargetNormalized * DistanceToShere;
+	const FVector Randvec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
+	const FVector EndLoc = SphereCenter + Randvec;
+	const FVector ToEndLoc = EndLoc - Start;
 
 	/*DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
 	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);

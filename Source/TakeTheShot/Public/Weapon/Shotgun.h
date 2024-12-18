@@ -20,6 +20,18 @@ public:
 
 	virtual void Fire(const FVector& HitTarget) override;
 
+	// 霰弹枪开火
+	virtual void ShotgunFire(const TArray<FVector_NetQuantize>& HitTargets);
+
+	// virtual void ShotgunFire(const FVector& HitTarget) override;
+
+	/**
+	 *  霰弹枪弹丸打散
+	 * @param HitTarget		目标点
+	 * @param HitTargets   	所有目标点
+	 */
+	void ShotgunTraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& HitTargets);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
