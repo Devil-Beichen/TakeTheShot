@@ -18,19 +18,7 @@ public:
 	// Sets default values for this actor's properties
 	AShotgun();
 
-	virtual void Fire(const FVector& HitTarget) override;
-
-	// 霰弹枪开火
-	virtual void ShotgunFire(const TArray<FVector_NetQuantize>& HitTargets);
-
-	// virtual void ShotgunFire(const FVector& HitTarget) override;
-
-	/**
-	 *  霰弹枪弹丸打散
-	 * @param HitTarget		目标点
-	 * @param HitTargets   	所有目标点
-	 */
-	void ShotgunTraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& HitTargets);
+	virtual void Fire(const TArray<FVector_NetQuantize>& HitTargets) override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -39,8 +27,4 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	// 霰弹枪弹丸数量
-	UPROPERTY(EditDefaultsOnly, Category="Weapon Scatter")
-	uint32 NumberOfPellets = 10;
 };

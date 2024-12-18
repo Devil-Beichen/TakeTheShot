@@ -271,7 +271,7 @@ void AWeapon::OnDropped()
 }
 
 // 射击
-void AWeapon::Fire(const FVector& HitTarget)
+void AWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 {
 	if (FireAnimation)
 	{
@@ -299,19 +299,12 @@ void AWeapon::Fire(const FVector& HitTarget)
 	}
 }
 
-// 添加子弹
-void AWeapon::AddAmmo(int AmmoToAdd)
-{
-	Ammo = FMath::Clamp(Ammo - AmmoToAdd, 0, MagCapacity);
-	SetHUDAmmo();
-}
-
 // 随机散射命中点
-FVector AWeapon::TraceEndWithScatter(const FVector& HitTarget)
+void AWeapon::TraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& HitTargets)
 {
 	// 尝试获取武器网格上的"MuzzleFlash"插槽，并确保控制器已初始化
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
-	if (MuzzleFlashSocket == nullptr) return FVector();
+	if (MuzzleFlashSocket == nullptr) return;
 
 	// 获取插槽的变换
 	const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
@@ -322,21 +315,25 @@ FVector AWeapon::TraceEndWithScatter(const FVector& HitTarget)
 	const FVector ToTargetNormalized = (HitTarget - Start).GetSafeNormal();
 	// 球的中心点
 	const FVector SphereCenter = Start + ToTargetNormalized * DistanceToShere;
-	const FVector Randvec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
-	const FVector EndLoc = SphereCenter + Randvec;
-	const FVector ToEndLoc = EndLoc - Start;
 
-	/*DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
-	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
-	DrawDebugLine(
-		GetWorld(),
-		TraceStart,
-		FVector(TraceStart + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size()),
-		FColor::Cyan,
-		true);*/
-
-	return FVector(Start + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size());
+	// 生成随机的球体半径
+	for (uint32 i = 0; i < NumberOfPellets; i++)
+	{
+		const FVector Randvec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, SphereRadius);
+		const FVector EndLoc = SphereCenter + Randvec;
+		FVector ToEndLoc = EndLoc - Start;
+		ToEndLoc = Start + ToEndLoc * TRACE_LENGTH / ToEndLoc.Size();
+		HitTargets.Add(ToEndLoc);
+	}
 }
+
+// 添加子弹
+void AWeapon::AddAmmo(int AmmoToAdd)
+{
+	Ammo = FMath::Clamp(Ammo - AmmoToAdd, 0, MagCapacity);
+	SetHUDAmmo();
+}
+
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {

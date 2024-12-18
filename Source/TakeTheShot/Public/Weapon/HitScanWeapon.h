@@ -17,7 +17,7 @@ class TAKETHESHOT_API AHitScanWeapon : public AWeapon
 public:
 	AHitScanWeapon();
 	// 开火
-	virtual void Fire(const FVector& HitTarget) override;
+	virtual void Fire(const TArray<FVector_NetQuantize>& HitTargets) override;
 
 protected:
 	/**
@@ -26,7 +26,7 @@ protected:
 	 * @param HitTarget    命中点
 	 * @param OutHit       命中信息
 	 */
-	void WeaponTraceHit(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit);
+	void WeaponTraceHit(const FVector& TraceStart, const FVector_NetQuantize& HitTarget, FHitResult& OutHit);
 
 	// 伤害
 	UPROPERTY(EditDefaultsOnly)
@@ -34,24 +34,23 @@ protected:
 
 	// 命中特效
 	UPROPERTY(EditDefaultsOnly)
-	class UParticleSystem* ImpactParticles;
+	class UParticleSystem* ImpactParticles = nullptr;
 
 	// 拖尾特效
 	UPROPERTY(EditDefaultsOnly)
-	UParticleSystem* BeamParticles;
+	UParticleSystem* BeamParticles = nullptr;
 
 	// 枪口特效
 	UPROPERTY(EditDefaultsOnly)
-	UParticleSystem* MuzzleFlash;
+	UParticleSystem* MuzzleFlash = nullptr;
 
 	// 枪口音效
 	UPROPERTY(EditDefaultsOnly)
-	USoundCue* FireSound;
+	USoundCue* FireSound = nullptr;
 
 	// 命中音效
 	UPROPERTY(EditDefaultsOnly)
-	USoundCue* HitSound;
+	USoundCue* HitSound = nullptr;
 
 private:
-
 };

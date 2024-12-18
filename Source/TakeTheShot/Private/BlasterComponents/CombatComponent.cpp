@@ -9,7 +9,6 @@
 #include "PlayerController/BlasterPlayerController.h"
 #include "Sound/SoundCue.h"
 #include "Weapon/Projectile.h"
-#include "Weapon/Shotgun.h"
 #include "Weapon/Weapon.h"
 
 
@@ -614,7 +613,7 @@ void UCombatComponent::Fire()
 	if (CanFire())
 	{
 		bCanFire = false;
-		if (EquippedWeapon)
+		/*if (EquippedWeapon)
 		{
 			CrosshairShootingFactor = 1.75f;
 
@@ -633,89 +632,75 @@ void UCombatComponent::Fire()
 			case EFireType::EWS_MAX:
 				break;
 			}
-		}
+		}*/
+		WeaponFire();
 
 		StartFireTimer();
 	}
 }
 
-// 发送开火请求（发射子弹类的武器）
-void UCombatComponent::FireProjectileWeapon()
+// 武器开火
+void UCombatComponent::WeaponFire()
 {
+	// 如果已装备武器且角色存在
 	if (EquippedWeapon && Character)
 	{
-		HitTarget = EquippedWeapon->bUseScatter ? EquippedWeapon->TraceEndWithScatter(HitTarget) : HitTarget;
-		// 如果是本地玩家，则调用本地开火函数
-		if (!Character->HasAuthority())LocalFire(HitTarget);
-
-		// 调用服务器端开火函数
-		ServerFire(HitTarget);
-	}
-}
-
-// 发送开火请求（发射射线的武器）
-void UCombatComponent::FireHitScanWeapon()
-{
-	if (EquippedWeapon && Character)
-	{
-		HitTarget = EquippedWeapon->bUseScatter ? EquippedWeapon->TraceEndWithScatter(HitTarget) : HitTarget;
-
-		// 如果是本地玩家，则调用本地开火函数
-		if (!Character->HasAuthority())LocalFire(HitTarget);
-
-		// 调用服务器端开火函数
-		ServerFire(HitTarget);
-	}
-}
-
-// 发送开火请求（霰弹枪）
-void UCombatComponent::FireShotgun()
-{
-	AShotgun* Shotgun = Cast<AShotgun>(EquippedWeapon);
-	if (Shotgun)
-	{
+		CrosshairShootingFactor = 1.75f;
+		// 初始化存储命中目标的数组
 		TArray<FVector_NetQuantize> HitTargets;
-		Shotgun->ShotgunTraceEndWithScatter(HitTarget, HitTargets);
+
+		// 根据武器是否使用散射来处理射击目标
+		if (EquippedWeapon->bUseScatter)
+		{
+			// 如果武器使用散射，则调用武器的TraceEndWithScatter函数处理散射目标
+			EquippedWeapon->TraceEndWithScatter(HitTarget, HitTargets);
+		}
+		else
+		{
+			// 如果武器不使用散射，则直接将命中目标添加到数组中
+			HitTargets.Add(HitTarget);
+		}
 
 		// 如果是本地玩家，则调用本地开火函数
-		if (!Character->HasAuthority())LocalShotgunFire(HitTargets);
+		if (!Character->HasAuthority())LocalFire(HitTargets);
 
-		ServerShotgunFier(HitTargets);
+		// 调用服务器端开火函数
+		ServerFire(HitTargets);
 	}
 }
 
 // 服务器端开火处理，用于同步所有客户端的开火动作
-void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+void UCombatComponent::ServerFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTargets)
 {
 	// 调用多播开火函数，实现所有客户端的同时开火效果
-	MulticastFire(TraceHitTarget);
+	MulticastFire(TraceHitTargets);
 }
 
 // 多播开火实现，用于实际播放角色开火动画和执行武器开火逻辑
-void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+void UCombatComponent::MulticastFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTargets)
 {
 	// 如果角色是本地控制且不是服务端，则不执行任何操作
 	if (Character && Character->IsLocallyControlled() && !Character->HasAuthority()) return;
 
-	LocalFire(TraceHitTarget);
+	LocalFire(TraceHitTargets);
 }
 
 // 本地开火
-void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
+void UCombatComponent::LocalFire(const TArray<FVector_NetQuantize>& TraceHitTargets)
 {
 	// 如果没有装备武器，则不执行任何操作
 	if (EquippedWeapon == nullptr || Character == nullptr) return;
-	/*// 如果当前武器类型是霰弹枪，则执行霰弹枪开火逻辑
+	// 如果当前武器类型是霰弹枪，则执行霰弹枪开火逻辑
 	if (CombatState == ECombatState::ECS_Reloading)
 	{
 		// 播放角色开火动画，参数bAiming表示是否瞄准状态
 		Character->PlayFireMontage(bAiming);
 
 		// 调用装备武器的开火函数，实现实际开火逻辑
-		EquippedWeapon->Fire(TraceHitTarget);
+		EquippedWeapon->Fire(TraceHitTargets);
 		CombatState = ECombatState::ECS_Unoccupied; // 设置当前武器状态为非繁忙状态
 		return;
-	}*/
+	}
 
 	// 如果角色存在
 	if (CombatState == ECombatState::ECS_Unoccupied)
@@ -724,41 +709,7 @@ void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 		Character->PlayFireMontage(bAiming);
 
 		// 调用装备武器的开火函数，实现实际开火逻辑
-		EquippedWeapon->Fire(TraceHitTarget);
-	}
-}
-
-// 服务器端霰弹枪开火处理，用于同步所有客户端的霰弹枪开火动作
-void UCombatComponent::ServerShotgunFier_Implementation(const TArray<FVector_NetQuantize>& TraceHitTargets)
-{
-	MulticastShotgunFier(TraceHitTargets);
-}
-
-// 多播霰弹枪开火实现，用于实际播放角色霰弹枪开火动画和执行武器开火逻辑
-void UCombatComponent::MulticastShotgunFier_Implementation(const TArray<FVector_NetQuantize>& TraceHitTargets)
-{
-	// 如果角色是本地控制且不是服务端，则不执行任何操作
-	if (Character && Character->IsLocallyControlled() && !Character->HasAuthority()) return;
-	LocalShotgunFire(TraceHitTargets);
-}
-
-// 本地霰弹枪开火
-void UCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTarget)
-{
-	// 如果没有装备武器，则不执行任何操作
-	if (EquippedWeapon == nullptr || Character == nullptr) return;
-
-	AShotgun* Shotgun = Cast<AShotgun>(EquippedWeapon);
-
-	// 战斗状态为非繁忙状态
-	if (CombatState == ECombatState::ECS_Unoccupied)
-	{
-		// 播放角色开火动画，参数bAiming表示是否瞄准状态
-		Character->PlayFireMontage(bAiming);
-
-		Shotgun->ShotgunFire(TraceHitTarget);
-
-		CombatState = ECombatState::ECS_Unoccupied; // 设置当前武器状态为非繁忙状态
+		EquippedWeapon->Fire(TraceHitTargets);
 	}
 }
 

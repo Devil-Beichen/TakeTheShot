@@ -74,22 +74,23 @@ public:
 	 * 
 	 * 本函数实现了一个向目标位置发射火球的攻击动作，是常量成员函数
 	 * 
-	 * @param HitTarget 目标位置的向量表示，类型为FVector
+	 * @param HitTargets 命中点数组
 	 */
-	virtual void Fire(const FVector& HitTarget);
+	virtual void Fire(const TArray<FVector_NetQuantize>& HitTargets);
+
+	/**
+	* 随机散射命中点
+	* @param HitTarget		命中点
+	* @param HitTargets		命中点数组
+	* @return 
+	*/
+	void TraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& HitTargets);
 
 	// 丢弃武器
 	void Dropped();
 
 	// 添加子弹
 	void AddAmmo(int AmmoToAdd);
-
-	/**
-	* 随机散射命中点
-	* @param HitTarget    命中点
-	* @return 
-	*/
-	FVector TraceEndWithScatter(const FVector& HitTarget);
 
 	/**
  *	武器准星的纹理资源
@@ -151,6 +152,10 @@ public:
 	// 是否使用散射
 	UPROPERTY(EditDefaultsOnly, Category="Weapon Scatter")
 	bool bUseScatter = false;
+
+	// 弹丸数量
+	UPROPERTY(EditDefaultsOnly, Category="Weapon Scatter")
+	uint32 NumberOfPellets = 1;
 
 	/**
 	*  带散点的命中追踪轨迹结束

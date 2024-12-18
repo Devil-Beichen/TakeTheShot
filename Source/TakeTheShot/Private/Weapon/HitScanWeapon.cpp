@@ -12,13 +12,13 @@
 AHitScanWeapon::AHitScanWeapon()
 {
 	FireType = EFireType::EFT_HitScan;
+	NumberOfPellets = 1;
 }
 
 // 当击中目标时调用此函数来处理命中扫描武器的射击逻辑
-void AHitScanWeapon::Fire(const FVector& HitTarget)
+void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 {
-	// 调用父类的Fire函数以执行任何预射击逻辑
-	Super::Fire(HitTarget);
+	Super::Fire(HitTargets);
 
 	// 获取拥有此武器的Pawn
 	APawn* OwnerPawn = Cast<APawn>(GetOwner());
@@ -37,48 +37,52 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 		// 获取射击起点的位置
 		FVector Start = SocketTransform.GetLocation();
 
-		// 用于存储射击线迹的结果
-		FHitResult FireHit;
-
-		WeaponTraceHit(Start, HitTarget, FireHit);
-
-		// 如果线迹测试击中了某个物体
-		if (FireHit.bBlockingHit)
+		// 循环遍历每个目标点
+		for (FVector_NetQuantize HitTarget : HitTargets)
 		{
-			// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
-			if (HasAuthority() && InstigatorController && Cast<ABlasterCharacter>(FireHit.GetActor()))
-			{
-				UE_LOG(LogTemp, Log, TEXT("击中了：%s - %f点伤害"), *FireHit.GetActor()->GetName(), Damage)
-				// 应用伤害给击中的对象
-				UGameplayStatics::ApplyDamage(
-					FireHit.GetActor(),
-					Damage,
-					InstigatorController,
-					this,
-					UDamageType::StaticClass()
-				);
-			}
+			// 用于存储射击线迹的结果
+			FHitResult FireHit;
 
-			// 如果有设置撞击粒子效果
-			if (ImpactParticles)
+			WeaponTraceHit(Start, HitTarget, FireHit);
+			// 如果线迹测试击中了某个物体
+			if (FireHit.bBlockingHit)
 			{
-				// 在撞击点生成粒子效果
-				UGameplayStatics::SpawnEmitterAtLocation(
-					GetWorld(),
-					ImpactParticles,
-					FireHit.ImpactPoint,
-					FireHit.ImpactNormal.Rotation()
-				);
-			}
-			if (HitSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(
-					GetWorld(),
-					HitSound,
-					FireHit.ImpactPoint
-				);
+				// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
+				if (HasAuthority() && InstigatorController && Cast<ABlasterCharacter>(FireHit.GetActor()))
+				{
+					// UE_LOG(LogTemp, Log, TEXT("击中了：%s - %f点伤害"), *FireHit.GetActor()->GetName(), Damage)
+					// 应用伤害给击中的对象
+					UGameplayStatics::ApplyDamage(
+						FireHit.GetActor(),
+						Damage,
+						InstigatorController,
+						this,
+						UDamageType::StaticClass()
+					);
+				}
+
+				// 如果有设置撞击粒子效果
+				if (ImpactParticles)
+				{
+					// 在撞击点生成粒子效果
+					UGameplayStatics::SpawnEmitterAtLocation(
+						GetWorld(),
+						ImpactParticles,
+						FireHit.ImpactPoint,
+						FireHit.ImpactNormal.Rotation()
+					);
+				}
+				if (HitSound)
+				{
+					UGameplayStatics::PlaySoundAtLocation(
+						GetWorld(),
+						HitSound,
+						FireHit.ImpactPoint
+					);
+				}
 			}
 		}
+
 		if (MuzzleFlash)
 		{
 			UGameplayStatics::SpawnEmitterAttached(
@@ -102,7 +106,7 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 }
 
 // 武器命中效果
-void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit)
+void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector_NetQuantize& HitTarget, FHitResult& OutHit)
 {
 	if (UWorld* World = GetWorld())
 	{

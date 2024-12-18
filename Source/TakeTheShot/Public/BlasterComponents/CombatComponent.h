@@ -253,47 +253,30 @@ private:
 	// 开火
 	void Fire();
 
-	// 发送开火请求（发射子弹类的武器）
-	void FireProjectileWeapon();
-
-	// 发送开火请求（发射射线的武器）
-	void FireHitScanWeapon();
-
-	// 发送开火请求（霰弹枪）
-	void FireShotgun();
-
-	// 本地发射
-	void LocalFire(const FVector_NetQuantize& TraceHitTarget);
-
+	// 武器开火
+	void WeaponFire();
+	
 	/**
 	* 服务器端发射函数
 	* 该函数通过网络可靠地发送一个射击动作，指定射击的目标点
 	* 
-	 * @param TraceHitTarget 射击射中目标的位置，以网络量化向量表示
+	 * @param TraceHitTargets 射击射中目标的位置，以网络量化向量表示
 	*                        该参数通过网络传输，确保在服务器和客户端之间同步射击目标
 	*/
 	UFUNCTION(Server, Reliable)
-	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
+	void ServerFire(const TArray<FVector_NetQuantize>& TraceHitTargets);
 
 	/**
 	 * 网络多播函数，用于可靠地发送射击指令
 	 * 该函数通过网络将射击目标的位置通知给所有订阅此事件的客户端
 	 * 
-	 * @param TraceHitTarget 射击命中的目标位置，使用FVector_NetQuantize格式来优化网络传输
+	 * @param TraceHitTargets 射击命中的目标位置，使用FVector_NetQuantize格式来优化网络传输
 	 */
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
+	void MulticastFire(const TArray<FVector_NetQuantize>& TraceHitTargets);
 
-	// 服务器发送霰弹枪的开火请求
-	UFUNCTION(Server, Reliable)
-	void ServerShotgunFier(const TArray<FVector_NetQuantize>& TraceHitTargets);
-
-	// 霰弹枪多播函数
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastShotgunFier(const TArray<FVector_NetQuantize>& TraceHitTargets);
-
-	// 本地霰弹枪开火
-	void LocalShotgunFire(const TArray<FVector_NetQuantize>& TraceHitTarget);
+	// 本地发射
+	void LocalFire(const TArray<FVector_NetQuantize>& TraceHitTargets);
 
 	// 开火定时器结束
 	void FireTimerFinished();
