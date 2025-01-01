@@ -52,8 +52,18 @@ public:
 	friend class ABlasterCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	/**
+	 * 显示帧数据包
+	 * @param Package 需要显示的帧数据包
+	 * @param Color 颜色
+	 */
+	void ShowFramePackage(const FFramePackage& Package, FColor Color);
+
 protected:
 	virtual void BeginPlay() override;
+
+	// 存储帧数据
+	void SaveFramePackage(FFramePackage& Package);
 
 private:
 	// 角色
