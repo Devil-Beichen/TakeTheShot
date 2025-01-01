@@ -989,6 +989,10 @@ void UCombatComponent::SetAiming(const bool bIsAiming)
 	{
 		Character->ShowSniperScopeWidget(bIsAiming);
 	}
+	if (Character->IsLocallyControlled())
+	{
+		bAimButtonPressed = bIsAiming;
+	}
 }
 
 // 服务器端设置瞄准状态的函数，用于同步客户端和服务器端的状态
@@ -1015,5 +1019,13 @@ void UCombatComponent::MulticastSetAimingSpeed_Implementation() const
 		Character->GetCharacterMovement()->MaxWalkSpeed = Character->RunSpeed;
 
 		Character->bIsSlowWalk = false;
+	}
+}
+
+void UCombatComponent::OnRep_Aiming()
+{
+	if (Character && Character->IsLocallyControlled())
+	{
+		bAiming = bAimButtonPressed;
 	}
 }

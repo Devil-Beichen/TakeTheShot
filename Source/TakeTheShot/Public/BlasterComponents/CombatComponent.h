@@ -190,8 +190,15 @@ private:
 	AWeapon* SecondaryWeapon = nullptr;
 
 	// 定义一个布尔变量，用于指示角色是否正在瞄准
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_Aiming)
 	bool bAiming = false;
+
+	// 瞄准按钮是否被按下
+	bool bAimButtonPressed = false;
+
+	// 瞄准回调
+	UFUNCTION()
+	void OnRep_Aiming();
 
 	// 角色是否正在发射
 	bool bFireButtonPressed = false;
@@ -255,7 +262,7 @@ private:
 
 	// 武器开火
 	void WeaponFire();
-	
+
 	/**
 	* 服务器端发射函数
 	* 该函数通过网络可靠地发送一个射击动作，指定射击的目标点
