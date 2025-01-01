@@ -656,4 +656,10 @@ public:
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 	// 获取附加的手榴弹
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
+	// 是否在本地进行换弹
+	FORCEINLINE bool IsLocallyReloading() const
+	{
+		if (Combat == nullptr) return false;
+		return Combat->bLocallyReloading;
+	}
 };

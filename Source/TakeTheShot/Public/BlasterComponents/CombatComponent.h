@@ -168,6 +168,9 @@ public:
 	// 拾取弹药
 	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
 
+	// 在本地重新装填
+	bool bLocallyReloading = false;
+
 private:
 	// 定义一个指向Blaster角色的指针，用于在装备系统中引用角色实例
 	UPROPERTY()

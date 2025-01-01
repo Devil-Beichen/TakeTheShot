@@ -322,9 +322,12 @@ void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade)
 // 重新装填逻辑
 void UCombatComponent::Reload()
 {
-	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied && !EquippedWeapon->IsFull())
+	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied && !EquippedWeapon->IsFull() && !bLocallyReloading)
 	{
 		ServerReload();
+		// 处理重新装填动作
+		HandleReload();
+		bLocallyReloading = true;
 	}
 }
 
@@ -335,8 +338,13 @@ void UCombatComponent::ServerReload_Implementation()
 
 	// 更改战斗状态为“正在重新装填”
 	CombatState = ECombatState::ECS_Reloading;
-	// 处理重新装填动作
-	HandleReload();
+
+	// 如果角色不是本地控制，则处理重新装填动作
+	if (!Character->IsLocallyControlled())
+	{
+		// 处理重新装填动作
+		HandleReload();
+	}
 }
 
 void UCombatComponent::OnRep_CombatState()
@@ -344,7 +352,7 @@ void UCombatComponent::OnRep_CombatState()
 	switch (CombatState)
 	{
 	case ECombatState::ECS_Reloading:
-		HandleReload();
+		if (Character && !Character->IsLocallyControlled())HandleReload();
 		break;
 	case ECombatState::ECS_Unoccupied:
 		if (bFireButtonPressed)
@@ -363,13 +371,17 @@ void UCombatComponent::OnRep_CombatState()
 // 重新装填逻辑
 void UCombatComponent::HandleReload()
 {
-	Character->PlayReloadMontage();
+	if (Character)
+	{
+		Character->PlayReloadMontage();
+	}
 }
 
 // 完成重新装填
 void UCombatComponent::FinishReload()
 {
 	if (Character == nullptr) return;
+	bLocallyReloading = false;
 	if (Character->HasAuthority())
 	{
 		CombatState = ECombatState::ECS_Unoccupied;
@@ -633,6 +645,9 @@ void UCombatComponent::Fire()
 				break;
 			}
 		}*/
+
+		CrosshairShootingFactor = 1.75f;
+
 		WeaponFire();
 
 		StartFireTimer();
@@ -745,6 +760,7 @@ void UCombatComponent::FireTimerFinished()
 bool UCombatComponent::CanFire()
 {
 	if (EquippedWeapon == nullptr) return false;
+	if (bLocallyReloading) return false;
 	if (!EquippedWeapon->IsAmmoEmpty() && bCanFire && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun) return true;
 	return !EquippedWeapon->IsAmmoEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 }
