@@ -40,13 +40,13 @@ void AProjectileWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 			// 根据向量计算目标的旋转角度
 			const FRotator TargetRotation = ToTarget.Rotation();
 
-			// 在本地和远程客户端上绘制调试信息
-			/*if (!InstigatorPawn->HasAuthority())
+			/*// 在本地和远程客户端上绘制调试信息
+			if (!InstigatorPawn->HasAuthority())
 			{
 				DrawDebugLine(World, SocketTransform.GetLocation(), HitTarget, FColor::Green, true, 1.f, 1.f);
 				DrawDebugSphere(World, SocketTransform.GetLocation(), 15.f, 12, FColor(0.f, 255.f, 0.f), true, 1.f, 1.f);
 			}
-			if (InstigatorPawn->HasAuthority())
+			else
 			{
 				DrawDebugLine(World, SocketTransform.GetLocation(), HitTarget, FColor::Red, true, 1.f, 1.f);
 				DrawDebugSphere(World, SocketTransform.GetLocation(), 15.f, 12, FColor(255.f, 0.f, 0.f), true, 1.f, 1.f);

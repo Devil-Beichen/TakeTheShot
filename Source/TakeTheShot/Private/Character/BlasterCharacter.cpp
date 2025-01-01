@@ -115,11 +115,7 @@ void ABlasterCharacter::BeginPlay()
 	if (HasAuthority())
 	{
 		SpawnDefaultWeapon(); // 生成默认武器
-	}
 
-	// 如果当前角色具有权威性（即服务器端），则注册一个事件处理函数
-	if (HasAuthority())
-	{
 		// 当角色受到任何伤害时，调用ReceiveDamage函数处理伤害逻辑
 		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
 	}

@@ -104,7 +104,6 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
-	DOREPLIFETIME(AWeapon, Ammo);
 }
 
 // 当角色的拥有者发生变化时回调函数
@@ -131,14 +130,43 @@ void AWeapon::SpendRound()
 {
 	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
 	SetHUDAmmo();
+	if (HasAuthority())
+	{
+		ClientUpdateAmmo(Ammo);
+	}
+	else
+	{
+		++Sequence;
+	}
 }
 
-// 当剩余子弹数量发生变化时回调函数 只会在客户端执行
-void AWeapon::OnRep_Ammo()
+// 添加子弹
+void AWeapon::AddAmmo(int AmmoToAdd)
 {
+	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
+	SetHUDAmmo();
+	ClientAddAmmo(AmmoToAdd);
+}
+
+// 客户端更新弹药数量
+void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
+{
+	if (HasAuthority())return;
+	Ammo = ServerAmmo;
+	--Sequence;
+	Ammo -= Sequence;
+	SetHUDAmmo();
+}
+
+// 客户端添加子弹
+void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
+{
+	if (HasAuthority())return;
+	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
 	if (BlasterOwnerCharacter && BlasterOwnerCharacter->GetCombat() && IsFull())
 	{
-		BlasterOwnerCharacter->GetCombat()->JumpToShotgunEnd(); // 播放弹夹装填动画
+		BlasterOwnerCharacter->GetCombat()->JumpToShotgunEnd();
 	}
 	SetHUDAmmo();
 }
@@ -293,10 +321,8 @@ void AWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 			}
 		}
 	}
-	if (HasAuthority())
-	{
-		SpendRound();
-	}
+
+	SpendRound();
 }
 
 // 随机散射命中点
@@ -326,14 +352,6 @@ void AWeapon::TraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQu
 		HitTargets.Add(ToEndLoc);
 	}
 }
-
-// 添加子弹
-void AWeapon::AddAmmo(int AmmoToAdd)
-{
-	Ammo = FMath::Clamp(Ammo - AmmoToAdd, 0, MagCapacity);
-	SetHUDAmmo();
-}
-
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {

@@ -561,7 +561,7 @@ void UCombatComponent::UpdateAmmoValues()
 	}
 
 	// 将装备的武器的弹药数量增加（负数表示减少，这里实际上是增加武器内的弹药）
-	EquippedWeapon->AddAmmo(-ReloadAmount);
+	EquippedWeapon->AddAmmo(ReloadAmount);
 	UpdateCarriedAmmo();
 }
 
@@ -578,7 +578,7 @@ void UCombatComponent::UpdateShotgunAmmoValues()
 		// 更新携带的该类型弹药数量
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
-	EquippedWeapon->AddAmmo(-1); // 负数表示减少，这里实际上是增加武器内的弹药
+	EquippedWeapon->AddAmmo(1); // 负数表示减少，这里实际上是增加武器内的弹药
 	UpdateCarriedAmmo(); // 更新携带的弹药数量
 
 	// 可以再次开火

@@ -93,8 +93,8 @@ public:
 	void AddAmmo(int AmmoToAdd);
 
 	/**
- *	武器准星的纹理资源
- */
+	*	武器准星的纹理资源
+	*/
 
 	// 准星中心
 	UPROPERTY(EditDefaultsOnly, Category="Crosshairs")
@@ -250,19 +250,34 @@ private:
 	TSubclassOf<class ACasing> CasingClass;
 
 	// 当前子弹
-	UPROPERTY(EditDefaultsOnly, ReplicatedUsing="OnRep_Ammo")
+	UPROPERTY(EditDefaultsOnly)
 	int32 Ammo = 30;
+
+	/**
+	 * 客户端更新子弹
+	 * @param ServerAmmo	服务器端的子弹数量 
+	 */
+	UFUNCTION(Client, Reliable)
+	void ClientUpdateAmmo(int32 ServerAmmo);
+	/**
+	 * 客户端添加子弹
+	 * @param AmmoToAdd	添加的子弹数量
+	 */
+	UFUNCTION(Client, Reliable)
+	void ClientAddAmmo(int32 AmmoToAdd);
 
 	// 消耗子弹
 	void SpendRound();
-
-	// 当剩余子弹数量发生变化时回调函数 只会在客户端执行
-	UFUNCTION()
-	void OnRep_Ammo();
-
+	
 	// 弹匣容量(备弹量)
 	UPROPERTY(EditDefaultsOnly)
 	int32 MagCapacity = 30;
+
+	/**
+	 *  未处理的 服务器请求弹药的数量
+	 *  在消化子弹中增加，在更新子弹中递减
+	 */
+	int32 Sequence = 0;
 
 	// 拥有自己的玩家角色
 	UPROPERTY()
