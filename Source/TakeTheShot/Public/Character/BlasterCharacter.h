@@ -19,6 +19,7 @@ class UInputAction;
 class UAnimMontage;
 class ABlasterPlayerController;
 class USoundCue;
+class UBoxComponent;
 
 
 /*	爆破角色的基类
@@ -143,6 +144,10 @@ public:
 
 	// 丢弃或销毁所有武器
 	void DropOrDestrouWeapons();
+
+	// 击中碰撞框
+	UPROPERTY()
+	TMap<FName, class UBoxComponent*> HitCollisionBoxes;
 
 protected:
 	virtual void BeginPlay() override;
@@ -328,6 +333,65 @@ public:
 	 * @return 返回一个UCameraComponent类型的指针，指向跟随相机组件。
 	 */
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+protected:
+	/**
+	* 角色的碰撞盒组件
+	*/
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* head;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* pelvis;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* spine_02;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* spine_03;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* upperarm_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* upperarm_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* lowerarm_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* lowerarm_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* hand_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* hand_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* backpack;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* blanket;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* thigh_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* thigh_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* calf_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* calf_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* foot_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* foot_r;
 
 #pragma endregion
 
