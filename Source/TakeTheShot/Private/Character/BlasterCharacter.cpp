@@ -8,6 +8,7 @@
 #include "TakeTheShot.h"
 #include "BlasterComponents/CombatComponent.h"
 #include "BlasterComponents/BuffComponent.h"
+#include "BlasterComponents/LagCompensationComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -80,6 +81,12 @@ ABlasterCharacter::ABlasterCharacter()
 	 */
 	Buff = CreateDefaultSubobject<UBuffComponent>(TEXT("BuffComponent"));
 	Buff->SetIsReplicated(true);
+
+	/**
+	 * 创建并初始化一个延迟补偿组件，用于处理延迟补偿逻辑
+	 */
+	LagCompensation = CreateDefaultSubobject<ULagCompensationComponent>(TEXT("LagCompensation"));
+	LagCompensation->SetIsReplicated(true);
 
 	// 定义网络更新频率，用于控制数据同步的速率
 	NetUpdateFrequency = 66.f;
@@ -290,6 +297,11 @@ void ABlasterCharacter::PostInitializeComponents()
 			GetCharacterMovement()->MaxWalkSpeedCrouched);
 		// 设置初始跳跃速度
 		Buff->SetInitialJumpVelocity(GetCharacterMovement()->JumpZVelocity);
+	}
+	if (LagCompensation)
+	{
+		LagCompensation->Character = this;
+		LagCompensation->Controller = Cast<ABlasterPlayerController>(Controller);
 	}
 }
 
