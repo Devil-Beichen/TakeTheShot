@@ -18,7 +18,7 @@ void ULagCompensationComponent::BeginPlay()
 }
 
 // 服务器端回溯函数，用于处理命中补偿
-/**
+/**             
  * 服务器端倒带（回退）
  * @param HitCharacter	命中的角色
  * @param TraceStart	命中的起始位置
@@ -176,3 +176,50 @@ void ULagCompensationComponent::SaveFramePackage(FFramePackage& Package)
 		}
 	}
 }
+
+/**
+ * 在两帧之间进行插值计算
+ * 
+ * 此函数用于根据给定的两个帧（OlderFrame 和 YoungerFram）以及一个指定的时间点（HitTime），
+ * 计算出在这个时间点上，各个命中盒（HitBox）的位置和旋转状态此方法主要用于补偿网络延迟下的画面显示问题，
+ * 通过插值处理来平滑动画效果
+ * 
+ * @param OlderFrame 较旧的帧数据，用于插值计算的起始点
+ * @param YoungerFram 较新的帧数据，用于插值计算的终点
+ * @param HitTime 插值计算的目标时间点，决定了插值的结果
+ * @return 返回插值计算得到的帧数据，包括各个命中盒在目标时间点的位置和旋转状态
+ */
+FFramePackage ULagCompensationComponent::InterpBetweenFrames(const FFramePackage& OlderFrame, const FFramePackage& YoungerFram, float HitTime)
+{
+    // 计算两帧之间的时间距离
+    const float Distance = YoungerFram.Time - OlderFrame.Time;
+    // 计算插值比例，确保其在0到1之间，避免超出有效范围
+    const float InterpFraction = FMath::Clamp((HitTime - OlderFrame.Time) / Distance, 0.f, 1.f);
+
+    // 初始化插值计算得到的帧数据结构
+    FFramePackage InterpFramePackage;
+    InterpFramePackage.Time = HitTime;
+    // 遍历较新的帧中的每个命中盒信息，进行插值计算
+    for (auto& YoungerPair : YoungerFram.HitBoxInfo)
+    {
+        // 获取命中盒的名称，用于索引和匹配
+        const FName& BoxInfoName = YoungerPair.Key;
+        // 从较旧和较新的帧数据中获取对应的命中盒信息
+        const FBoxInFormation& OlderBox = OlderFrame.HitBoxInfo[BoxInfoName];
+        const FBoxInFormation& YoungerBox = YoungerFram.HitBoxInfo[BoxInfoName];
+
+        // 初始化插值计算得到的命中盒信息
+        FBoxInFormation InterpBoxInfo;
+        // 使用线性插值计算命中盒的位置
+        InterpBoxInfo.Location = FMath::VInterpTo(OlderBox.Location, YoungerBox.Location, 1.f, InterpFraction);
+        // 使用线性插值计算命中盒的旋转
+        InterpBoxInfo.Rotation = FMath::RInterpTo(OlderBox.Rotation, YoungerBox.Rotation, 1.f, InterpFraction);
+        // 直接使用较新的帧中的命中盒尺寸信息，因为尺寸不参与插值计算
+        InterpBoxInfo.BoxExtent = YoungerBox.BoxExtent;
+        // 将插值计算得到的命中盒信息添加到结果帧数据中
+        InterpFramePackage.HitBoxInfo.Add(BoxInfoName, InterpBoxInfo);
+    }
+    // 返回插值计算得到的帧数据
+    return InterpFramePackage;
+}
+

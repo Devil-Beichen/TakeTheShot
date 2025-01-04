@@ -74,6 +74,15 @@ protected:
 	// 存储帧数据
 	void SaveFramePackage(FFramePackage& Package);
 
+	/**
+	 * 插值帧数据
+	 * @param OlderFrame	旧帧
+	 * @param YoungerFram	新帧
+	 * @param HitTime		命中的时间
+	 * @return 
+	 */
+	FFramePackage InterpBetweenFrames(const FFramePackage& OlderFrame, const FFramePackage& YoungerFram, float HitTime);
+
 private:
 	// 角色
 	UPROPERTY()
