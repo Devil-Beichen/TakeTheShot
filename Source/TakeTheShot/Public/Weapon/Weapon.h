@@ -169,6 +169,22 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Weapon Scatter")
 	float SphereRadius = 75.f;
 
+	// 伤害
+	UPROPERTY(EditDefaultsOnly)
+	float Damage = 20.f;
+
+	// 使用服务器回溯
+	UPROPERTY(EditDefaultsOnly)
+	bool bUseServerSideRewind = false;
+
+	// 拥有自己的玩家角色
+	UPROPERTY()
+	class ABlasterCharacter* BlasterOwnerCharacter;
+
+	// 拥有自己的玩家控制器
+	UPROPERTY()
+	class ABlasterPlayerController* BlasterOwnerController;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -268,7 +284,7 @@ private:
 
 	// 消耗子弹
 	void SpendRound();
-	
+
 	// 弹匣容量(备弹量)
 	UPROPERTY(EditDefaultsOnly)
 	int32 MagCapacity = 30;
@@ -278,14 +294,6 @@ private:
 	 *  在消化子弹中增加，在更新子弹中递减
 	 */
 	int32 Sequence = 0;
-
-	// 拥有自己的玩家角色
-	UPROPERTY()
-	class ABlasterCharacter* BlasterOwnerCharacter;
-
-	// 拥有自己的玩家控制器
-	UPROPERTY()
-	class ABlasterPlayerController* BlasterOwnerController;
 
 	// 武器类型
 	UPROPERTY(EditDefaultsOnly)
@@ -315,4 +323,6 @@ public:
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	// 获取弹匣容量
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
+	// 获取伤害
+	FORCEINLINE float GetDamage() const { return Damage; }
 };

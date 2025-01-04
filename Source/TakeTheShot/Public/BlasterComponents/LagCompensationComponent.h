@@ -83,6 +83,23 @@ public:
 	 */
 	FServerSideRewindResult ServerSideRewind(class ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime);
 
+	/**
+	 * 伤害请求（只会在服务器调用）
+	 * @param HitCharacter	命中的角色
+	 * @param TraceStart	命中的起始位置
+	 * @param HitLocation	命中的位置
+	 * @param HitTime		命中的时间
+	 * @param DamageCauser	伤害的发起者
+	 */
+	UFUNCTION(Server, Reliable)
+	void ServerScoreRequest(
+		ABlasterCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize& HitLocation,
+		float HitTime,
+		class AWeapon* DamageCauser
+	);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -131,6 +148,9 @@ protected:
 
 	// 启用或禁用角色的碰撞盒
 	void EnableCharacterMeshCollision(ABlasterCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnable);
+
+	// 存储帧数据
+	void SaveFramePackage();
 
 private:
 	// 角色

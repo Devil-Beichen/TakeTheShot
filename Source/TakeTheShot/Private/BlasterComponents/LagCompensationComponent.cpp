@@ -5,6 +5,8 @@
 
 #include "Character/BlasterCharacter.h"
 #include "Components/BoxComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Weapon/Weapon.h"
 
 
 ULagCompensationComponent::ULagCompensationComponent()
@@ -20,23 +22,7 @@ void ULagCompensationComponent::BeginPlay()
 void ULagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (FrameHistory.Num() <= 1)
-	{
-		AddFramePackage();
-	}
-	else
-	{
-		// 获取历史帧数据包持续的时间长度（用最新的时间减去最旧的时间）
-		float HistoryLength = GetFrameTime();
-		while (HistoryLength > MaxRecordTime)
-		{
-			// 移除最旧的帧数据包
-			FrameHistory.RemoveNode(FrameHistory.GetTail());
-			HistoryLength = GetFrameTime();
-		}
-		AddFramePackage();
-	}
+	SaveFramePackage();
 }
 
 // 添加帧数据包
@@ -46,7 +32,7 @@ void ULagCompensationComponent::AddFramePackage()
 	SaveFramePackage(ThisFrame);
 	FrameHistory.AddHead(ThisFrame);
 
-	ShowFramePackage(ThisFrame, FColor::Red);
+	// ShowFramePackage(ThisFrame, FColor::Red);
 }
 
 // 获取帧数据包持续的时间长度
@@ -177,6 +163,30 @@ FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(class ABlast
 	}
 	// 返回命中补偿结果
 	return ConfirmHit(FrameToCheck, HitCharacter, TraceStart, HitLocation);
+}
+
+/**
+ * 伤害请求（只会在服务器调用）
+ * @param HitCharacter	命中的角色
+ * @param TraceStart	命中的起始位置
+ * @param HitLocation	命中的位置
+ * @param HitTime		命中的时间
+ * @param DamageCauser	伤害的发起者
+ */
+void ULagCompensationComponent::ServerScoreRequest_Implementation(ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime, class AWeapon* DamageCauser)
+{
+	FServerSideRewindResult Confirm = ServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
+
+	if (Character && HitCharacter && DamageCauser && Confirm.bHitConfirmed)
+	{
+		UGameplayStatics::ApplyDamage(
+			HitCharacter,
+			DamageCauser->GetDamage(),
+			Character->Controller,
+			DamageCauser,
+			UDamageType::StaticClass()
+		);
+	}
 }
 
 /**
@@ -399,5 +409,29 @@ void ULagCompensationComponent::EnableCharacterMeshCollision(ABlasterCharacter* 
 	if (HitCharacter && HitCharacter->GetMesh())
 	{
 		HitCharacter->GetMesh()->SetCollisionEnabled(CollisionEnable);
+	}
+}
+
+// 保存当前帧的数据包
+void ULagCompensationComponent::SaveFramePackage()
+{
+	// 确保拥有者是在服务器上
+	if (Character == nullptr || !Character->HasAuthority()) return;
+
+	if (FrameHistory.Num() <= 1)
+	{
+		AddFramePackage();
+	}
+	else
+	{
+		// 获取历史帧数据包持续的时间长度（用最新的时间减去最旧的时间）
+		float HistoryLength = GetFrameTime();
+		while (HistoryLength > MaxRecordTime)
+		{
+			// 移除最旧的帧数据包
+			FrameHistory.RemoveNode(FrameHistory.GetTail());
+			HistoryLength = GetFrameTime();
+		}
+		AddFramePackage();
 	}
 }

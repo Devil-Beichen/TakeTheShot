@@ -78,6 +78,9 @@ public:
 	// 匹配状态改变
 	void OnMatchStateSet(FName State);
 
+	// 到服务器的时间（单程）
+	float SingleTripTime = 0.f;
+
 protected:
 	virtual void BeginPlay() override;
 

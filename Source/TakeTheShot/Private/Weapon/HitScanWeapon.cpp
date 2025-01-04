@@ -3,10 +3,12 @@
 
 #include "Weapon/HitScanWeapon.h"
 
+#include "BlasterComponents/LagCompensationComponent.h"
 #include "Character/BlasterCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "PlayerController/BlasterPlayerController.h"
 #include "Sound/SoundCue.h"
 
 AHitScanWeapon::AHitScanWeapon()
@@ -47,18 +49,40 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 			// 如果线迹测试击中了某个物体
 			if (FireHit.bBlockingHit)
 			{
+				ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
 				// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
-				if (HasAuthority() && InstigatorController && Cast<ABlasterCharacter>(FireHit.GetActor()))
+				if (InstigatorController && BlasterCharacter)
 				{
-					// UE_LOG(LogTemp, Log, TEXT("击中了：%s - %f点伤害"), *FireHit.GetActor()->GetName(), Damage)
-					// 应用伤害给击中的对象
-					UGameplayStatics::ApplyDamage(
-						FireHit.GetActor(),
-						Damage,
-						InstigatorController,
-						this,
-						UDamageType::StaticClass()
-					);
+					// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
+					bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
+					if (HasAuthority() && bCauseAuthDamage)
+					{
+						// UE_LOG(LogTemp, Log, TEXT("击中了：%s - %f点伤害"), *FireHit.GetActor()->GetName(), Damage)
+						// 应用伤害给击中的对象
+						UGameplayStatics::ApplyDamage(
+							FireHit.GetActor(),
+							Damage,
+							InstigatorController,
+							this,
+							UDamageType::StaticClass()
+						);
+					}
+					else if (!HasAuthority() && bUseServerSideRewind)
+					{
+						BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
+						BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;
+
+						if (BlasterOwnerCharacter && BlasterOwnerController && BlasterOwnerCharacter->GetLagComponent())
+						{
+							BlasterOwnerCharacter->GetLagComponent()->ServerScoreRequest(
+								BlasterCharacter,
+								Start,
+								HitTarget,
+								BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime,
+								this
+							);
+						}
+					}
 				}
 
 				// 如果有设置撞击粒子效果
@@ -128,7 +152,7 @@ void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector_Net
 		}
 
 		// 绘制命中点
-		DrawDebugSphere(World, BeamEnd, 15.f, 12, FColor(243, 156, 18), true, 5);
+		DrawDebugSphere(World, BeamEnd, 15.f, 12, FColor(243, 156, 18), false, 5);
 
 		if (BeamParticles)
 		{

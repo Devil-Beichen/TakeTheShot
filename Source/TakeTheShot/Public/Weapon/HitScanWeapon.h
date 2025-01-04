@@ -28,10 +28,6 @@ protected:
 	 */
 	void WeaponTraceHit(const FVector& TraceStart, const FVector_NetQuantize& HitTarget, FHitResult& OutHit);
 
-	// 伤害
-	UPROPERTY(EditDefaultsOnly)
-	float Damage = 20.f;
-
 	// 命中特效
 	UPROPERTY(EditDefaultsOnly)
 	class UParticleSystem* ImpactParticles = nullptr;
