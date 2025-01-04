@@ -17,6 +17,81 @@ void ULagCompensationComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
+// 服务器端回溯函数，用于处理命中补偿
+/**
+ * 服务器端倒带（回退）
+ * @param HitCharacter	命中的角色
+ * @param TraceStart	命中的起始位置
+ * @param HitLocation	命中的位置
+ * @param HitTime		命中的时间
+ */
+void ULagCompensationComponent::ServerSideRewind(class ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime)
+{
+	// 检查命中角色及其帧历史是否有效
+	bool bReturn =
+		HitCharacter == nullptr ||
+		HitCharacter->GetLagComponent() == nullptr ||
+		HitCharacter->GetLagComponent()->FrameHistory.GetHead() == nullptr ||
+		HitCharacter->GetLagComponent()->FrameHistory.GetTail() == nullptr;
+
+	// 初始化要检查的帧
+	FFramePackage FrameToCheck;
+
+	// 初始化是否应该插值的标志
+	bool bShouldInterpolate = true;
+
+	// 获取命中角色的帧历史
+	const TDoubleLinkedList<FFramePackage>& History = HitCharacter->GetLagComponent()->FrameHistory;
+	// 获取最早和最新的帧历史时间
+	const float OldestHistoyTime = History.GetTail()->GetValue().Time;
+	const float NewestHistoyTime = History.GetHead()->GetValue().Time;
+
+	// 如果命中时间比最早的历史时间还早，直接返回
+	if (OldestHistoyTime > HitTime)
+	{
+		return;
+	}
+
+	// 如果命中时间等于最早或最新历史时间，设置要检查的帧并禁用插值
+	if (OldestHistoyTime == HitTime || NewestHistoyTime <= HitTime)
+	{
+		FrameToCheck = History.GetHead()->GetValue();
+		bShouldInterpolate = false;
+	}
+
+	// 初始化用于插值的较新和较旧帧指针
+	TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Younger = History.GetHead();
+	TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Older = Younger;
+
+	// 遍历历史帧数据包，找到最接近命中时间的帧数据包
+	while (Older->GetValue().Time > HitTime)
+	{
+		if (Older->GetNextNode() == nullptr) break;
+		Older = Older->GetNextNode();
+		if (Older->GetValue().Time > HitTime)
+		{
+			Younger = Older;
+		}
+	}
+
+	// 如果找到与命中时间完全匹配的帧，设置要检查的帧并禁用插值
+	if (Older->GetValue().Time == HitTime)
+	{
+		FrameToCheck = Older->GetValue();
+		bShouldInterpolate = false;
+	}
+
+	// 如果需要插值，执行插值操作
+	if (bShouldInterpolate)
+	{
+		// 比较老的时间和比较新的时间之间进行插值
+	}
+
+	// 如果之前标记为返回，则返回
+	if (bReturn) return;
+}
+
+
 void ULagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);

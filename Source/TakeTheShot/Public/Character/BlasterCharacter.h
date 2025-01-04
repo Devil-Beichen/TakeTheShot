@@ -730,4 +730,7 @@ public:
 		if (Combat == nullptr) return false;
 		return Combat->bLocallyReloading;
 	}
+
+	// 获取延迟补偿组件
+	FORCEINLINE ULagCompensationComponent* GetLagComponent() const { return LagCompensation; }
 };

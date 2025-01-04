@@ -59,6 +59,15 @@ public:
 	 */
 	void ShowFramePackage(const FFramePackage& Package, FColor Color);
 
+	/**
+	 * 服务器端回溯函数，用于处理命中补偿
+	 * @param HitCharacter	命中的角色
+	 * @param TraceStart	命中的起始位置
+	 * @param HitLocation	命中的位置
+	 * @param HitTime		命中的时间
+	 */
+	void ServerSideRewind(class ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime);
+
 protected:
 	virtual void BeginPlay() override;
 
