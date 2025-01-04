@@ -39,6 +39,21 @@ struct FFramePackage
 	TMap<FName, FBoxInFormation> HitBoxInfo = TMap<FName, FBoxInFormation>();
 };
 
+// 服务器端回溯结果
+USTRUCT(BlueprintType)
+struct FServerSideRewindResult
+{
+	GENERATED_BODY()
+
+	// 是否命中
+	UPROPERTY()
+	bool bHitConfirmed = false;
+
+	// 爆头
+	UPROPERTY()
+	bool bHeadShot = false;
+};
+
 /**
  * 延迟补偿组件
  */
@@ -66,7 +81,7 @@ public:
 	 * @param HitLocation	命中的位置
 	 * @param HitTime		命中的时间
 	 */
-	void ServerSideRewind(class ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime);
+	FServerSideRewindResult ServerSideRewind(class ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime);
 
 protected:
 	virtual void BeginPlay() override;
@@ -82,6 +97,40 @@ protected:
 	 * @return 
 	 */
 	FFramePackage InterpBetweenFrames(const FFramePackage& OlderFrame, const FFramePackage& YoungerFram, float HitTime);
+
+	/**
+	 * 确认命中
+	 * @param Package			需要插值的帧数据包
+	 * @param HitCharacter		命中的角色
+	 * @param TraceStart		命中的起始位置
+	 * @param HitLocation		命中的位置
+	 * @return 
+	 */
+	FServerSideRewindResult ConfirmHit(const FFramePackage& Package, ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation);
+
+	/**
+	 * 缓存角色碰撞框位置信息
+	 * @param HitCharacter		命中的角色 
+	 * @param OutFramePackage	缓存的帧数据包
+	 */
+	void CacheBoxPositions(ABlasterCharacter* HitCharacter, FFramePackage& OutFramePackage);
+
+	/**
+	 *	移动角色身上的碰撞盒到指定位置和旋转
+	 * @param HitCharacter 被击中的角色，如果为nullptr则直接返回
+	 * @param Package 包含了需要应用到碰撞盒上的位置、旋转和大小信息的帧包
+	 */
+	void MoveBoxes(ABlasterCharacter* HitCharacter, const FFramePackage& Package);
+
+	/**
+	 * 重置角色的碰撞盒位置和旋转
+	* @param HitCharacter 被击中的角色，如果为nullptr则直接返回
+	 * @param Package 包含了需要应用到碰撞盒上的位置、旋转和大小信息的帧包
+	 */
+	void ResetHitBoxes(ABlasterCharacter* HitCharacter, const FFramePackage& Package);
+
+	// 启用或禁用角色的碰撞盒
+	void EnableCharacterMeshCollision(ABlasterCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnable);
 
 private:
 	// 角色
