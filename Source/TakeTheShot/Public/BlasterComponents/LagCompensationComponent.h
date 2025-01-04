@@ -14,15 +14,15 @@ struct FBoxInFormation
 
 	// 位置
 	UPROPERTY()
-	FVector Location;
+	FVector Location = FVector();
 
 	// 旋转
 	UPROPERTY()
-	FRotator Rotation;
+	FRotator Rotation = FRotator();
 
 	// 大小
 	UPROPERTY()
-	FVector BoxExtent;
+	FVector BoxExtent = FVector();
 };
 
 // 帧数据结构
@@ -33,10 +33,10 @@ struct FFramePackage
 
 	// 时间
 	UPROPERTY()
-	float Time;
+	float Time = 0.f;
 
 	// 盒子信息
-	TMap<FName, FBoxInFormation> HitBoxInfo;
+	TMap<FName, FBoxInFormation> HitBoxInfo = TMap<FName, FBoxInFormation>();
 };
 
 /**
@@ -68,10 +68,23 @@ protected:
 private:
 	// 角色
 	UPROPERTY()
-	ABlasterCharacter* Character;
+	ABlasterCharacter* Character = nullptr;
 	// 玩家控制器
 	UPROPERTY()
-	class ABlasterPlayerController* Controller;
+	class ABlasterPlayerController* Controller = nullptr;
+
+	// 帧数据
+	TDoubleLinkedList<FFramePackage> FrameHistory;
+
+	// 添加帧数据包
+	void AddFramePackage();
+
+	// 获取帧数据包持续的时间长度
+	float GetFrameTime() const;
+
+	// 最大记录时间
+	UPROPERTY(EditDefaultsOnly)
+	float MaxRecordTime = 4.f;
 
 public:
 };

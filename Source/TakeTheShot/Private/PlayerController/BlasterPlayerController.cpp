@@ -188,7 +188,8 @@ void ABlasterPlayerController::ShowPingDisplay()
 	// 检查BlasterHUD及其相关元素是否已正确初始化
 	const bool bHUDValid = BlasterHUD &&
 		BlasterHUD->CharacterOverlay &&
-		BlasterHUD->CharacterOverlay->PingText;
+		BlasterHUD->CharacterOverlay->PingText &&
+		BlasterHUD->CharacterOverlay->FPSText;
 	if (bHUDValid)
 	{
 		if (PlayerState)
@@ -205,6 +206,10 @@ void ABlasterPlayerController::ShowPingDisplay()
 			// 显示Ping
 			const FString PingText = FString::Printf(TEXT("Ping : %d"), FMath::RoundToInt32(Ping));
 			BlasterHUD->CharacterOverlay->PingText->SetText(FText::FromString(PingText));
+
+			float FPS = 1.f / GetWorld()->GetDeltaSeconds();
+			const FString FPSText = FString::Printf(TEXT("FPS : %d"), FMath::RoundToInt32(FPS));
+			BlasterHUD->CharacterOverlay->FPSText->SetText(FText::FromString(FPSText));
 		}
 	}
 }

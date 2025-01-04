@@ -15,15 +15,44 @@ ULagCompensationComponent::ULagCompensationComponent()
 void ULagCompensationComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	FFramePackage Package;
-	SaveFramePackage(Package);
-	ShowFramePackage(Package, FColor::Orange);
 }
 
 void ULagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (FrameHistory.Num() <= 1)
+	{
+		AddFramePackage();
+	}
+	else
+	{
+		// 获取历史帧数据包持续的时间长度（用最新的时间减去最旧的时间）
+		float HistoryLength = GetFrameTime();
+		while (HistoryLength > MaxRecordTime)
+		{
+			// 移除最旧的帧数据包
+			FrameHistory.RemoveNode(FrameHistory.GetTail());
+			HistoryLength = GetFrameTime();
+		}
+		AddFramePackage();
+	}
+}
+
+// 添加帧数据包
+void ULagCompensationComponent::AddFramePackage()
+{
+	FFramePackage ThisFrame;
+	SaveFramePackage(ThisFrame);
+	FrameHistory.AddHead(ThisFrame);
+
+	ShowFramePackage(ThisFrame, FColor::Red);
+}
+
+// 获取帧数据包持续的时间长度
+float ULagCompensationComponent::GetFrameTime() const
+{
+	return FrameHistory.GetHead()->GetValue().Time - FrameHistory.GetTail()->GetValue().Time;
 }
 
 // 显示帧数据包
@@ -37,7 +66,8 @@ void ULagCompensationComponent::ShowFramePackage(const FFramePackage& Package, F
 			BoxInfo.Value.BoxExtent,
 			FQuat(BoxInfo.Value.Rotation),
 			Color,
-			true
+			false,
+			4.f
 
 		);
 	}

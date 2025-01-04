@@ -71,4 +71,8 @@ public:
 	// 延迟
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* PingText;
+
+	// FPS
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* FPSText;
 };
