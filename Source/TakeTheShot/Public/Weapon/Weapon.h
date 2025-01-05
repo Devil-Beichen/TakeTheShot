@@ -173,8 +173,8 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float Damage = 20.f;
 
-	// 使用服务器回溯
-	UPROPERTY(EditDefaultsOnly)
+	// 使用服务器回溯(延迟补偿)
+	UPROPERTY(EditAnywhere)
 	bool bUseServerSideRewind = false;
 
 	// 拥有自己的玩家角色

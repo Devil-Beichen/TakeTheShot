@@ -15,6 +15,7 @@ AHitScanWeapon::AHitScanWeapon()
 {
 	FireType = EFireType::EFT_HitScan;
 	NumberOfPellets = 1;
+	bUseServerSideRewind = true;
 }
 
 // 当击中目标时调用此函数来处理命中扫描武器的射击逻辑
@@ -31,6 +32,8 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 	// 获取控制拥有此武器的Pawn的控制器
 	AController* InstigatorController = OwnerPawn->GetController();
 
+	if (InstigatorController == nullptr) return;
+
 	// 尝试获取武器网格上的"MuzzleFlash"插槽，并确保控制器已初始化
 	if (const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash"))
 	{
@@ -38,6 +41,8 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 		FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
 		// 获取射击起点的位置
 		FVector Start = SocketTransform.GetLocation();
+		// 命中的角色
+		TArray<ABlasterCharacter*> HitCharacter = TArray<ABlasterCharacter*>();
 
 		// 循环遍历每个目标点
 		for (FVector_NetQuantize HitTarget : HitTargets)
@@ -51,8 +56,9 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 			{
 				ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
 				// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
-				if (InstigatorController && BlasterCharacter)
+				if (BlasterCharacter)
 				{
+					HitCharacter.AddUnique(BlasterCharacter);
 					// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
 					bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
 					if (HasAuthority() && bCauseAuthDamage)
@@ -66,21 +72,6 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 							this,
 							UDamageType::StaticClass()
 						);
-					}
-					else if (!HasAuthority() && bUseServerSideRewind)
-					{
-						BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
-						BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;
-
-						if (BlasterOwnerCharacter && BlasterOwnerController && BlasterOwnerCharacter->GetLagComponent())
-						{
-							BlasterOwnerCharacter->GetLagComponent()->ServerScoreRequest(
-								BlasterCharacter,
-								Start,
-								HitTarget,
-								BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime
-							);
-						}
 					}
 				}
 
@@ -103,6 +94,22 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 						FireHit.ImpactPoint
 					);
 				}
+			}
+		}
+		// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效(启用延迟补偿)
+		if (!HitCharacter.IsEmpty() && !HasAuthority() && bUseServerSideRewind)
+		{
+			BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
+			BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;
+
+			if (BlasterOwnerCharacter && BlasterOwnerController && BlasterOwnerCharacter->GetLagComponent() && BlasterOwnerCharacter->IsLocallyControlled())
+			{
+				BlasterOwnerCharacter->GetLagComponent()->ServerScoreRequest(
+					HitCharacter,
+					Start,
+					HitTargets,
+					BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime
+				);
 			}
 		}
 

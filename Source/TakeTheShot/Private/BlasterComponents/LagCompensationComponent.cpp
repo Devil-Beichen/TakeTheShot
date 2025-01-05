@@ -3,6 +3,7 @@
 
 #include "BlasterComponents/LagCompensationComponent.h"
 
+#include "TakeTheShot.h"
 #include "Character/BlasterCharacter.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -43,8 +44,7 @@ void ULagCompensationComponent::ShowFramePackage(const FFramePackage& Package, F
 			FQuat(BoxInfo.Value.Rotation),
 			Color,
 			false,
-			4.f
-
+			3.f
 		);
 	}
 }
@@ -113,104 +113,6 @@ void ULagCompensationComponent::AddFramePackage()
 	// ShowFramePackage(ThisFrame, FColor::Red);
 }
 
-// 服务器端回溯函数，用于处理命中补偿
-/**             
- * 服务器端倒带（回退）
- * @param HitCharacter	命中的角色
- * @param TraceStart	命中的起始位置
- * @param HitLocation	命中的位置
- * @param HitTime		命中的时间
- */
-FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(class ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime)
-{
-	FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);
-	// 返回命中补偿结果
-	return ConfirmHit(FrameToCheck, HitCharacter, TraceStart, HitLocation);
-}
-
-/**
- * 确认命中
- * @param Package			需要插值的帧数据包
- * @param HitCharacter		命中的角色
- * @param TraceStart		命中的起始位置
- * @param HitLocation		命中的位置
- * @return 
- */
-FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackage& Package, ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation)
-{
-	// 如果击中的角色为空，则返回默认的服务器端回放结果
-	if (HitCharacter == nullptr) return FServerSideRewindResult();
-
-	// 缓存当前帧的数据
-	FFramePackage CurrentFrame;
-	CacheBoxPositions(HitCharacter, CurrentFrame);
-
-	// 移动碰撞盒到指定的位置
-	MoveBoxes(HitCharacter, Package);
-
-	// 禁用角色网格的碰撞
-	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::NoCollision);
-
-	// 首先启用头部碰撞
-	UBoxComponent* HeadBox = HitCharacter->HitCollisionBoxes[FName("head")];
-	HeadBox->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-	HeadBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-
-	// 存储确认击中的结果
-	FHitResult ConfirmHitResult;
-
-	// 计算追踪结束的位置
-	const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
-
-	// 尝试进行线迹检测
-	if (UWorld* World = GetWorld())
-	{
-		World->LineTraceSingleByChannel(
-			ConfirmHitResult,
-			TraceStart,
-			TraceEnd,
-			ECC_Visibility
-		);
-		// 击中了头部，没必要去检查其它Box了
-		if (ConfirmHitResult.bBlockingHit)
-		{
-			ResetHitBoxes(HitCharacter, CurrentFrame);
-			EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
-			return FServerSideRewindResult{true, true};
-		}
-		else // 没有击中头部
-		{
-			// 启用其他碰撞盒的碰撞检测
-			for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
-			{
-				if (HitBoxPair.Value != nullptr)
-				{
-					HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-					HitBoxPair.Value->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-				}
-			}
-			// 再次进行线迹检测
-			World->LineTraceSingleByChannel(
-				ConfirmHitResult,
-				TraceStart,
-				TraceEnd,
-				ECC_Visibility);
-			// 检查是否击中了其他盒子
-			if (ConfirmHitResult.bBlockingHit)
-			{
-				ResetHitBoxes(HitCharacter, CurrentFrame);
-				EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
-				return FServerSideRewindResult{true, false};
-			}
-		}
-	}
-
-	// 如果没有击中任何盒子，重置碰撞盒和角色网格的碰撞设置
-	ResetHitBoxes(HitCharacter, CurrentFrame);
-	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
-	// 返回表示没有击中的结果
-	return FServerSideRewindResult{false, false};
-}
 
 /**
  * 执行散弹枪服务器端回放
@@ -226,7 +128,7 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackag
  * 它会遍历每个被击中的角色，并获取其在击中时刻的帧信息
  * 最后，根据这些帧信息和射击参数，确认射击是否命中
  */
-FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime)
+FShotgunServerSideRewindResult ULagCompensationComponent::ServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime)
 {
 	// 存储需要检查的帧信息数组
 	TArray<FFramePackage> FramesToCheck;
@@ -236,11 +138,11 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunServerSideRewin
 		FramesToCheck.Add(GetFrameToCheck(HitCharacter, HitTime));
 	}
 	// 根据帧信息、射击起始位置和击中位置，确认射击结果
-	return ShotgunConfirmHit(FramesToCheck, TraceStart, HitLocations);
+	return ConfirmHit(FramesToCheck, TraceStart, HitLocations);
 }
 
-// 确认散弹枪射击命中
-FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations)
+// 确认命中
+FShotgunServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations)
 {
 	for (auto& Frame : Framepackages)
 	{
@@ -270,7 +172,7 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(cons
 	{
 		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
 		HeadBox->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-		HeadBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+		HeadBox->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
 	}
 
 	UWorld* World = GetWorld();
@@ -291,7 +193,7 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(cons
 				ConfirmHitResult,
 				TraceStart,
 				TraceEnd,
-				ECC_Visibility
+				ECC_HitBox
 			);
 			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
 			if (BlasterCharacter)
@@ -317,7 +219,7 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(cons
 			if (HitBoxPair.Value != nullptr)
 			{
 				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
 			}
 		}
 		// 禁用用头部碰撞
@@ -340,7 +242,7 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(cons
 				ConfirmHitResult,
 				TraceStart,
 				TraceEnd,
-				ECC_Visibility
+				ECC_HitBox
 			);
 			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
 			if (BlasterCharacter)
@@ -367,6 +269,7 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(cons
 	return ShotgunResult;
 }
 
+// 获取帧信息
 FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime)
 {
 	// 检查命中角色及其帧历史是否有效
@@ -377,10 +280,10 @@ FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitC
 		HitCharacter->GetLagComponent()->FrameHistory.GetTail() == nullptr;
 
 	// 如果有错误，返回默认值
-	if (bReturn) FFramePackage();
+	if (bReturn) return FFramePackage();
 
 	// 初始化要检查的帧
-	FFramePackage FrameToCheck;
+	FFramePackage FrameToCheck = FFramePackage();
 
 	// 初始化是否应该插值的标志
 	bool bShouldInterpolate = true;
@@ -439,31 +342,8 @@ FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitC
 		// 比较老的时间和比较新的时间之间进行插值
 		FrameToCheck = InterpBetweenFrames(Older->GetValue(), Younger->GetValue(), HitTime);
 	}
-
+	FrameToCheck.Character = HitCharacter;
 	return FrameToCheck;
-}
-
-/**
- * 伤害请求（只会在服务器调用）
- * @param HitCharacter	命中的角色
- * @param TraceStart	命中的起始位置
- * @param HitLocation	命中的位置
- * @param HitTime		命中的时间
- */
-void ULagCompensationComponent::ServerScoreRequest_Implementation(ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime)
-{
-	FServerSideRewindResult Confirm = ServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
-
-	if (Character && HitCharacter && Character->GetEquippedWeapon() && Confirm.bHitConfirmed)
-	{
-		UGameplayStatics::ApplyDamage(
-			HitCharacter,
-			Character->GetEquippedWeapon()->GetDamage(),
-			Character->Controller,
-			Character->GetEquippedWeapon(),
-			UDamageType::StaticClass()
-		);
-	}
 }
 
 /**
@@ -473,9 +353,9 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(ABlasterCharac
  * @param HitLocations		被命中的位置
  * @param HitTime			命中的时间
  */
-void ULagCompensationComponent::ServerShotgunScoreRequest_Implementation(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime)
+void ULagCompensationComponent::ServerScoreRequest_Implementation(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime)
 {
-	FShotgunServerSideRewindResult Confirm = ShotgunServerSideRewind(HitCharacters, TraceStart, HitLocations, HitTime);
+	FShotgunServerSideRewindResult Confirm = ServerSideRewind(HitCharacters, TraceStart, HitLocations, HitTime);
 	for (auto& HitCharacter : HitCharacters)
 	{
 		if (HitCharacter == nullptr || HitCharacter->GetEquippedWeapon() == nullptr || Character == nullptr) continue;
@@ -573,7 +453,7 @@ void ULagCompensationComponent::CacheBoxPositions(ABlasterCharacter* HitCharacte
 			// 设置碰撞框的旋转信息
 			BoxInfo.Rotation = HitBoxPair.Value->GetComponentRotation();
 			// 设置碰撞框的大小信息
-			BoxInfo.BoxExtent = HitBoxPair.Value->GetComponentScale();
+			BoxInfo.BoxExtent = HitBoxPair.Value->GetScaledBoxExtent();
 			// 将碰撞框的信息添加到帧数据包中
 			OutFramePackage.HitBoxInfo.Add(HitBoxPair.Key, BoxInfo);
 		}
@@ -604,6 +484,7 @@ void ULagCompensationComponent::MoveBoxes(ABlasterCharacter* HitCharacter, const
 			HitBoxPair.Value->SetBoxExtent(Package.HitBoxInfo[HitBoxPair.Key].BoxExtent);
 		}
 	}
+	ShowFramePackage(Package, FColor::Red);
 }
 
 /**

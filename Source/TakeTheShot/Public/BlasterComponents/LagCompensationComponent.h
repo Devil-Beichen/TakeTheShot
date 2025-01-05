@@ -92,54 +92,25 @@ public:
 	void ShowFramePackage(const FFramePackage& Package, FColor Color);
 
 	/**
-	 * 服务器端回溯函数，用于处理命中补偿
-	 * @param HitCharacter	命中的角色
-	 * @param TraceStart	命中的起始位置
-	 * @param HitLocation	命中的位置
-	 * @param HitTime		命中的时间
-	 */
-	FServerSideRewindResult ServerSideRewind(class ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime);
-
-	/**
-	* 确认命中
-	* @param Package			需要插值的帧数据包
-	* @param HitCharacter		命中的角色
-	* @param TraceStart		命中的起始位置
-	* @param HitLocation		命中的位置
-	* @return 
-	*/
-	FServerSideRewindResult ConfirmHit(const FFramePackage& Package, ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation);
-
-
-	/**
-	 * 伤害请求（只会在服务器调用）
-	 * @param HitCharacter	命中的角色
-	 * @param TraceStart	命中的起始位置
-	 * @param HitLocation	命中的位置
-	 * @param HitTime		命中的时间
-	 */
-	UFUNCTION(Server, Reliable)
-	void ServerScoreRequest(
-		ABlasterCharacter* HitCharacter,
-		const FVector_NetQuantize& TraceStart,
-		const FVector_NetQuantize& HitLocation,
-		float HitTime
-	);
-
-	/**
-	 * 霰弹枪伤害请求（只会在服务器调用）
+	 * 延迟补偿伤害请求（只会在服务器调用）
 	 * @param HitCharacters		命中的角色
 	 * @param TraceStart		命中的起始位置
 	 * @param HitLocations		命中的位置
 	 * @param HitTime			命中的时间
 	 */
 	UFUNCTION(Server, Reliable)
-	void ServerShotgunScoreRequest(
+	void ServerScoreRequest(
 		const TArray<ABlasterCharacter*>& HitCharacters,
 		const FVector_NetQuantize& TraceStart,
 		const TArray<FVector_NetQuantize>& HitLocations,
 		float HitTime
 	);
+
+protected:
+	// 服务器回溯函数，用于处理命中补偿
+	FShotgunServerSideRewindResult ServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime);
+	// 确认命中
+	FShotgunServerSideRewindResult ConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations);
 
 protected:
 	virtual void BeginPlay() override;
@@ -190,14 +161,6 @@ protected:
 	 * @return				命中的帧数据包
 	 */
 	FFramePackage GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime);
-
-	/**
-	 * 霰弹枪
-	 */
-	// 服务器端霰弹枪回溯函数，用于处理命中补偿
-	FShotgunServerSideRewindResult ShotgunServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime);
-	// 确认霰弹枪命中
-	FShotgunServerSideRewindResult ShotgunConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations);
 
 private:
 	// 角色

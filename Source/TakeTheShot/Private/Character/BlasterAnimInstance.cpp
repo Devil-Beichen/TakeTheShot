@@ -124,9 +124,11 @@ void UBlasterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 	else
 	{
 		bUseFABRIK = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
-		if (BlasterCharacter->IsLocallyControlled() && BlasterCharacter->GetCombatState() != ECombatState::ECS_ThrowingGrenade)
+		bool bFABRIKOverride = BlasterCharacter->IsLocallyControlled() &&
+			BlasterCharacter->GetCombatState() != ECombatState::ECS_ThrowingGrenade;
+		if (bFABRIKOverride)
 		{
-			bUseFABRIK = BlasterCharacter->IsLocallyReloading();
+			bUseFABRIK = !BlasterCharacter->IsLocallyReloading();
 		}
 		bUseAimOffsets = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
 		bTransformRightHand = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;

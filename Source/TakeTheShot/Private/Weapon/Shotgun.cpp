@@ -3,10 +3,12 @@
 
 #include "Weapon/Shotgun.h"
 
+#include "BlasterComponents/LagCompensationComponent.h"
 #include "Character/BlasterCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "PlayerController/BlasterPlayerController.h"
 #include "Sound/SoundCue.h"
 
 
@@ -29,6 +31,7 @@ void AShotgun::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 
 	// 获取控制拥有此武器的Pawn的控制器
 	AController* InstigatorController = OwnerPawn->GetController();
+	if (InstigatorController == nullptr) return;
 
 	// 尝试获取武器网格上的"MuzzleFlash"插槽，并确保控制器已初始化
 	if (const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash"))
@@ -40,6 +43,8 @@ void AShotgun::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 
 		// 创建一个哈希表，用于存储命中的目标和命中的次数
 		TMap<ABlasterCharacter*, uint32> HitMap;
+		// 命中的角色
+		TArray<ABlasterCharacter*> HitCharacter = TArray<ABlasterCharacter*>();
 
 		// 遍历所有命中的目标
 		for (FVector_NetQuantize HitTarget : HitTargets)
@@ -51,8 +56,9 @@ void AShotgun::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
 
 			// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
-			if (HasAuthority() && InstigatorController && BlasterCharacter)
+			if (BlasterCharacter)
 			{
+				HitCharacter.AddUnique(BlasterCharacter);
 				if (HitMap.Contains(BlasterCharacter))
 				{
 					HitMap[BlasterCharacter]++;
@@ -85,9 +91,10 @@ void AShotgun::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 		}
 
 		// 遍历哈希表，对每个目标应用伤害
-		for (auto HitPair : HitMap)
+		for (auto& HitPair : HitMap)
 		{
-			if (HitPair.Key && InstigatorController && HasAuthority()) // 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
+			bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
+			if (HitPair.Key && HasAuthority() && bCauseAuthDamage) // 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
 			{
 				// 应用伤害给击中的对象
 				UGameplayStatics::ApplyDamage(
@@ -96,6 +103,23 @@ void AShotgun::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 					InstigatorController,
 					this,
 					UDamageType::StaticClass()
+				);
+			}
+		}
+
+		// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 使用服务器侧回溯
+		if (!HasAuthority() && !HitCharacter.IsEmpty() && bUseServerSideRewind)
+		{
+			BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
+			BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;
+
+			if (BlasterOwnerCharacter && BlasterOwnerController && BlasterOwnerCharacter->GetLagComponent() && BlasterOwnerCharacter->IsLocallyControlled())
+			{
+				BlasterOwnerCharacter->GetLagComponent()->ServerScoreRequest(
+					HitCharacter,
+					Start,
+					HitTargets,
+					BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime
 				);
 			}
 		}
