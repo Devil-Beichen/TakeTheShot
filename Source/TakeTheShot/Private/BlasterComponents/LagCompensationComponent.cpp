@@ -25,16 +25,6 @@ void ULagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	SaveFramePackage();
 }
 
-// 添加帧数据包
-void ULagCompensationComponent::AddFramePackage()
-{
-	FFramePackage ThisFrame;
-	SaveFramePackage(ThisFrame);
-	FrameHistory.AddHead(ThisFrame);
-
-	// ShowFramePackage(ThisFrame, FColor::Red);
-}
-
 // 获取帧数据包持续的时间长度
 float ULagCompensationComponent::GetFrameTime() const
 {
@@ -59,6 +49,30 @@ void ULagCompensationComponent::ShowFramePackage(const FFramePackage& Package, F
 	}
 }
 
+// 保存当前帧的数据包
+void ULagCompensationComponent::SaveFramePackage()
+{
+	// 确保拥有者是在服务器上
+	if (Character == nullptr || !Character->HasAuthority()) return;
+
+	if (FrameHistory.Num() <= 1)
+	{
+		AddFramePackage();
+	}
+	else
+	{
+		// 获取历史帧数据包持续的时间长度（用最新的时间减去最旧的时间）
+		float HistoryLength = GetFrameTime();
+		while (HistoryLength > MaxRecordTime)
+		{
+			// 移除最旧的帧数据包
+			FrameHistory.RemoveNode(FrameHistory.GetTail());
+			HistoryLength = GetFrameTime();
+		}
+		AddFramePackage();
+	}
+}
+
 // 存储当前帧的数据
 // 保存帧数据包
 // 该函数用于捕获当前游戏世界的时间以及角色碰撞盒的信息，并将这些信息存储在FFramePackage对象中
@@ -73,6 +87,7 @@ void ULagCompensationComponent::SaveFramePackage(FFramePackage& Package)
 	{
 		// 记录当前世界时间
 		Package.Time = GetWorld()->GetTimeSeconds();
+		Package.Character = Character;
 
 		// 遍历角色的每个碰撞盒，保存其位置、旋转和扩展信息
 		for (auto& BoxPaor : Character->HitCollisionBoxes)
@@ -88,6 +103,16 @@ void ULagCompensationComponent::SaveFramePackage(FFramePackage& Package)
 	}
 }
 
+// 添加帧数据包
+void ULagCompensationComponent::AddFramePackage()
+{
+	FFramePackage ThisFrame;
+	SaveFramePackage(ThisFrame);
+	FrameHistory.AddHead(ThisFrame);
+
+	// ShowFramePackage(ThisFrame, FColor::Red);
+}
+
 // 服务器端回溯函数，用于处理命中补偿
 /**             
  * 服务器端倒带（回退）
@@ -98,141 +123,9 @@ void ULagCompensationComponent::SaveFramePackage(FFramePackage& Package)
  */
 FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(class ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime)
 {
-	// 检查命中角色及其帧历史是否有效
-	bool bReturn =
-		HitCharacter == nullptr ||
-		HitCharacter->GetLagComponent() == nullptr ||
-		HitCharacter->GetLagComponent()->FrameHistory.GetHead() == nullptr ||
-		HitCharacter->GetLagComponent()->FrameHistory.GetTail() == nullptr;
-
-	// 如果有错误，返回默认值
-	if (bReturn) FServerSideRewindResult();
-
-	// 初始化要检查的帧
-	FFramePackage FrameToCheck;
-
-	// 初始化是否应该插值的标志
-	bool bShouldInterpolate = true;
-
-	// 获取命中角色的帧历史
-	const TDoubleLinkedList<FFramePackage>& History = HitCharacter->GetLagComponent()->FrameHistory;
-	// 获取最早和最新的帧历史时间
-	const float OldestHistoyTime = History.GetTail()->GetValue().Time;
-	const float NewestHistoyTime = History.GetHead()->GetValue().Time;
-
-	// 如果命中时间比最早的历史时间还早，直接返回
-	if (OldestHistoyTime > HitTime)
-	{
-		return FServerSideRewindResult();
-	}
-
-	// 如果命中时间等于最早或最新历史时间，设置要检查的帧并禁用插值
-	if (OldestHistoyTime == HitTime || NewestHistoyTime <= HitTime)
-	{
-		FrameToCheck = History.GetHead()->GetValue();
-		bShouldInterpolate = false;
-	}
-
-	// 初始化用于插值的较新和较旧帧指针
-	TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Younger = History.GetHead();
-	TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Older = Younger;
-
-	// 遍历历史帧数据包，找到最接近命中时间的帧数据包
-	while (Older->GetValue().Time > HitTime)
-	{
-		if (Older->GetNextNode() == nullptr) break;
-		Older = Older->GetNextNode();
-		if (Older->GetValue().Time > HitTime)
-		{
-			Younger = Older;
-		}
-	}
-
-	// 如果找到与命中时间完全匹配的帧，设置要检查的帧并禁用插值
-	if (Older->GetValue().Time == HitTime)
-	{
-		FrameToCheck = Older->GetValue();
-		bShouldInterpolate = false;
-	}
-
-	// 如果需要插值，执行插值操作
-	if (bShouldInterpolate)
-	{
-		// 比较老的时间和比较新的时间之间进行插值
-		FrameToCheck = InterpBetweenFrames(Older->GetValue(), Younger->GetValue(), HitTime);
-	}
+	FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);
 	// 返回命中补偿结果
 	return ConfirmHit(FrameToCheck, HitCharacter, TraceStart, HitLocation);
-}
-
-/**
- * 伤害请求（只会在服务器调用）
- * @param HitCharacter	命中的角色
- * @param TraceStart	命中的起始位置
- * @param HitLocation	命中的位置
- * @param HitTime		命中的时间
- * @param DamageCauser	伤害的发起者
- */
-void ULagCompensationComponent::ServerScoreRequest_Implementation(ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime, class AWeapon* DamageCauser)
-{
-	FServerSideRewindResult Confirm = ServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
-
-	if (Character && HitCharacter && DamageCauser && Confirm.bHitConfirmed)
-	{
-		UGameplayStatics::ApplyDamage(
-			HitCharacter,
-			DamageCauser->GetDamage(),
-			Character->Controller,
-			DamageCauser,
-			UDamageType::StaticClass()
-		);
-	}
-}
-
-/**
- * 在两帧之间进行插值计算
- * 
- * 此函数用于根据给定的两个帧（OlderFrame 和 YoungerFram）以及一个指定的时间点（HitTime），
- * 计算出在这个时间点上，各个命中盒（HitBox）的位置和旋转状态此方法主要用于补偿网络延迟下的画面显示问题，
- * 通过插值处理来平滑动画效果
- * 
- * @param OlderFrame 较旧的帧数据，用于插值计算的起始点
- * @param YoungerFram 较新的帧数据，用于插值计算的终点
- * @param HitTime 插值计算的目标时间点，决定了插值的结果
- * @return 返回插值计算得到的帧数据，包括各个命中盒在目标时间点的位置和旋转状态
- */
-FFramePackage ULagCompensationComponent::InterpBetweenFrames(const FFramePackage& OlderFrame, const FFramePackage& YoungerFram, float HitTime)
-{
-	// 计算两帧之间的时间距离
-	const float Distance = YoungerFram.Time - OlderFrame.Time;
-	// 计算插值比例，确保其在0到1之间，避免超出有效范围
-	const float InterpFraction = FMath::Clamp((HitTime - OlderFrame.Time) / Distance, 0.f, 1.f);
-
-	// 初始化插值计算得到的帧数据结构
-	FFramePackage InterpFramePackage;
-	InterpFramePackage.Time = HitTime;
-	// 遍历较新的帧中的每个命中盒信息，进行插值计算
-	for (auto& YoungerPair : YoungerFram.HitBoxInfo)
-	{
-		// 获取命中盒的名称，用于索引和匹配
-		const FName& BoxInfoName = YoungerPair.Key;
-		// 从较旧和较新的帧数据中获取对应的命中盒信息
-		const FBoxInFormation& OlderBox = OlderFrame.HitBoxInfo[BoxInfoName];
-		const FBoxInFormation& YoungerBox = YoungerFram.HitBoxInfo[BoxInfoName];
-
-		// 初始化插值计算得到的命中盒信息
-		FBoxInFormation InterpBoxInfo;
-		// 使用线性插值计算命中盒的位置
-		InterpBoxInfo.Location = FMath::VInterpTo(OlderBox.Location, YoungerBox.Location, 1.f, InterpFraction);
-		// 使用线性插值计算命中盒的旋转
-		InterpBoxInfo.Rotation = FMath::RInterpTo(OlderBox.Rotation, YoungerBox.Rotation, 1.f, InterpFraction);
-		// 直接使用较新的帧中的命中盒尺寸信息，因为尺寸不参与插值计算
-		InterpBoxInfo.BoxExtent = YoungerBox.BoxExtent;
-		// 将插值计算得到的命中盒信息添加到结果帧数据中
-		InterpFramePackage.HitBoxInfo.Add(BoxInfoName, InterpBoxInfo);
-	}
-	// 返回插值计算得到的帧数据
-	return InterpFramePackage;
 }
 
 /**
@@ -317,6 +210,185 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackag
 	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 	// 返回表示没有击中的结果
 	return FServerSideRewindResult{false, false};
+}
+
+/**
+ * 执行散弹枪服务器端回放
+ * 
+ * @param HitCharacters 被击中的角色数组
+ * @param TraceStart 射击的起始位置
+ * @param HitLocation 被击中角色的位置数组
+ * @param HitTime 击中时刻的时间戳
+ * 
+ * @return 返回射击结果
+ * 
+ * 此函数通过服务器端回放机制，确认散弹枪射击的命中情况
+ * 它会遍历每个被击中的角色，并获取其在击中时刻的帧信息
+ * 最后，根据这些帧信息和射击参数，确认射击是否命中
+ */
+FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocation, float HitTime)
+{
+	// 存储需要检查的帧信息数组
+	TArray<FFramePackage> FramesToCheck;
+	// 遍历每个被击中的角色，获取其在击中时刻的帧信息
+	for (ABlasterCharacter* HitCharacter : HitCharacters)
+	{
+		FramesToCheck.Add(GetFrameToCheck(HitCharacter, HitTime));
+	}
+	// 根据帧信息、射击起始位置和击中位置，确认射击结果
+	return ShotgunConfirmHit(FramesToCheck, TraceStart, HitLocation);
+}
+
+// 确认散弹枪射击命中
+FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocation)
+{
+	return FShotgunServerSideRewindResult();
+}
+
+FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime)
+{
+	// 检查命中角色及其帧历史是否有效
+	bool bReturn =
+		HitCharacter == nullptr ||
+		HitCharacter->GetLagComponent() == nullptr ||
+		HitCharacter->GetLagComponent()->FrameHistory.GetHead() == nullptr ||
+		HitCharacter->GetLagComponent()->FrameHistory.GetTail() == nullptr;
+
+	// 如果有错误，返回默认值
+	if (bReturn) FFramePackage();
+
+	// 初始化要检查的帧
+	FFramePackage FrameToCheck;
+
+	// 初始化是否应该插值的标志
+	bool bShouldInterpolate = true;
+
+	// 获取命中角色的帧历史
+	const TDoubleLinkedList<FFramePackage>& History = HitCharacter->GetLagComponent()->FrameHistory;
+	// 获取最早和最新的帧历史时间
+	const float OldestHistoyTime = History.GetTail()->GetValue().Time;
+	const float NewestHistoyTime = History.GetHead()->GetValue().Time;
+
+	// 如果命中时间比最早的历史时间还早，直接返回
+	if (OldestHistoyTime > HitTime)
+	{
+		return FFramePackage();
+	}
+
+	// 如果命中时间与最旧历史时间相同，获取尾部历史帧，不需要插值
+	if (OldestHistoyTime == HitTime)
+	{
+		FrameToCheck = History.GetTail()->GetValue();
+		bShouldInterpolate = false;
+	}
+
+	// 如果命中时间晚于或等于最新的历史时间，获取头部历史帧，不需要插值
+	if (NewestHistoyTime <= HitTime)
+	{
+		FrameToCheck = History.GetHead()->GetValue();
+		bShouldInterpolate = false;
+	}
+
+	// 初始化用于插值的较新和较旧帧指针
+	TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Younger = History.GetHead();
+	TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Older = Younger;
+
+	// 遍历历史帧数据包，找到最接近命中时间的帧数据包
+	while (Older->GetValue().Time > HitTime)
+	{
+		if (Older->GetNextNode() == nullptr) break;
+		Older = Older->GetNextNode();
+		if (Older->GetValue().Time > HitTime)
+		{
+			Younger = Older;
+		}
+	}
+
+	// 如果找到与命中时间完全匹配的帧，设置要检查的帧并禁用插值
+	if (Older->GetValue().Time == HitTime)
+	{
+		FrameToCheck = Older->GetValue();
+		bShouldInterpolate = false;
+	}
+
+	// 如果需要插值，执行插值操作
+	if (bShouldInterpolate)
+	{
+		// 比较老的时间和比较新的时间之间进行插值
+		FrameToCheck = InterpBetweenFrames(Older->GetValue(), Younger->GetValue(), HitTime);
+	}
+
+	return FrameToCheck;
+}
+
+/**
+ * 伤害请求（只会在服务器调用）
+ * @param HitCharacter	命中的角色
+ * @param TraceStart	命中的起始位置
+ * @param HitLocation	命中的位置
+ * @param HitTime		命中的时间
+ * @param DamageCauser	伤害的发起者
+ */
+void ULagCompensationComponent::ServerScoreRequest_Implementation(ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime, class AWeapon* DamageCauser)
+{
+	FServerSideRewindResult Confirm = ServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
+
+	if (Character && HitCharacter && DamageCauser && Confirm.bHitConfirmed)
+	{
+		UGameplayStatics::ApplyDamage(
+			HitCharacter,
+			DamageCauser->GetDamage(),
+			Character->Controller,
+			DamageCauser,
+			UDamageType::StaticClass()
+		);
+	}
+}
+
+/**
+ * 在两帧之间进行插值计算
+ * 
+ * 此函数用于根据给定的两个帧（OlderFrame 和 YoungerFram）以及一个指定的时间点（HitTime），
+ * 计算出在这个时间点上，各个命中盒（HitBox）的位置和旋转状态此方法主要用于补偿网络延迟下的画面显示问题，
+ * 通过插值处理来平滑动画效果
+ * 
+ * @param OlderFrame 较旧的帧数据，用于插值计算的起始点
+ * @param YoungerFram 较新的帧数据，用于插值计算的终点
+ * @param HitTime 插值计算的目标时间点，决定了插值的结果
+ * @return 返回插值计算得到的帧数据，包括各个命中盒在目标时间点的位置和旋转状态
+ */
+FFramePackage ULagCompensationComponent::InterpBetweenFrames(const FFramePackage& OlderFrame, const FFramePackage& YoungerFram, float HitTime)
+{
+	// 计算两帧之间的时间距离
+	const float Distance = YoungerFram.Time - OlderFrame.Time;
+	// 计算插值比例，确保其在0到1之间，避免超出有效范围
+	const float InterpFraction = FMath::Clamp((HitTime - OlderFrame.Time) / Distance, 0.f, 1.f);
+
+	// 初始化插值计算得到的帧数据结构
+	FFramePackage InterpFramePackage;
+	InterpFramePackage.Time = HitTime;
+	// 遍历较新的帧中的每个命中盒信息，进行插值计算
+	for (auto& YoungerPair : YoungerFram.HitBoxInfo)
+	{
+		// 获取命中盒的名称，用于索引和匹配
+		const FName& BoxInfoName = YoungerPair.Key;
+		// 从较旧和较新的帧数据中获取对应的命中盒信息
+		const FBoxInFormation& OlderBox = OlderFrame.HitBoxInfo[BoxInfoName];
+		const FBoxInFormation& YoungerBox = YoungerFram.HitBoxInfo[BoxInfoName];
+
+		// 初始化插值计算得到的命中盒信息
+		FBoxInFormation InterpBoxInfo;
+		// 使用线性插值计算命中盒的位置
+		InterpBoxInfo.Location = FMath::VInterpTo(OlderBox.Location, YoungerBox.Location, 1.f, InterpFraction);
+		// 使用线性插值计算命中盒的旋转
+		InterpBoxInfo.Rotation = FMath::RInterpTo(OlderBox.Rotation, YoungerBox.Rotation, 1.f, InterpFraction);
+		// 直接使用较新的帧中的命中盒尺寸信息，因为尺寸不参与插值计算
+		InterpBoxInfo.BoxExtent = YoungerBox.BoxExtent;
+		// 将插值计算得到的命中盒信息添加到结果帧数据中
+		InterpFramePackage.HitBoxInfo.Add(BoxInfoName, InterpBoxInfo);
+	}
+	// 返回插值计算得到的帧数据
+	return InterpFramePackage;
 }
 
 /** 缓存角色碰撞框位置信息
@@ -409,29 +481,5 @@ void ULagCompensationComponent::EnableCharacterMeshCollision(ABlasterCharacter* 
 	if (HitCharacter && HitCharacter->GetMesh())
 	{
 		HitCharacter->GetMesh()->SetCollisionEnabled(CollisionEnable);
-	}
-}
-
-// 保存当前帧的数据包
-void ULagCompensationComponent::SaveFramePackage()
-{
-	// 确保拥有者是在服务器上
-	if (Character == nullptr || !Character->HasAuthority()) return;
-
-	if (FrameHistory.Num() <= 1)
-	{
-		AddFramePackage();
-	}
-	else
-	{
-		// 获取历史帧数据包持续的时间长度（用最新的时间减去最旧的时间）
-		float HistoryLength = GetFrameTime();
-		while (HistoryLength > MaxRecordTime)
-		{
-			// 移除最旧的帧数据包
-			FrameHistory.RemoveNode(FrameHistory.GetTail());
-			HistoryLength = GetFrameTime();
-		}
-		AddFramePackage();
 	}
 }

@@ -6,6 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "LagCompensationComponent.generated.h"
 
+class ABlasterCharacter;
+
 // 盒子数据结构
 USTRUCT(BlueprintType)
 struct FBoxInFormation
@@ -37,6 +39,9 @@ struct FFramePackage
 
 	// 盒子信息
 	TMap<FName, FBoxInFormation> HitBoxInfo = TMap<FName, FBoxInFormation>();
+
+	UPROPERTY()
+	ABlasterCharacter* Character = nullptr;
 };
 
 // 服务器端回溯结果
@@ -52,6 +57,18 @@ struct FServerSideRewindResult
 	// 爆头
 	UPROPERTY()
 	bool bHeadShot = false;
+};
+
+// 服务器端霰弹枪回溯结果
+USTRUCT(BlueprintType)
+struct FShotgunServerSideRewindResult
+{
+	GENERATED_BODY()
+
+	// 击中头部
+	TMap<ABlasterCharacter*, uint32> HeadShots;
+	// 击中身体
+	TMap<ABlasterCharacter*, uint32> BodyShots;
 };
 
 /**
@@ -82,6 +99,17 @@ public:
 	 * @param HitTime		命中的时间
 	 */
 	FServerSideRewindResult ServerSideRewind(class ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime);
+
+	/**
+	* 确认命中
+	* @param Package			需要插值的帧数据包
+	* @param HitCharacter		命中的角色
+	* @param TraceStart		命中的起始位置
+	* @param HitLocation		命中的位置
+	* @return 
+	*/
+	FServerSideRewindResult ConfirmHit(const FFramePackage& Package, ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation);
+
 
 	/**
 	 * 伤害请求（只会在服务器调用）
@@ -116,16 +144,6 @@ protected:
 	FFramePackage InterpBetweenFrames(const FFramePackage& OlderFrame, const FFramePackage& YoungerFram, float HitTime);
 
 	/**
-	 * 确认命中
-	 * @param Package			需要插值的帧数据包
-	 * @param HitCharacter		命中的角色
-	 * @param TraceStart		命中的起始位置
-	 * @param HitLocation		命中的位置
-	 * @return 
-	 */
-	FServerSideRewindResult ConfirmHit(const FFramePackage& Package, ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation);
-
-	/**
 	 * 缓存角色碰撞框位置信息
 	 * @param HitCharacter		命中的角色 
 	 * @param OutFramePackage	缓存的帧数据包
@@ -151,6 +169,22 @@ protected:
 
 	// 存储帧数据
 	void SaveFramePackage();
+
+	/**
+	 * 获取需要检查的帧数据包
+	 * @param HitCharacter	被击中的角色
+	 * @param HitTime		命中的时间
+	 * @return				命中的帧数据包
+	 */
+	FFramePackage GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime);
+
+	/**
+	 * 霰弹枪
+	 */
+	// 服务器端霰弹枪回溯函数，用于处理命中补偿
+	FShotgunServerSideRewindResult ShotgunServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocation, float HitTime);
+	// 确认霰弹枪命中
+	FShotgunServerSideRewindResult ShotgunConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocation);
 
 private:
 	// 角色
