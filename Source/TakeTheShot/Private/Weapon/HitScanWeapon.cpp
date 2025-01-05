@@ -78,8 +78,7 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 								BlasterCharacter,
 								Start,
 								HitTarget,
-								BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime,
-								this
+								BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime
 							);
 						}
 					}
@@ -152,7 +151,7 @@ void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector_Net
 		}
 
 		// 绘制命中点
-		DrawDebugSphere(World, BeamEnd, 15.f, 12, FColor(243, 156, 18), false, 5);
+		DrawDebugSphere(World, BeamEnd, 15.f, 12, FColor(243, 156, 18), false, 3);
 
 		if (BeamParticles)
 		{

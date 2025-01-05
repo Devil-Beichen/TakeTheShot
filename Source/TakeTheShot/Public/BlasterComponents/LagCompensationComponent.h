@@ -117,15 +117,28 @@ public:
 	 * @param TraceStart	命中的起始位置
 	 * @param HitLocation	命中的位置
 	 * @param HitTime		命中的时间
-	 * @param DamageCauser	伤害的发起者
 	 */
 	UFUNCTION(Server, Reliable)
 	void ServerScoreRequest(
 		ABlasterCharacter* HitCharacter,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize& HitLocation,
-		float HitTime,
-		class AWeapon* DamageCauser
+		float HitTime
+	);
+
+	/**
+	 * 霰弹枪伤害请求（只会在服务器调用）
+	 * @param HitCharacters		命中的角色
+	 * @param TraceStart		命中的起始位置
+	 * @param HitLocations		命中的位置
+	 * @param HitTime			命中的时间
+	 */
+	UFUNCTION(Server, Reliable)
+	void ServerShotgunScoreRequest(
+		const TArray<ABlasterCharacter*>& HitCharacters,
+		const FVector_NetQuantize& TraceStart,
+		const TArray<FVector_NetQuantize>& HitLocations,
+		float HitTime
 	);
 
 protected:
