@@ -182,9 +182,9 @@ protected:
 	 * 霰弹枪
 	 */
 	// 服务器端霰弹枪回溯函数，用于处理命中补偿
-	FShotgunServerSideRewindResult ShotgunServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocation, float HitTime);
+	FShotgunServerSideRewindResult ShotgunServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime);
 	// 确认霰弹枪命中
-	FShotgunServerSideRewindResult ShotgunConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocation);
+	FShotgunServerSideRewindResult ShotgunConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations);
 
 private:
 	// 角色

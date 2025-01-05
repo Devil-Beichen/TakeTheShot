@@ -217,7 +217,7 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackag
  * 
  * @param HitCharacters 被击中的角色数组
  * @param TraceStart 射击的起始位置
- * @param HitLocation 被击中角色的位置数组
+ * @param HitLocations 被击中角色的位置数组
  * @param HitTime 击中时刻的时间戳
  * 
  * @return 返回射击结果
@@ -226,7 +226,7 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackag
  * 它会遍历每个被击中的角色，并获取其在击中时刻的帧信息
  * 最后，根据这些帧信息和射击参数，确认射击是否命中
  */
-FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocation, float HitTime)
+FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime)
 {
 	// 存储需要检查的帧信息数组
 	TArray<FFramePackage> FramesToCheck;
@@ -236,13 +236,135 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunServerSideRewin
 		FramesToCheck.Add(GetFrameToCheck(HitCharacter, HitTime));
 	}
 	// 根据帧信息、射击起始位置和击中位置，确认射击结果
-	return ShotgunConfirmHit(FramesToCheck, TraceStart, HitLocation);
+	return ShotgunConfirmHit(FramesToCheck, TraceStart, HitLocations);
 }
 
 // 确认散弹枪射击命中
-FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocation)
+FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations)
 {
-	return FShotgunServerSideRewindResult();
+	for (auto& Frame : Framepackages)
+	{
+		if (Frame.Character == nullptr) return FShotgunServerSideRewindResult();
+	}
+
+	FShotgunServerSideRewindResult ShotgunResult;
+
+	TArray<FFramePackage> CurrentFrames;
+	for (auto& Frame : Framepackages)
+	{
+		FFramePackage CurrentFrame;
+		CurrentFrame.Character = Frame.Character;
+		CacheBoxPositions(Frame.Character, CurrentFrame);
+
+		// 移动碰撞盒到指定的位置
+		MoveBoxes(Frame.Character, Frame);
+
+		// 禁用角色网格的碰撞
+		EnableCharacterMeshCollision(Frame.Character, ECollisionEnabled::NoCollision);
+		// 缓存当前帧的数据
+		CurrentFrames.Add(CurrentFrame);
+	}
+
+	// 启用头部碰撞
+	for (auto& Frame : Framepackages)
+	{
+		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
+		HeadBox->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+		HeadBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	}
+
+	UWorld* World = GetWorld();
+
+	// 检测是否有击中头部
+	for (auto& HitLocation : HitLocations)
+	{
+		// 存储确认击中的结果
+		FHitResult ConfirmHitResult;
+
+		// 计算追踪结束的位置
+		const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
+
+		// 尝试进行线迹检测
+		if (World)
+		{
+			World->LineTraceSingleByChannel(
+				ConfirmHitResult,
+				TraceStart,
+				TraceEnd,
+				ECC_Visibility
+			);
+			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
+			if (BlasterCharacter)
+			{
+				if (ShotgunResult.HeadShots.Contains(BlasterCharacter))
+				{
+					ShotgunResult.HeadShots[BlasterCharacter]++;
+				}
+				else
+				{
+					ShotgunResult.HeadShots.Emplace(BlasterCharacter, 1);
+				}
+			}
+		}
+	}
+
+	// 先启用所有碰撞，然后再关闭头部碰撞
+	for (auto& Frame : Framepackages)
+	{
+		for (auto& HitBoxPair : Frame.Character->HitCollisionBoxes)
+		{
+			// 启用其他碰撞盒的碰撞检测
+			if (HitBoxPair.Value != nullptr)
+			{
+				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+			}
+		}
+		// 禁用用头部碰撞
+		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
+		HeadBox->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+	}
+
+	for (auto& HitLocation : HitLocations)
+	{
+		// 存储确认击中的结果
+		FHitResult ConfirmHitResult;
+
+		// 计算追踪结束的位置
+		const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
+
+		// 尝试进行线迹检测
+		if (World)
+		{
+			World->LineTraceSingleByChannel(
+				ConfirmHitResult,
+				TraceStart,
+				TraceEnd,
+				ECC_Visibility
+			);
+			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
+			if (BlasterCharacter)
+			{
+				if (ShotgunResult.BodyShots.Contains(BlasterCharacter))
+				{
+					ShotgunResult.BodyShots[BlasterCharacter]++;
+				}
+				else
+				{
+					ShotgunResult.BodyShots.Emplace(BlasterCharacter, 1);
+				}
+			}
+		}
+	}
+
+	// 重置所有碰撞盒和角色网格的碰撞设置
+	for (auto& Frame : CurrentFrames)
+	{
+		ResetHitBoxes(Frame.Character, Frame);
+		EnableCharacterMeshCollision(Frame.Character, ECollisionEnabled::QueryAndPhysics);
+	}
+
+	return ShotgunResult;
 }
 
 FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime)
