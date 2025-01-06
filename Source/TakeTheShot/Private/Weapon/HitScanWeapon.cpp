@@ -23,6 +23,9 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 {
 	Super::Fire(HitTargets);
 
+	UWorld* World = GetWorld();
+	if (World == nullptr)return;
+
 	// 获取拥有此武器的Pawn
 	APawn* OwnerPawn = Cast<APawn>(GetOwner());
 
@@ -42,8 +45,9 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 		// 获取射击起点的位置
 		FVector Start = SocketTransform.GetLocation();
 		// 命中的角色
-		TArray<ABlasterCharacter*> HitCharacter = TArray<ABlasterCharacter*>();
-
+		TArray<ABlasterCharacter*> HitCharacters = TArray<ABlasterCharacter*>();
+		// 创建一个哈希表，用于存储命中的目标和命中的次数
+		TMap<ABlasterCharacter*, uint32> HitMap;
 		// 循环遍历每个目标点
 		for (FVector_NetQuantize HitTarget : HitTargets)
 		{
@@ -55,49 +59,54 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 			if (FireHit.bBlockingHit)
 			{
 				ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
-				// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
+
 				if (BlasterCharacter)
 				{
-					HitCharacter.AddUnique(BlasterCharacter);
-					// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
-					bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
-					if (HasAuthority() && bCauseAuthDamage)
+					HitCharacters.AddUnique(BlasterCharacter);
+
+					if (HitMap.Contains(BlasterCharacter))
 					{
-						// UE_LOG(LogTemp, Log, TEXT("击中了：%s - %f点伤害"), *FireHit.GetActor()->GetName(), Damage)
-						// 应用伤害给击中的对象
-						UGameplayStatics::ApplyDamage(
-							FireHit.GetActor(),
-							Damage,
-							InstigatorController,
-							this,
-							UDamageType::StaticClass()
-						);
+						HitMap[BlasterCharacter]++;
+					}
+					else
+					{
+						HitMap.Emplace(BlasterCharacter, 1);
 					}
 				}
+			}
 
-				// 如果有设置撞击粒子效果
-				if (ImpactParticles)
-				{
-					// 在撞击点生成粒子效果
-					UGameplayStatics::SpawnEmitterAtLocation(
-						GetWorld(),
-						ImpactParticles,
-						FireHit.ImpactPoint,
-						FireHit.ImpactNormal.Rotation()
-					);
-				}
-				if (HitSound)
-				{
-					UGameplayStatics::PlaySoundAtLocation(
-						GetWorld(),
-						HitSound,
-						FireHit.ImpactPoint
-					);
-				}
+			// 如果有设置撞击粒子效果
+			if (ImpactParticles)
+			{
+				// 在撞击点生成粒子效果
+				UGameplayStatics::SpawnEmitterAtLocation(World, ImpactParticles, FireHit.ImpactPoint);
+			}
+			if (HitSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(World, HitSound, FireHit.ImpactPoint);
 			}
 		}
+
+		// 遍历哈希表，对每个目标应用伤害
+		for (auto& HitPair : HitMap)
+		{
+			bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
+			// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
+			if (HitPair.Key && HasAuthority() && bCauseAuthDamage)
+			{
+				// 应用伤害给击中的对象
+				UGameplayStatics::ApplyDamage(
+					HitPair.Key,
+					Damage * HitPair.Value,
+					InstigatorController,
+					this,
+					UDamageType::StaticClass()
+				);
+			}
+		}
+
 		// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效(启用延迟补偿)
-		if (!HitCharacter.IsEmpty() && !HasAuthority() && bUseServerSideRewind)
+		if (!HitCharacters.IsEmpty() && !HasAuthority() && bUseServerSideRewind)
 		{
 			BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
 			BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;
@@ -105,7 +114,7 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 			if (BlasterOwnerCharacter && BlasterOwnerController && BlasterOwnerCharacter->GetLagComponent() && BlasterOwnerCharacter->IsLocallyControlled())
 			{
 				BlasterOwnerCharacter->GetLagComponent()->ServerScoreRequest(
-					HitCharacter,
+					HitCharacters,
 					Start,
 					HitTargets,
 					BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime

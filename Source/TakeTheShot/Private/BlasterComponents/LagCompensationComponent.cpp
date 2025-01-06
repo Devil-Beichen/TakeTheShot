@@ -144,6 +144,8 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ServerSideRewind(const
 // 确认命中
 FShotgunServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations)
 {
+	UWorld* World = GetWorld();
+	if (World == nullptr) return FShotgunServerSideRewindResult();
 	for (auto& Frame : Framepackages)
 	{
 		if (Frame.Character == nullptr) return FShotgunServerSideRewindResult();
@@ -167,19 +169,20 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArra
 		CurrentFrames.Add(CurrentFrame);
 	}
 
-	// 启用头部碰撞
-	for (auto& Frame : Framepackages)
-	{
-		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
-		HeadBox->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-		HeadBox->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
-	}
-
-	UWorld* World = GetWorld();
 
 	// 检测是否有击中头部
 	for (auto& HitLocation : HitLocations)
 	{
+		// 启用头部碰撞
+		for (auto& Frame : Framepackages)
+		{
+			UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
+			HeadBox->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+			HeadBox->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
+		}
+
+		ABlasterCharacter* BlasterCharacter = nullptr;
+
 		// 存储确认击中的结果
 		FHitResult ConfirmHitResult;
 
@@ -187,15 +190,16 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArra
 		const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
 
 		// 尝试进行线迹检测
-		if (World)
+		World->LineTraceSingleByChannel(
+			ConfirmHitResult,
+			TraceStart,
+			TraceEnd,
+			ECC_HitBox
+		);
+
+		if (ConfirmHitResult.bBlockingHit)
 		{
-			World->LineTraceSingleByChannel(
-				ConfirmHitResult,
-				TraceStart,
-				TraceEnd,
-				ECC_HitBox
-			);
-			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
+			BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
 			if (BlasterCharacter)
 			{
 				if (ShotgunResult.HeadShots.Contains(BlasterCharacter))
@@ -208,52 +212,44 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArra
 				}
 			}
 		}
-	}
-
-	// 先启用所有碰撞，然后再关闭头部碰撞
-	for (auto& Frame : Framepackages)
-	{
-		for (auto& HitBoxPair : Frame.Character->HitCollisionBoxes)
+		else
 		{
-			// 启用其他碰撞盒的碰撞检测
-			if (HitBoxPair.Value != nullptr)
+			for (auto& Frame : Framepackages)
 			{
-				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
+				for (auto& HitBoxPair : Frame.Character->HitCollisionBoxes)
+				{
+					// 启用其他碰撞盒的碰撞检测
+					if (HitBoxPair.Value != nullptr)
+					{
+						HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+						HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
+					}
+				}
+				// 禁用用头部碰撞
+				UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
+				HeadBox->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 			}
-		}
-		// 禁用用头部碰撞
-		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
-		HeadBox->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
-	}
 
-	for (auto& HitLocation : HitLocations)
-	{
-		// 存储确认击中的结果
-		FHitResult ConfirmHitResult;
-
-		// 计算追踪结束的位置
-		const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
-
-		// 尝试进行线迹检测
-		if (World)
-		{
+			// 尝试进行线迹检测
 			World->LineTraceSingleByChannel(
 				ConfirmHitResult,
 				TraceStart,
 				TraceEnd,
 				ECC_HitBox
 			);
-			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
-			if (BlasterCharacter)
+			if (ConfirmHitResult.bBlockingHit)
 			{
-				if (ShotgunResult.BodyShots.Contains(BlasterCharacter))
+				BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
+				if (BlasterCharacter)
 				{
-					ShotgunResult.BodyShots[BlasterCharacter]++;
-				}
-				else
-				{
-					ShotgunResult.BodyShots.Emplace(BlasterCharacter, 1);
+					if (ShotgunResult.BodyShots.Contains(BlasterCharacter))
+					{
+						ShotgunResult.BodyShots[BlasterCharacter]++;
+					}
+					else
+					{
+						ShotgunResult.BodyShots.Emplace(BlasterCharacter, 1);
+					}
 				}
 			}
 		}
@@ -265,7 +261,17 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArra
 		ResetHitBoxes(Frame.Character, Frame);
 		EnableCharacterMeshCollision(Frame.Character, ECollisionEnabled::QueryAndPhysics);
 	}
-
+	int head = 0;
+	for (auto& Head : ShotgunResult.HeadShots)
+	{
+		head += Head.Value;
+	}
+	int body = 0;
+	for (auto& Body : ShotgunResult.BodyShots)
+	{
+		body += Body.Value;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("击中头%d，击中身体%d"), head, body);
 	return ShotgunResult;
 }
 

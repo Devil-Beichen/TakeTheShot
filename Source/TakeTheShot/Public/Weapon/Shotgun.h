@@ -18,8 +18,6 @@ public:
 	// Sets default values for this actor's properties
 	AShotgun();
 
-	virtual void Fire(const TArray<FVector_NetQuantize>& HitTargets) override;
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
