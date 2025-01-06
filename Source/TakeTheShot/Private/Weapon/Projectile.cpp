@@ -6,6 +6,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 #include "TakeTheShot.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 AProjectile::AProjectile()
 {
@@ -30,6 +31,30 @@ AProjectile::AProjectile()
 	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECR_Block);
 }
+
+#if WITH_EDITOR
+// 当属性被编辑更改时调用此函数
+void AProjectile::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	// 调用父类的相同函数以处理通用逻辑
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	// 获取更改的属性名称
+	FName PropertyName = PropertyChangedEvent.Property != nullptr ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+
+	// 检查更改的属性是否为InitialSpeed
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AProjectile, InitialSpeed))
+	{
+		// 如果ProjectileMovementComponent存在，则更新其初始速度和最大速度
+		if (ProjectileMovementComponent)
+		{
+			ProjectileMovementComponent->InitialSpeed = InitialSpeed;
+			ProjectileMovementComponent->MaxSpeed = InitialSpeed;
+		}
+	}
+}
+
+#endif
 
 void AProjectile::BeginPlay()
 {

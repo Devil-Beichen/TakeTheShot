@@ -21,6 +21,11 @@ public:
 
 	virtual void Destroyed() override;
 
+#if WITH_EDITOR
+	// 允许在编辑器中修改属性时触发的函数。
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -73,6 +78,10 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		FVector NormalImpulse,
 		const FHitResult& Hit);
+
+	// 初始速度
+	UPROPERTY(EditAnywhere)
+	float InitialSpeed = 15000;
 
 	// 伤害值
 	UPROPERTY(EditDefaultsOnly)
