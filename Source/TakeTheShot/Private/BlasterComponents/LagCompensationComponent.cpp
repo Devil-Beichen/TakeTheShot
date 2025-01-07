@@ -113,9 +113,46 @@ void ULagCompensationComponent::AddFramePackage()
 	// ShowFramePackage(ThisFrame, FColor::Red);
 }
 
+/**
+ * 伤害请求（只会在服务器调用）
+ * @param HitCharacters		被命中的角色
+ * @param TraceStart		命中的起始位置
+ * @param HitLocations		被命中的位置
+ * @param HitTime			命中的时间
+ */
+void ULagCompensationComponent::ServerScoreRequest_Implementation(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime)
+{
+	FServerSideRewindResult Confirm = ServerSideRewind(HitCharacters, TraceStart, HitLocations, HitTime);
+	for (auto& HitCharacter : HitCharacters)
+	{
+		if (HitCharacter == nullptr || HitCharacter->GetEquippedWeapon() == nullptr || Character == nullptr) continue;
+
+		// 总伤害
+		float TotalDamage = 0.f;
+
+		if (Confirm.HeadShots.Contains(HitCharacter))
+		{
+			float HeadShotDamage = Confirm.HeadShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
+			TotalDamage += HeadShotDamage;
+		}
+		if (Confirm.BodyShots.Contains(HitCharacter))
+		{
+			float BodyShotDamage = Confirm.BodyShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
+			TotalDamage += BodyShotDamage;
+		}
+
+		UGameplayStatics::ApplyDamage(
+			HitCharacter,
+			TotalDamage,
+			Character->Controller,
+			Character->GetEquippedWeapon(),
+			UDamageType::StaticClass()
+		);
+	}
+}
 
 /**
- * 执行散弹枪服务器端回放
+ * 执行服务器端回溯
  * 
  * @param HitCharacters 被击中的角色数组
  * @param TraceStart 射击的起始位置
@@ -128,30 +165,30 @@ void ULagCompensationComponent::AddFramePackage()
  * 它会遍历每个被击中的角色，并获取其在击中时刻的帧信息
  * 最后，根据这些帧信息和射击参数，确认射击是否命中
  */
-FShotgunServerSideRewindResult ULagCompensationComponent::ServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime)
+FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime)
 {
 	// 存储需要检查的帧信息数组
-	TArray<FFramePackage> FramesToCheck;
+	TArray<FFramePackage> FramePackages;
 	// 遍历每个被击中的角色，获取其在击中时刻的帧信息
 	for (ABlasterCharacter* HitCharacter : HitCharacters)
 	{
-		FramesToCheck.Add(GetFrameToCheck(HitCharacter, HitTime));
+		FramePackages.Add(GetFrameToCheck(HitCharacter, HitTime));
 	}
 	// 根据帧信息、射击起始位置和击中位置，确认射击结果
-	return ConfirmHit(FramesToCheck, TraceStart, HitLocations);
+	return ConfirmHit(FramePackages, TraceStart, HitLocations);
 }
 
 // 确认命中
-FShotgunServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations)
+FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations)
 {
 	UWorld* World = GetWorld();
-	if (World == nullptr) return FShotgunServerSideRewindResult();
+	if (World == nullptr) return FServerSideRewindResult();
 	for (auto& Frame : Framepackages)
 	{
-		if (Frame.Character == nullptr) return FShotgunServerSideRewindResult();
+		if (Frame.Character == nullptr) return FServerSideRewindResult();
 	}
 
-	FShotgunServerSideRewindResult ShotgunResult;
+	FServerSideRewindResult ShotgunResult;
 
 	TArray<FFramePackage> CurrentFrames;
 	for (auto& Frame : Framepackages)
@@ -283,6 +320,118 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArra
 	return ShotgunResult;
 }
 
+// 子弹获取服务器端回溯结果
+FServerSideRewindResult ULagCompensationComponent::ProjectileServerSideRewind(ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime)
+{
+	FFramePackage FramePackage = GetFrameToCheck(HitCharacter, HitTime);
+
+	return ProjectileConfirmHit(FramePackage, HitCharacter, TraceStart, InitialVelocity, HitTime);
+}
+
+// 子弹确认命中
+FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FFramePackage& Package, ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime)
+{
+	FServerSideRewindResult ShotgunResult;
+
+	FFramePackage CurrentFrame;
+	CacheBoxPositions(HitCharacter, CurrentFrame);
+	MoveBoxes(HitCharacter, Package);
+	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::NoCollision);
+
+	// 启用头部碰撞
+	UBoxComponent* HeadBox = HitCharacter->HitCollisionBoxes[FName("head")];
+	HeadBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	HeadBox->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
+
+	// 预测追踪路径
+	FPredictProjectilePathParams PathParams;
+	PathParams.bTraceWithChannel = true;
+	PathParams.MaxSimTime = MaxRecordTime;
+	PathParams.LaunchVelocity = InitialVelocity;
+	PathParams.StartLocation = TraceStart;
+	PathParams.SimFrequency = 30.f;
+	PathParams.ProjectileRadius = 5.f;
+	PathParams.TraceChannel = ECC_HitBox;
+	PathParams.ActorsToIgnore.Add(GetOwner());
+	PathParams.DrawDebugTime = 5.f;
+	PathParams.DrawDebugType = EDrawDebugTrace::ForDuration;
+	PathParams.bTraceWithCollision = true;
+
+	// 预测结果
+	FPredictProjectilePathResult PathResult;
+	UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
+
+	if (PathResult.HitResult.bBlockingHit)
+	{
+		if (PathResult.HitResult.Component.IsValid())
+		{
+			DebugBox(PathResult.HitResult.Component);
+		}
+
+		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(PathResult.HitResult.GetActor());
+		if (BlasterCharacter)
+		{
+			if (ShotgunResult.HeadShots.Contains(BlasterCharacter))
+			{
+				ShotgunResult.HeadShots[BlasterCharacter]++;
+			}
+			else
+			{
+				ShotgunResult.HeadShots.Emplace(BlasterCharacter, 1);
+			}
+		}
+	}
+	else
+	{
+		for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
+		{
+			// 启用其他碰撞盒的碰撞检测
+			if (HitBoxPair.Value != nullptr)
+			{
+				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
+			}
+		}
+		// 禁用用头部碰撞
+		HeadBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
+		if (PathResult.HitResult.bBlockingHit)
+		{
+			if (PathResult.HitResult.Component.IsValid())
+			{
+				DebugBox(PathResult.HitResult.Component);
+			}
+
+			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(PathResult.HitResult.GetActor());
+			if (BlasterCharacter)
+			{
+				if (ShotgunResult.BodyShots.Contains(BlasterCharacter))
+				{
+					ShotgunResult.BodyShots[BlasterCharacter]++;
+				}
+				else
+				{
+					ShotgunResult.BodyShots.Emplace(BlasterCharacter, 1);
+				}
+			}
+		}
+	}
+	int head = 0;
+	for (auto& Head : ShotgunResult.HeadShots)
+	{
+		head += Head.Value;
+	}
+	int body = 0;
+	for (auto& Body : ShotgunResult.BodyShots)
+	{
+		body += Body.Value;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("击中头%d，击中身体%d"), head, body);
+
+	return ShotgunResult;
+}
+
 // 获取帧信息
 FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime)
 {
@@ -358,44 +507,6 @@ FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitC
 	}
 	FrameToCheck.Character = HitCharacter;
 	return FrameToCheck;
-}
-
-/**
- * 霰弹伤害请求（只会在服务器调用）
- * @param HitCharacters		被命中的角色
- * @param TraceStart		命中的起始位置
- * @param HitLocations		被命中的位置
- * @param HitTime			命中的时间
- */
-void ULagCompensationComponent::ServerScoreRequest_Implementation(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime)
-{
-	FShotgunServerSideRewindResult Confirm = ServerSideRewind(HitCharacters, TraceStart, HitLocations, HitTime);
-	for (auto& HitCharacter : HitCharacters)
-	{
-		if (HitCharacter == nullptr || HitCharacter->GetEquippedWeapon() == nullptr || Character == nullptr) continue;
-
-		// 总伤害
-		float TotalDamage = 0.f;
-
-		if (Confirm.HeadShots.Contains(HitCharacter))
-		{
-			float HeadShotDamage = Confirm.HeadShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
-			TotalDamage += HeadShotDamage;
-		}
-		if (Confirm.BodyShots.Contains(HitCharacter))
-		{
-			float BodyShotDamage = Confirm.BodyShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
-			TotalDamage += BodyShotDamage;
-		}
-
-		UGameplayStatics::ApplyDamage(
-			HitCharacter,
-			TotalDamage,
-			Character->Controller,
-			Character->GetEquippedWeapon(),
-			UDamageType::StaticClass()
-		);
-	}
 }
 
 /**

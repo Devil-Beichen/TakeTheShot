@@ -44,24 +44,10 @@ struct FFramePackage
 	ABlasterCharacter* Character = nullptr;
 };
 
-// 服务器端回溯结果
+
+// 服务器回溯结果
 USTRUCT(BlueprintType)
 struct FServerSideRewindResult
-{
-	GENERATED_BODY()
-
-	// 是否命中
-	UPROPERTY()
-	bool bHitConfirmed = false;
-
-	// 爆头
-	UPROPERTY()
-	bool bHeadShot = false;
-};
-
-// 服务器端霰弹枪回溯结果
-USTRUCT(BlueprintType)
-struct FShotgunServerSideRewindResult
 {
 	GENERATED_BODY()
 
@@ -106,11 +92,43 @@ public:
 		float HitTime
 	);
 
+	/**
+	 * 子弹类服务器回溯（延迟补偿）
+	 */
+
+	/**
+	 * 子弹类服务器回溯（延迟补偿）
+	 * @param HitCharacters		命中的角色
+	 * @param TraceStart		起始位置
+	 * @param InitialVelocity	初始速度
+	 * @param HitTime			命中的时间
+	 */
+	/*FServerSideRewindResult ProjectileServerScoreRequest(
+		const TArray<ABlasterCharacter*>& HitCharacters,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity,
+		float HitTime);*/
+
 protected:
 	// 服务器回溯函数，用于处理命中补偿
-	FShotgunServerSideRewindResult ServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime);
+	FServerSideRewindResult ServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime);
 	// 确认命中
-	FShotgunServerSideRewindResult ConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations);
+	FServerSideRewindResult ConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations);
+
+	// 子弹类服务器回溯（延迟补偿）
+	FServerSideRewindResult ProjectileServerSideRewind(
+		ABlasterCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity,
+		float HitTime);
+
+	// 子弹类确认命中
+	FServerSideRewindResult ProjectileConfirmHit(
+		const FFramePackage& Package,
+		ABlasterCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity,
+		float HitTime);
 
 protected:
 	virtual void BeginPlay() override;
@@ -163,7 +181,7 @@ protected:
 	FFramePackage GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime);
 
 	// 显示盒子
-	void DebugBox( struct TWeakObjectPtr<UPrimitiveComponent> NewComponent, FColor NewColor = FColor::Red);
+	void DebugBox(struct TWeakObjectPtr<UPrimitiveComponent> NewComponent, FColor NewColor = FColor::Red);
 
 private:
 	// 角色

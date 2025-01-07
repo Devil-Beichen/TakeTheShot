@@ -36,6 +36,7 @@ public:
 	float InitialSpeed = 15000;
 
 	// 伤害值
+	UPROPERTY(EditAnywhere)
 	float Damage = 10.f;
 
 #if WITH_EDITOR
