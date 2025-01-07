@@ -21,6 +21,23 @@ public:
 
 	virtual void Destroyed() override;
 
+	/**
+	* 与服务器倒带一起使用（延迟补偿）
+	*/
+	// 延迟补偿
+	bool bUseSercerSidRewind = false;
+	// 追踪开始点
+	FVector_NetQuantize TraceStart;
+	// 初始速度
+	FVector_NetQuantize100 InitialVelocity;
+
+	// 初始速度
+	UPROPERTY(EditAnywhere)
+	float InitialSpeed = 15000;
+
+	// 伤害值
+	float Damage = 10.f;
+
 #if WITH_EDITOR
 	// 允许在编辑器中修改属性时触发的函数。
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -78,14 +95,6 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		FVector NormalImpulse,
 		const FHitResult& Hit);
-
-	// 初始速度
-	UPROPERTY(EditAnywhere)
-	float InitialSpeed = 15000;
-
-	// 伤害值
-	UPROPERTY(EditDefaultsOnly)
-	float Damage = 10.f;
 
 	// 伤害内半径
 	UPROPERTY(EditDefaultsOnly)

@@ -6,6 +6,8 @@
 #include "Weapon.h"
 #include "ProjectileWeapon.generated.h"
 
+class AProjectile;
+
 /**
  *	发射子弹的武器
  */
@@ -21,9 +23,13 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	
+
 private:
 	// 子弹类
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile")
-	TSubclassOf<class AProjectile> ProjectileClass;
+	TSubclassOf<AProjectile> ProjectileClass;
+
+	// 服务器回溯的子弹类
+	UPROPERTY(EditDefaultsOnly, Category = "Projectile")
+	TSubclassOf<AProjectile> ServerSideRewindProjectileClass;
 };
