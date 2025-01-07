@@ -162,6 +162,9 @@ protected:
 	 */
 	FFramePackage GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime);
 
+	// 显示盒子
+	void DebugBox( struct TWeakObjectPtr<UPrimitiveComponent> NewComponent, FColor NewColor = FColor::Red);
+
 private:
 	// 角色
 	UPROPERTY()

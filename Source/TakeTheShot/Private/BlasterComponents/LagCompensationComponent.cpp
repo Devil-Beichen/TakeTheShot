@@ -169,7 +169,6 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArra
 		CurrentFrames.Add(CurrentFrame);
 	}
 
-
 	// 检测是否有击中头部
 	for (auto& HitLocation : HitLocations)
 	{
@@ -199,6 +198,11 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArra
 
 		if (ConfirmHitResult.bBlockingHit)
 		{
+			if (ConfirmHitResult.Component.IsValid())
+			{
+				DebugBox(ConfirmHitResult.Component);
+			}
+
 			BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
 			if (BlasterCharacter)
 			{
@@ -239,6 +243,10 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArra
 			);
 			if (ConfirmHitResult.bBlockingHit)
 			{
+				if (ConfirmHitResult.Component.IsValid())
+				{
+					DebugBox(ConfirmHitResult.Component, FColor::Blue);
+				}
 				BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
 				if (BlasterCharacter)
 				{
@@ -490,7 +498,6 @@ void ULagCompensationComponent::MoveBoxes(ABlasterCharacter* HitCharacter, const
 			HitBoxPair.Value->SetBoxExtent(Package.HitBoxInfo[HitBoxPair.Key].BoxExtent);
 		}
 	}
-	ShowFramePackage(Package, FColor::Red);
 }
 
 /**
@@ -527,5 +534,21 @@ void ULagCompensationComponent::EnableCharacterMeshCollision(ABlasterCharacter* 
 	if (HitCharacter && HitCharacter->GetMesh())
 	{
 		HitCharacter->GetMesh()->SetCollisionEnabled(CollisionEnable);
+	}
+}
+
+// 显示碰撞框
+void ULagCompensationComponent::DebugBox(struct TWeakObjectPtr<UPrimitiveComponent> NewComponent, FColor NewColor)
+{
+	if (UBoxComponent* Box = Cast<UBoxComponent>(NewComponent))
+	{
+		DrawDebugBox(
+			GetWorld(),
+			Box->GetComponentLocation(),
+			Box->GetScaledBoxExtent(),
+			FQuat(Box->GetComponentRotation()),
+			NewColor,
+			false,
+			5.f);
 	}
 }

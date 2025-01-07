@@ -108,7 +108,6 @@ void AProjectileWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 	}
 }
 
-
 void AProjectileWeapon::BeginPlay()
 {
 	Super::BeginPlay();

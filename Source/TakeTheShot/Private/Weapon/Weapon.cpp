@@ -35,7 +35,6 @@ AWeapon::AWeapon()
 	// 设置WeaponMesh对Pawn通道的碰撞响应为忽略
 	// 这样武器不会阻止角色的移动和交互
 	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Ignore);
 
 	// 禁止WeaponMesh的碰撞检测
 	// 即使其他物体与WeaponMesh相交，也不会产生碰撞效果
