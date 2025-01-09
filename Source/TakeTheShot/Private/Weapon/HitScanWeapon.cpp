@@ -167,7 +167,7 @@ void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector_Net
 		}
 
 		// 绘制命中点
-		DrawDebugSphere(World, BeamEnd, 15.f, 12, FColor(243, 156, 18), false, 3);
+		// DrawDebugSphere(World, BeamEnd, 15.f, 12, FColor(243, 156, 18), false, 3);
 
 		if (BeamParticles)
 		{

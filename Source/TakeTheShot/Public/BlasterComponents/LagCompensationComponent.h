@@ -16,15 +16,22 @@ struct FBoxInFormation
 
 	// 位置
 	UPROPERTY()
-	FVector Location = FVector();
+	FVector Location;
 
 	// 旋转
 	UPROPERTY()
-	FRotator Rotation = FRotator();
+	FRotator Rotation;
 
 	// 大小
 	UPROPERTY()
-	FVector BoxExtent = FVector();
+	FVector BoxExtent;
+
+	FBoxInFormation():
+		Location(FVector::ZeroVector),
+		Rotation(FRotator::ZeroRotator),
+		BoxExtent(FVector::ZeroVector)
+	{
+	}
 };
 
 // 帧数据结构

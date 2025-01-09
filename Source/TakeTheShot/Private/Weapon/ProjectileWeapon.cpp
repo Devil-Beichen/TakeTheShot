@@ -20,6 +20,8 @@ void AProjectileWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 {
 	Super::Fire(HitTargets);
 
+	if(!ProjectileClass||!ServerSideRewindProjectileClass) return;
+
 	// 获取当前武器的所有者（持有者），并尝试将其转换为APawn类型
 	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));
@@ -72,8 +74,8 @@ void AProjectileWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 					else // 拥有服务器权限不是本地玩家
 					{
 						SpawnedProjectile = World->SpawnActor<AProjectile>(ServerSideRewindProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
-						// 设置不用服务器回溯
-						SpawnedProjectile->bUseSercerSidRewind = false;
+						// 设置需要服务器回溯
+						SpawnedProjectile->bUseSercerSidRewind = true;
 					}
 				}
 				else // 客户端 ，使用服务器回溯
