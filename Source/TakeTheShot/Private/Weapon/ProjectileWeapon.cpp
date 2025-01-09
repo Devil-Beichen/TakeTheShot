@@ -20,8 +20,6 @@ void AProjectileWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 {
 	Super::Fire(HitTargets);
 
-	if(!ProjectileClass||!ServerSideRewindProjectileClass) return;
-
 	// 获取当前武器的所有者（持有者），并尝试将其转换为APawn类型
 	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));
@@ -66,25 +64,28 @@ void AProjectileWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 				{
 					if (InstigatorPawn->IsLocallyControlled()) // 拥有服务器权限是本地玩家
 					{
+						if (!ProjectileClass) return;
 						SpawnedProjectile = World->SpawnActor<AProjectile>(ProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
 						// 设置不用服务器回溯
-						SpawnedProjectile->bUseSercerSidRewind = false;
+						SpawnedProjectile->bUseServerSidRewind = false;
 						SpawnedProjectile->Damage = Damage;
 					}
 					else // 拥有服务器权限不是本地玩家
 					{
+						if (!ServerSideRewindProjectileClass) return;
 						SpawnedProjectile = World->SpawnActor<AProjectile>(ServerSideRewindProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
 						// 设置需要服务器回溯
-						SpawnedProjectile->bUseSercerSidRewind = true;
+						SpawnedProjectile->bUseServerSidRewind = true;
 					}
 				}
 				else // 客户端 ，使用服务器回溯
 				{
+					if (!ServerSideRewindProjectileClass) return;
 					if (InstigatorPawn->IsLocallyControlled()) // 客户端，本地控制，生成非复制的子弹 使用服务器回溯
 					{
 						SpawnedProjectile = World->SpawnActor<AProjectile>(ServerSideRewindProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
 						// 设置需要服务器回溯
-						SpawnedProjectile->bUseSercerSidRewind = true;
+						SpawnedProjectile->bUseServerSidRewind = true;
 						SpawnedProjectile->TraceStart = SocketTransform.GetLocation();
 						SpawnedProjectile->InitialVelocity = SpawnedProjectile->GetActorForwardVector() * SpawnedProjectile->InitialSpeed;
 						SpawnedProjectile->Damage = Damage;
@@ -92,17 +93,18 @@ void AProjectileWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 					else // 客户端，非本地控制生成非复制子弹，子弹不使用服务器回溯
 					{
 						SpawnedProjectile = World->SpawnActor<AProjectile>(ServerSideRewindProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
-						SpawnedProjectile->bUseSercerSidRewind = false;
+						SpawnedProjectile->bUseServerSidRewind = false;
 					}
 				}
 			}
 			else // 不使用服务器回溯(延迟补偿)
 			{
+				if (!ProjectileClass) return;
 				if (InstigatorPawn->HasAuthority())
 				{
 					SpawnedProjectile = World->SpawnActor<AProjectile>(ProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
 					// 设置不用服务器回溯
-					SpawnedProjectile->bUseSercerSidRewind = false;
+					SpawnedProjectile->bUseServerSidRewind = false;
 					SpawnedProjectile->Damage = Damage;
 				}
 			}

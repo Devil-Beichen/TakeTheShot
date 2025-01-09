@@ -151,6 +151,37 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(const TArray<A
 	}
 }
 
+// 子弹类服务器回溯（延迟补偿）
+void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime)
+{
+	FServerSideRewindResult Confirm = ProjectileServerSideRewind(HitCharacter, TraceStart, InitialVelocity, HitTime);
+
+	if (HitCharacter && HitCharacter->GetEquippedWeapon() && Character)
+	{
+		// 总伤害
+		float TotalDamage = 0.f;
+
+		if (Confirm.HeadShots.Contains(HitCharacter))
+		{
+			float HeadShotDamage = Confirm.HeadShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
+			TotalDamage += HeadShotDamage;
+		}
+		if (Confirm.BodyShots.Contains(HitCharacter))
+		{
+			float BodyShotDamage = Confirm.BodyShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
+			TotalDamage += BodyShotDamage;
+		}
+
+		UGameplayStatics::ApplyDamage(
+			HitCharacter,
+			Character->GetEquippedWeapon()->GetDamage(),
+			Character->Controller,
+			Character->GetEquippedWeapon(),
+			UDamageType::StaticClass()
+		);
+	}
+}
+
 /**
  * 执行服务器端回溯
  * 
@@ -356,6 +387,7 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FF
 	PathParams.DrawDebugTime = 5.f;
 	PathParams.DrawDebugType = EDrawDebugTrace::ForDuration;
 	PathParams.bTraceWithCollision = true;
+	ABlasterCharacter* BlasterCharacter = nullptr;
 
 	// 预测结果
 	FPredictProjectilePathResult PathResult;
@@ -368,7 +400,7 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FF
 			DebugBox(PathResult.HitResult.Component);
 		}
 
-		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(PathResult.HitResult.GetActor());
+		BlasterCharacter = Cast<ABlasterCharacter>(PathResult.HitResult.GetActor());
 		if (BlasterCharacter)
 		{
 			if (ShotgunResult.HeadShots.Contains(BlasterCharacter))
@@ -400,10 +432,10 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FF
 		{
 			if (PathResult.HitResult.Component.IsValid())
 			{
-				DebugBox(PathResult.HitResult.Component);
+				DebugBox(PathResult.HitResult.Component, FColor::Blue);
 			}
 
-			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(PathResult.HitResult.GetActor());
+			BlasterCharacter = Cast<ABlasterCharacter>(PathResult.HitResult.GetActor());
 			if (BlasterCharacter)
 			{
 				if (ShotgunResult.BodyShots.Contains(BlasterCharacter))
@@ -417,6 +449,10 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FF
 			}
 		}
 	}
+	// 重置所有碰撞盒和角色网格的碰撞设置
+	ResetHitBoxes(HitCharacter, CurrentFrame);
+	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
+
 	int head = 0;
 	for (auto& Head : ShotgunResult.HeadShots)
 	{

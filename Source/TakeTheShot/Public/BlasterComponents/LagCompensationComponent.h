@@ -105,16 +105,17 @@ public:
 
 	/**
 	 * 子弹类服务器回溯（延迟补偿）
-	 * @param HitCharacters		命中的角色
+	 * @param HitCharacter		命中的角色
 	 * @param TraceStart		起始位置
 	 * @param InitialVelocity	初始速度
 	 * @param HitTime			命中的时间
 	 */
-	/*FServerSideRewindResult ProjectileServerScoreRequest(
-		const TArray<ABlasterCharacter*>& HitCharacters,
+	UFUNCTION(Server, Reliable)
+	void ProjectileServerScoreRequest(
+		ABlasterCharacter* HitCharacter,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize100& InitialVelocity,
-		float HitTime);*/
+		float HitTime);
 
 protected:
 	// 服务器回溯函数，用于处理命中补偿
