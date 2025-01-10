@@ -75,6 +75,11 @@ void AWeapon::EnableCustomDepth(const bool bEnable)
 	}
 }
 
+void AWeapon::OnPingTooHigh(bool bPingTooHigh)
+{
+	bUseServerSideRewind = !bPingTooHigh;
+}
+
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
@@ -104,6 +109,8 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
+	// 仅向拥有的角色同步
+	DOREPLIFETIME_CONDITION(AWeapon, bUseServerSideRewind, COND_OwnerOnly);
 }
 
 // 当角色的拥有者发生变化时回调函数
@@ -253,6 +260,15 @@ void AWeapon::OnEquipped()
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Ignore);
 	}
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter && bUseServerSideRewind)
+	{
+		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+		if (BlasterOwnerController && HasAuthority() && !BlasterOwnerController->HighPingDelegate.IsBound())
+		{
+			BlasterOwnerController->HighPingDelegate.AddDynamic(this, &AWeapon::OnPingTooHigh);
+		}
+	}
 }
 
 // 装备副武器
@@ -290,7 +306,11 @@ void AWeapon::Dropped()
 // 武器丢弃
 void AWeapon::OnDropped()
 {
-	AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	if (HasAuthority())
+	{
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	WeaponMesh->SetSimulatePhysics(true);
 	WeaponMesh->SetEnableGravity(true);
@@ -298,6 +318,16 @@ void AWeapon::OnDropped()
 	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_INTERITEM);
+
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter)
+	{
+		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+		if (BlasterOwnerController && HasAuthority() && BlasterOwnerController->HighPingDelegate.IsBound())
+		{
+			BlasterOwnerController->HighPingDelegate.RemoveDynamic(this, &AWeapon::OnPingTooHigh);
+		}
+	}
 }
 
 // 射击

@@ -6,6 +6,9 @@
 #include "GameFramework/PlayerController.h"
 #include "BlasterPlayerController.generated.h"
 
+// 高延迟多播委托
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
+
 /**	爆破玩家的控制器
  * 
  */
@@ -80,6 +83,8 @@ public:
 
 	// 到服务器的时间（单程）
 	float SingleTripTime = 0.f;
+
+	FHighPingDelegate HighPingDelegate;
 
 protected:
 	virtual void BeginPlay() override;
@@ -251,7 +256,11 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = Time)
 	float CheckPingFrequency = 20.f;
 
+	// 报告延迟状态
+	UFUNCTION(Server, Reliable)
+	void ServerReportPingStatus(bool bHightPing);
+
 	// 高延迟的阈值
 	UPROPERTY(EditDefaultsOnly, Category = Time)
-	float HighPingThreshold = 50.f;
+	float HighPingThreshold = 100.f;
 };

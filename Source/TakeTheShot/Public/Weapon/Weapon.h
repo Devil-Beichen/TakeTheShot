@@ -174,7 +174,7 @@ public:
 	float Damage = 20.f;
 
 	// 使用服务器回溯(延迟补偿)
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(Replicated, EditAnywhere)
 	bool bUseServerSideRewind = false;
 
 	// 拥有自己的玩家角色
@@ -184,6 +184,10 @@ public:
 	// 拥有自己的玩家控制器
 	UPROPERTY()
 	class ABlasterPlayerController* BlasterOwnerController;
+
+	// Ping是否过高
+	UFUNCTION()
+	void OnPingTooHigh(bool bPingTooHigh);
 
 protected:
 	virtual void BeginPlay() override;

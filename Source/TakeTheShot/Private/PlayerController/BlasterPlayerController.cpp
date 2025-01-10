@@ -227,6 +227,21 @@ void ABlasterPlayerController::CheckPing(float DeltaSeconds)
 			{
 				HighPingWarning();
 				PingAnimationRunningTime = 0.f;
+				// ServerReportPingStatus(true);
+			}
+			/*else
+			{
+				ServerReportPingStatus(false);
+			}*/
+			if (PlayerState->GetPingInMilliseconds() > 40.f && PlayerState->GetPingInMilliseconds() < HighPingThreshold)
+			{
+				ServerReportPingStatus(false);
+				// UE_LOG(LogTemp, Warning, TEXT("需要延迟补偿%f"), PlayerState->GetPingInMilliseconds());
+			}
+			else
+			{
+				ServerReportPingStatus(true);
+				// UE_LOG(LogTemp, Warning, TEXT("不需要延迟补偿%f"), PlayerState->GetPingInMilliseconds());
 			}
 		}
 		HighPingRunningTime = 0.f;
@@ -244,6 +259,12 @@ void ABlasterPlayerController::CheckPing(float DeltaSeconds)
 			BlasterHUD->CharacterOverlay->PingText->SetRenderOpacity(1.f);
 		}
 	}
+}
+
+// 服务器报告Ping状态
+void ABlasterPlayerController::ServerReportPingStatus_Implementation(bool bHightPing)
+{
+	HighPingDelegate.Broadcast(bHightPing);
 }
 
 // 高延迟警告
