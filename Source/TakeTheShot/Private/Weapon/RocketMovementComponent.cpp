@@ -13,5 +13,5 @@ UProjectileMovementComponent::EHandleBlockingHitResult URocketMovementComponent:
 void URocketMovementComponent::HandleImpact(const FHitResult& Hit, float TimeSlice, const FVector& MoveDelta)
 {
 	// 火箭弹不应当停下来，只有当她们的碰撞盒体检测到撞机才会爆炸
-	Super::HandleImpact(Hit, TimeSlice, MoveDelta);
+	// Super::HandleImpact(Hit, TimeSlice, MoveDelta);
 }
