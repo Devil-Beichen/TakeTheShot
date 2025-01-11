@@ -114,29 +114,11 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 // 切换武器
 void UCombatComponent::SwapWeapons()
 {
-	AWeapon* TempWeapon = EquippedWeapon;
-	EquippedWeapon = SecondaryWeapon;
-	SecondaryWeapon = TempWeapon;
+	if (CombatState != ECombatState::ECS_Unoccupied || Character == nullptr)return;
 
-	/**
-	 * 设置主武器状态
-	 */
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	// 将武器装备到角色的右手上
-	AttachActorToRightHand(EquippedWeapon);
-	// 设置弹药信息
-	EquippedWeapon->SetHUDAmmo();
-	// 更新弹药数量
-	UpdateCarriedAmmo();
-	// 播放装备武器的音效
-	PlayEquipWeaponSound(EquippedWeapon);
-	// 重新装填空武器
-	ReloadEmptyWeapon();
-
-	/**
-	 * 设置副武器状态
-	 */
-	SecondaryWeaponStatus();
+	Character->PlaySwapMontage();
+	CombatState = ECombatState::ECS_SwappingWeapons;
+	Character->bFinishedSwapping = false;
 }
 
 // 检查是否应该切换武器
@@ -331,6 +313,41 @@ void UCombatComponent::Reload()
 	}
 }
 
+// 切换武器绑定
+void UCombatComponent::SwapAttachWeapon()
+{
+	if (Character == nullptr || !Character->HasAuthority()) return;
+
+	AWeapon* TempWeapon = EquippedWeapon;
+	EquippedWeapon = SecondaryWeapon;
+	SecondaryWeapon = TempWeapon;
+
+	// 设置主武器状态
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	// 将武器装备到角色的右手上
+	AttachActorToRightHand(EquippedWeapon);
+	// 设置弹药信息
+	EquippedWeapon->SetHUDAmmo();
+	// 更新弹药数量
+	UpdateCarriedAmmo();
+	// 播放装备武器的音效
+	PlayEquipWeaponSound(EquippedWeapon);
+	// 重新装填空武器
+	ReloadEmptyWeapon();
+	// 设置副武器状态
+	SecondaryWeaponStatus();
+}
+
+// 武器更换完成
+void UCombatComponent::SwapFinish()
+{
+	if (Character && Character->HasAuthority())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+	if (Character) Character->bFinishedSwapping = true;
+}
+
 void UCombatComponent::ServerReload_Implementation()
 {
 	// 检查角色或装备的武器是否为空，若为空则不执行任何操作
@@ -362,6 +379,12 @@ void UCombatComponent::OnRep_CombatState()
 		break;
 	case ECombatState::ECS_ThrowingGrenade:
 		ThrowGrenadeSet();
+		break;
+	case ECombatState::ECS_SwappingWeapons:
+		if (Character && !Character->IsLocallyControlled())
+		{
+			Character->PlaySwapMontage();
+		}
 		break;
 	case ECombatState::ECS_MAX:
 		break;
@@ -462,7 +485,7 @@ void UCombatComponent::ServerThrowGrenade_Implementation()
 // 投掷手雷设置
 void UCombatComponent::ThrowGrenadeSet()
 {
-	if (Character == nullptr) return;
+	if (Character == nullptr && !Character->IsLocallyControlled()) return;
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 
 	Character->PlayThrowGrenadeMontage();
@@ -706,8 +729,9 @@ void UCombatComponent::LocalFire(const TArray<FVector_NetQuantize>& TraceHitTarg
 	// 如果没有装备武器，则不执行任何操作
 	if (EquippedWeapon == nullptr || Character == nullptr) return;
 	// 如果当前武器类型是霰弹枪，则执行霰弹枪开火逻辑
-	if (CombatState == ECombatState::ECS_Reloading)
+	if (CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
 	{
+		bLocallyReloading = false;
 		// 播放角色开火动画，参数bAiming表示是否瞄准状态
 		Character->PlayFireMontage(bAiming);
 
@@ -717,7 +741,7 @@ void UCombatComponent::LocalFire(const TArray<FVector_NetQuantize>& TraceHitTarg
 		return;
 	}
 
-	// 如果角色存在
+	// 如果当前武器状态为非繁忙状态，则执行武器开火逻辑
 	if (CombatState == ECombatState::ECS_Unoccupied)
 	{
 		// 播放角色开火动画，参数bAiming表示是否瞄准状态
@@ -760,8 +784,8 @@ void UCombatComponent::FireTimerFinished()
 bool UCombatComponent::CanFire()
 {
 	if (EquippedWeapon == nullptr) return false;
-	if (bLocallyReloading) return false;
 	if (!EquippedWeapon->IsAmmoEmpty() && bCanFire && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun) return true;
+	if (bLocallyReloading) return false;
 	return !EquippedWeapon->IsAmmoEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 }
 

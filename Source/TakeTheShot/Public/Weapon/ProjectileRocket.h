@@ -38,9 +38,5 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	USoundAttenuation* LoopingSoundAttenuation;
 
-	// 火箭移动组件
-	UPROPERTY(VisibleAnywhere)
-	class URocketMovementComponent* RocketMovementComponent;
-
 private:
 };

@@ -687,7 +687,7 @@ void ULagCompensationComponent::EnableCharacterMeshCollision(ABlasterCharacter* 
 // 显示碰撞框
 void ULagCompensationComponent::DebugBox(struct TWeakObjectPtr<UPrimitiveComponent> NewComponent, FColor NewColor)
 {
-	if (UBoxComponent* Box = Cast<UBoxComponent>(NewComponent))
+	/*if (UBoxComponent* Box = Cast<UBoxComponent>(NewComponent))
 	{
 		DrawDebugBox(
 			GetWorld(),
@@ -697,5 +697,5 @@ void ULagCompensationComponent::DebugBox(struct TWeakObjectPtr<UPrimitiveCompone
 			NewColor,
 			false,
 			5.f);
-	}
+	}*/
 }

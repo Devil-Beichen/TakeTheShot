@@ -36,6 +36,12 @@ public:
 	// 重新装填
 	void Reload();
 
+	// 切换武器绑定
+	void SwapAttachWeapon();
+
+	// 切换完成
+	void SwapFinish();
+
 	/**
 	* 处理发射按钮按下事件
 	* 当发射按钮被按下或松开时，调用本函数通知对象

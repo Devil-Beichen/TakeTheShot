@@ -47,6 +47,10 @@ public:
 	UFUNCTION()
 	void RemoveMappingContext() const;
 
+	/*
+	 * 播放蒙太奇
+	 */
+
 	/**	播放射击蒙太奇
 	 * 
 	 * @param bAiming 瞄准
@@ -74,6 +78,9 @@ public:
 	// 播放投掷手榴弹蒙太奇
 	void PlayThrowGrenadeMontage();
 
+	// 播放换武器蒙太奇
+	void PlaySwapMontage();
+
 	// 发射手雷
 	UFUNCTION(Blueprintable)
 	void LaunchGrenade();
@@ -81,6 +88,14 @@ public:
 	// 投掷手榴弹结束
 	UFUNCTION(Blueprintable)
 	void ThrowGrenadeFinished();
+
+	// 切换武器绑定
+	UFUNCTION(Blueprintable)
+	void SwapAttachWeapon();
+
+	// 切换完成
+	UFUNCTION(Blueprintable)
+	void SwapFinish();
 
 	// 重写角色移动通知
 	virtual void OnRep_ReplicatedMovement() override;
@@ -148,6 +163,9 @@ public:
 	// 击中碰撞框
 	UPROPERTY()
 	TMap<FName, class UBoxComponent*> HitCollisionBoxes;
+
+	// 武器交换完成
+	bool bFinishedSwapping = false;
 
 protected:
 	virtual void BeginPlay() override;
@@ -493,6 +511,10 @@ private:
 	// 投掷手榴弹蒙太奇动画
 	UPROPERTY(EditDefaultsOnly, Category=Combat)
 	UAnimMontage* ThrowGrenadeMontage = nullptr;
+
+	// 角色换武器蒙太奇动画
+	UPROPERTY(EditDefaultsOnly, Category=Combat)
+	UAnimMontage* SwapMontage = nullptr;
 
 	// 如果接近相机就隐藏角色
 	void HideCameraIfCharacterClose();

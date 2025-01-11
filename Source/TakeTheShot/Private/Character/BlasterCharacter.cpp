@@ -559,6 +559,18 @@ void ABlasterCharacter::PlayThrowGrenadeMontage()
 	}
 }
 
+// 切换武器动画
+void ABlasterCharacter::PlaySwapMontage()
+{
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		if (SwapMontage)
+		{
+			AnimInstance->Montage_Play(SwapMontage);
+		}
+	}
+}
+
 // 发射手雷
 void ABlasterCharacter::LaunchGrenade()
 {
@@ -574,6 +586,24 @@ void ABlasterCharacter::ThrowGrenadeFinished()
 	if (Combat)
 	{
 		Combat->ThrowGrenadeFinished();
+	}
+}
+
+// 切换武器绑定
+void ABlasterCharacter::SwapAttachWeapon()
+{
+	if (Combat)
+	{
+		Combat->SwapAttachWeapon();
+	}
+}
+
+// 切换完成
+void ABlasterCharacter::SwapFinish()
+{
+	if (Combat)
+	{
+		Combat->SwapFinish();
 	}
 }
 
@@ -789,7 +819,18 @@ void ABlasterCharacter::Equip_Started()
 {
 	if (bDisableGameplay) return;
 	if (!Combat) return;
-	ServerEquipButtonPressed();
+	if (Combat->CombatState == ECombatState::ECS_Unoccupied)ServerEquipButtonPressed();
+	bool bSwap = Combat->ShouldSwapWeapons() &&
+		IsLocallyControlled() &&
+		!HasAuthority() &&
+		Combat->CombatState == ECombatState::ECS_Unoccupied &&
+		OverlappingWeapon == nullptr;
+	if (bSwap)
+	{
+		PlaySwapMontage();
+		Combat->CombatState = ECombatState::ECS_SwappingWeapons;
+		bFinishedSwapping = false;
+	}
 }
 
 // 服务器调用，确保所有客户端都能正确地接收到装备按钮按下的消息并做出相应调整。
