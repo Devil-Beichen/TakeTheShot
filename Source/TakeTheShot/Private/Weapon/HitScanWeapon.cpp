@@ -35,8 +35,6 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 	// 获取控制拥有此武器的Pawn的控制器
 	AController* InstigatorController = OwnerPawn->GetController();
 
-	if (InstigatorController == nullptr) return;
-
 	// 尝试获取武器网格上的"MuzzleFlash"插槽，并确保控制器已初始化
 	if (const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash"))
 	{
@@ -73,17 +71,27 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 						HitMap.Emplace(BlasterCharacter, 1);
 					}
 				}
-			}
-
-			// 如果有设置撞击粒子效果
-			if (ImpactParticles)
-			{
-				// 在撞击点生成粒子效果
-				UGameplayStatics::SpawnEmitterAtLocation(World, ImpactParticles, FireHit.ImpactPoint);
-			}
-			if (HitSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(World, HitSound, FireHit.ImpactPoint);
+				// 如果有设置撞击粒子效果
+				if (ImpactParticles)
+				{
+					// 在撞击点生成粒子效果
+					UGameplayStatics::SpawnEmitterAtLocation(
+						World,
+						ImpactParticles,
+						FireHit.ImpactPoint,
+						FireHit.ImpactNormal.Rotation()
+					);
+				}
+				if (HitSound)
+				{
+					UGameplayStatics::PlaySoundAtLocation(
+						this,
+						HitSound,
+						FireHit.ImpactPoint,
+						.5f,
+						FMath::FRandRange(-.5f, .5f)
+					);
+				}
 			}
 		}
 
@@ -136,7 +144,7 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 		if (FireSound)
 		{
 			UGameplayStatics::PlaySoundAtLocation(
-				GetWorld(),
+				World,
 				FireSound,
 				Start
 			);
