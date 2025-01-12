@@ -11,7 +11,7 @@ void AShieldPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AA
 {
 	Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
-	if (BlasterCharacter && BlasterCharacter->GetBuff())
+	if (BlasterCharacter && BlasterCharacter->GetBuff() && BlasterCharacter->GetShield() != BlasterCharacter->GetMaxShield())
 	{
 		BlasterCharacter->GetBuff()->ShieldReplenish(ShieldReplenishAmount, ShieldReplenishTime);
 		Destroy();

@@ -23,7 +23,7 @@ void AHealthPickup::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AA
 {
 	Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
-	if (BlasterCharacter && BlasterCharacter->GetBuff())
+	if (BlasterCharacter && BlasterCharacter->GetBuff() && BlasterCharacter->GetHealth() != BlasterCharacter->GetMaxHealth())
 	{
 		BlasterCharacter->GetBuff()->Heal(HealAmount, HealingTime);
 		Destroy();
