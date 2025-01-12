@@ -521,6 +521,14 @@ void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
 	}
 }
 
+// 拾取手榴弹
+void UCombatComponent::PickupGrenade(int AddGrenade)
+{
+	// 更新手榴弹数量
+	Grenades = FMath::Clamp(AddGrenade + Grenades, 0, MaxGrenades);
+	UpdateHUDGrenades();
+}
+
 // 发送投掷手雷的请求
 void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuantize& Target)
 {

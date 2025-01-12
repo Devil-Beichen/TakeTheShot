@@ -48,6 +48,7 @@ private:
 	// 生成拾取类时间
 	UPROPERTY(EditAnywhere)
 	float SpawnPickupTimeMin = 20.f;
+	// 生成拾取类最大时间
 	UPROPERTY(EditAnywhere)
 	float SpawnPickupTimeMax = 30.f;
 

@@ -174,6 +174,9 @@ public:
 	// 拾取弹药
 	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
 
+	// 拾取手雷
+	void PickupGrenade(int AddGrenade);
+
 	// 在本地重新装填
 	bool bLocallyReloading = false;
 
@@ -381,6 +384,8 @@ private:
 public:
 	// 获取携带的手雷
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
+	// 获取最大携带的手雷
+	FORCEINLINE int32 GetMaxGrenades() const { return MaxGrenades; }
 
 	// 是否应该切换武器
 	bool ShouldSwapWeapons() const;
