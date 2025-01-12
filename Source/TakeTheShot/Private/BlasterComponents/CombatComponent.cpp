@@ -124,7 +124,7 @@ void UCombatComponent::SwapWeapons()
 // 检查是否应该切换武器
 bool UCombatComponent::ShouldSwapWeapons() const
 {
-	return (EquippedWeapon != nullptr && SecondaryWeapon != nullptr && CombatState == ECombatState::ECS_Unoccupied);
+	return (EquippedWeapon && SecondaryWeapon && CombatState == ECombatState::ECS_Unoccupied && !bLocallyReloading);
 }
 
 // 丢弃装备的武器
@@ -304,7 +304,7 @@ void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade)
 // 重新装填逻辑
 void UCombatComponent::Reload()
 {
-	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied && !EquippedWeapon->IsFull() && !bLocallyReloading)
+	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied && EquippedWeapon && !EquippedWeapon->IsFull() && !bLocallyReloading)
 	{
 		ServerReload();
 		// 处理重新装填动作
@@ -344,6 +344,7 @@ void UCombatComponent::SwapFinish()
 	if (Character && Character->HasAuthority())
 	{
 		CombatState = ECombatState::ECS_Unoccupied;
+		ReloadEmptyWeapon(); // 重新装填空武器
 	}
 	if (Character) Character->bFinishedSwapping = true;
 }
