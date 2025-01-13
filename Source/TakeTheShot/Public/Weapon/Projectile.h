@@ -39,6 +39,10 @@ public:
 	UPROPERTY(EditAnywhere)
 	float Damage = 10.f;
 
+	// 爆炸检测的碰撞类型
+	UPROPERTY(EditAnywhere)
+	TArray<TEnumAsByte<EObjectTypeQuery>> ExplodeCollisionType;
+
 #if WITH_EDITOR
 	// 允许在编辑器中修改属性时触发的函数。
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;

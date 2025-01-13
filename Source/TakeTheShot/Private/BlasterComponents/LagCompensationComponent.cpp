@@ -6,6 +6,7 @@
 #include "TakeTheShot.h"
 #include "Character/BlasterCharacter.h"
 #include "Components/BoxComponent.h"
+#include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 #include "Weapon/Weapon.h"
 
@@ -179,6 +180,128 @@ void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(ABla
 			Character->GetEquippedWeapon(),
 			UDamageType::StaticClass()
 		);
+	}
+}
+
+// 爆炸类服务器回溯（延迟补偿）
+void ULagCompensationComponent::ServerExplosion_Implementation(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& HitLocation, const float DamageInnerRadius, float DamageOuterRadius, float HitTime)
+{
+	UWorld* World = GetWorld();
+	if (World == nullptr) return;
+
+	// 存储需要检查的帧信息数组
+	TArray<FFramePackage> FramePackages;
+	// 遍历每个被击中的角色，获取其在击中时刻的帧信息
+	for (ABlasterCharacter* HitCharacter : HitCharacters)
+	{
+		FramePackages.Add(GetFrameToCheck(HitCharacter, HitTime));
+	}
+
+	TArray<FFramePackage> CurrentFrames;
+	for (auto& Frame : FramePackages)
+	{
+		FFramePackage CurrentFrame;
+		CurrentFrame.Character = Frame.Character;
+		CacheBoxPositions(Frame.Character, CurrentFrame);
+
+		// 移动碰撞盒到指定的位置
+		MoveBoxes(Frame.Character, Frame);
+
+		// 禁用角色网格的碰撞
+		EnableCharacterMeshCollision(Frame.Character, ECollisionEnabled::NoCollision);
+		// 缓存当前帧的数据
+		CurrentFrames.Add(CurrentFrame);
+	}
+
+	for (auto& Frame : FramePackages)
+	{
+		for (auto& HitBoxPair : Frame.Character->HitCollisionBoxes)
+		{
+			// 启用碰撞
+			if (HitBoxPair.Value != nullptr)
+			{
+				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
+			}
+		}
+	}
+
+	// 被击中的角色
+	TArray<ABlasterCharacter*> ActualHitCharacters;
+
+	TArray<FHitResult> OutHits;
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_HitBox));
+	bool const bHit = UKismetSystemLibrary::SphereTraceMultiForObjects(
+		World,
+		HitLocation,
+		HitLocation + FVector(0.f, 0.f, 0.001f),
+		DamageOuterRadius,
+		ObjectTypes,
+		false,
+		TArray<AActor*>(),
+		EDrawDebugTrace::None,
+		OutHits,
+		false);
+
+	if (bHit)
+	{
+		for (auto& HitResult : OutHits)
+		{
+			if (HitResult.bBlockingHit)
+			{
+				ABlasterCharacter* TempCharacter = Cast<ABlasterCharacter>(HitResult.GetActor());
+				if (TempCharacter)
+				{
+					ActualHitCharacters.AddUnique(TempCharacter);
+
+					for (auto& BoxPaor : TempCharacter->HitCollisionBoxes)
+					{
+						if (UBoxComponent* Box = Cast<UBoxComponent>(BoxPaor.Value))
+						{
+							DrawDebugBox(
+								GetWorld(),
+								Box->GetComponentLocation(),
+								Box->GetScaledBoxExtent(),
+								FQuat(Box->GetComponentRotation()),
+								FColor::Red,
+								false,
+								5.f);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	FRadialDamageEvent DmgEvent;
+	DmgEvent.Origin = HitLocation;
+	DmgEvent.DamageTypeClass = UDamageType::StaticClass();
+	DmgEvent.ComponentHits = OutHits;
+	DmgEvent.Params = FRadialDamageParams(
+		Character->GetEquippedWeapon()->GetDamage(),
+		10,
+		DamageInnerRadius,
+		DamageOuterRadius,
+		1);
+
+	if (ActualHitCharacters.Num() > 0)
+	{
+		for (auto& Victim : ActualHitCharacters)
+		{
+			Victim->TakeDamage(
+				Character->GetEquippedWeapon()->GetDamage(),
+				DmgEvent,
+				Character->Controller,
+				Character->GetEquippedWeapon());
+		}
+	}
+
+	// 重置所有碰撞盒和角色网格的碰撞设置
+	for (auto& Frame : CurrentFrames)
+	{
+		ResetHitBoxes(Frame.Character, Frame);
+		EnableCharacterMeshCollision(Frame.Character, ECollisionEnabled::QueryAndPhysics);
 	}
 }
 

@@ -117,6 +117,22 @@ public:
 		const FVector_NetQuantize100& InitialVelocity,
 		float HitTime);
 
+	/**
+	 * 爆炸类服务器回溯（延迟补偿）
+	 * @param HitCharacters			命中的角色
+	 * @param HitLocation			命中的位置
+	 * @param DamageInnerRadius		伤害范围内半径
+	 * @param DamageOuterRadius		伤害范围外半径
+	 * @param HitTime				命中的时间
+	 */
+	UFUNCTION(Server, Reliable)
+	void ServerExplosion(
+		const TArray<ABlasterCharacter*>& HitCharacters,
+		const FVector_NetQuantize& HitLocation,
+		const float DamageInnerRadius,
+		float DamageOuterRadius,
+		float HitTime);
+
 protected:
 	// 服务器回溯函数，用于处理命中补偿
 	FServerSideRewindResult ServerSideRewind(const TArray<ABlasterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime);

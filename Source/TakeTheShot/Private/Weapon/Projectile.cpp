@@ -6,7 +6,10 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 #include "TakeTheShot.h"
+#include "BlasterComponents/LagCompensationComponent.h"
+#include "Character/BlasterCharacter.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "PlayerController/BlasterPlayerController.h"
 
 AProjectile::AProjectile()
 {
@@ -114,23 +117,88 @@ void AProjectile::SpawnTrailSystem()
 // 爆炸伤害 
 void AProjectile::ExplodeDamage()
 {
-	if (const APawn* FiringPawn = GetInstigator(); FiringPawn && HasAuthority())
+	if (const ABlasterCharacter* OwnerCharacter = Cast<ABlasterCharacter>(GetInstigator()); OwnerCharacter)
 	{
-		if (AController* FiringController = FiringPawn->GetController())
+		if (AController* FiringController = OwnerCharacter->GetController())
 		{
-			UGameplayStatics::ApplyRadialDamageWithFalloff(
-				this, // 世界上下文
-				Damage, // 基础伤害
-				10.f, // 最小伤害
-				GetActorLocation(), // 中心起点
-				DamageInnerRadius, // 伤害内半径
-				DamageOuterRadius, // 伤害外半径
-				1.f, // 衰减指数
-				UDamageType::StaticClass(), // 伤害类型
-				TArray<AActor*>(), // 忽略的Actor
-				this, // 造成伤害的Actor
-				FiringController // 伤害发起者的控制器
-			);
+			if (ABlasterPlayerController* OwnerController = Cast<ABlasterPlayerController>(OwnerCharacter->Controller))
+			{
+				if (OwnerCharacter->HasAuthority() && !bUseServerSidRewind)
+				{
+					UGameplayStatics::ApplyRadialDamageWithFalloff(
+						this, // 世界上下文
+						Damage, // 基础伤害
+						10.f, // 最小伤害
+						GetActorLocation(), // 中心起点
+						DamageInnerRadius, // 伤害内半径
+						DamageOuterRadius, // 伤害外半径
+						1.f, // 衰减指数
+						UDamageType::StaticClass(), // 伤害类型
+						TArray<AActor*>(), // 忽略的Actor
+						this, // 造成伤害的Actor
+						FiringController // 伤害发起者的控制器
+					);
+					return;
+				}
+				if (bUseServerSidRewind && OwnerCharacter->IsLocallyControlled())
+				{
+					// 被击中的角色
+					TArray<ABlasterCharacter*> ActualHitCharacters;
+
+					TArray<FHitResult> OutHits;
+
+					bool const bHit = UKismetSystemLibrary::SphereTraceMultiForObjects(
+						GetWorld(),
+						GetActorLocation(),
+						GetActorLocation() + FVector(0.f, 0.f, 0.001f),
+						DamageOuterRadius,
+						ExplodeCollisionType,
+						false,
+						TArray<AActor*>(),
+						EDrawDebugTrace::None,
+						OutHits,
+						false);
+
+					if (bHit && OutHits.Num() > 0)
+					{
+						for (auto HitResult : OutHits)
+						{
+							if (HitResult.bBlockingHit)
+							{
+								if (!ActualHitCharacters.Contains(HitResult.GetActor()))
+								{
+									FHitResult ConfirmHitResult;
+									// 检测是否有阻挡
+									bool block = GetWorld()->LineTraceSingleByChannel(
+										ConfirmHitResult,
+										GetActorLocation() + FVector(0.f, 0.f, 20.f),
+										HitResult.GetActor()->GetActorLocation(),
+										ECC_Visibility
+									);
+									if (block)
+									{
+										ABlasterCharacter* Character = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
+										if (Character)
+										{
+											ActualHitCharacters.AddUnique(Character);
+										}
+									}
+								}
+							}
+						}
+					}
+					UE_LOG(LogTemp, Log, TEXT("击中数量%d"), ActualHitCharacters.Num());
+					if (OwnerCharacter->GetLagComponent() && !ActualHitCharacters.IsEmpty())
+					{
+						OwnerCharacter->GetLagComponent()->ServerExplosion(
+							ActualHitCharacters,
+							GetActorLocation(),
+							DamageInnerRadius,
+							DamageOuterRadius,
+							OwnerController->GetServerTime() - OwnerController->SingleTripTime);
+					}
+				}
+			}
 		}
 	}
 }
