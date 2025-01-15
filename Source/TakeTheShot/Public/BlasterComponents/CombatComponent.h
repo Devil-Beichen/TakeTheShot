@@ -279,11 +279,11 @@ private:
 	* 服务器端发射函数
 	* 该函数通过网络可靠地发送一个射击动作，指定射击的目标点
 	* 
-	 * @param TraceHitTargets 射击射中目标的位置，以网络量化向量表示
-	*                        该参数通过网络传输，确保在服务器和客户端之间同步射击目标
+	* @param TraceHitTargets	射击射中目标的位置，以网络量化向量表示
+	* @param FireDelay			射击的延迟时间，以秒为单位                 
 	*/
-	UFUNCTION(Server, Reliable)
-	void ServerFire(const TArray<FVector_NetQuantize>& TraceHitTargets);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerFire(const TArray<FVector_NetQuantize>& TraceHitTargets, float FireDelay);
 
 	/**
 	 * 网络多播函数，用于可靠地发送射击指令

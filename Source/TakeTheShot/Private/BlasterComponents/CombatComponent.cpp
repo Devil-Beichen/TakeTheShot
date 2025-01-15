@@ -712,12 +712,23 @@ void UCombatComponent::WeaponFire()
 		if (!Character->HasAuthority())LocalFire(HitTargets);
 
 		// 调用服务器端开火函数
-		ServerFire(HitTargets);
+		ServerFire(HitTargets, EquippedWeapon->FireDelay);
 	}
 }
 
+// 服务器端开火验证，用于验证客户端发送的开火请求
+bool UCombatComponent::ServerFire_Validate(const TArray<FVector_NetQuantize>& TraceHitTargets, float FireDelay)
+{
+	if (EquippedWeapon)
+	{
+		bool bNearlyEqual = FMath::IsNearlyEqual(EquippedWeapon->FireDelay, FireDelay, 0.001f);
+		return bNearlyEqual;
+	}
+	return true;
+}
+
 // 服务器端开火处理，用于同步所有客户端的开火动作
-void UCombatComponent::ServerFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTargets)
+void UCombatComponent::ServerFire_Implementation(const TArray<FVector_NetQuantize>& TraceHitTargets, float FireDelay)
 {
 	// 调用多播开火函数，实现所有客户端的同时开火效果
 	MulticastFire(TraceHitTargets);
