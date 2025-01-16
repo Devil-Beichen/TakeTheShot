@@ -21,6 +21,8 @@ class ABlasterPlayerController;
 class USoundCue;
 class UBoxComponent;
 
+// 退出游戏多播
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
 
 /*	爆破角色的基类
  * 
@@ -101,11 +103,11 @@ public:
 	virtual void OnRep_ReplicatedMovement() override;
 
 	// 只在服务器上执行的淘汰
-	void Elim();
+	void Elim(bool bPlayerLeftGame);
 
 	// 多播淘汰
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastElim();
+	void MulticastElim(bool bPlayerLeftGame);
 
 	// 重写销毁角色
 	virtual void Destroyed() override;
@@ -622,6 +624,20 @@ private:
 	UFUNCTION()
 	void ElimTimeFinished();
 
+public:
+	// 是否离开游戏
+	UPROPERTY(BlueprintReadOnly)
+	bool bLeftGame = false;
+
+	// 离开游戏事件
+	UPROPERTY(BlueprintAssignable)
+	FOnLeftGame OnLeftGame;
+
+	// 服务器离开游戏
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void ServerLeaveGame();
+
+private:
 	/**
 	 *  溶解效果
 	 */

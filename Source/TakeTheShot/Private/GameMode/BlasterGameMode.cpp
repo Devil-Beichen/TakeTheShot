@@ -36,6 +36,7 @@ void ABlasterGameMode::BeginPlay()
 	}
 }
 
+// 比赛状态设置
 void ABlasterGameMode::OnMatchStateSet()
 {
 	Super::OnMatchStateSet();
@@ -113,10 +114,11 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, 
 
 	if (EliminatedCharacter)
 	{
-		EliminatedCharacter->Elim();
+		EliminatedCharacter->Elim(false);
 	}
 }
 
+// 请求重新生成
 void ABlasterGameMode::RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController)
 {
 	// 如果被消除的角色对象存在
@@ -139,5 +141,20 @@ void ABlasterGameMode::RequestRespawn(ACharacter* EliminatedCharacter, AControll
 		const int32 Selection = FMath::RandRange(0, PlayerStarts.Num() - 1);
 		// 让被消除的玩家在新的起点重新开始游戏
 		RestartPlayerAtPlayerStart(EliminatedController, PlayerStarts[Selection]);
+	}
+}
+
+// 玩家离开游戏
+void ABlasterGameMode::PlayerLeftGame(ABlasterPlayerState* PlayerLeaving)
+{
+	if (PlayerLeaving == nullptr) return;
+	// 调用玩家淘汰，并且将bLeftGame设置成true
+	if (ABlasterGameState* BlasterGameState = GetGameState<ABlasterGameState>(); BlasterGameState->TopScoringPlayers.Contains(PlayerLeaving))
+	{
+		BlasterGameState->TopScoringPlayers.Remove(PlayerLeaving);
+	}
+	if (ABlasterCharacter* CharacterLeaving = Cast<ABlasterCharacter>(PlayerLeaving->GetPawn()))
+	{
+		CharacterLeaving->Elim(true);
 	}
 }

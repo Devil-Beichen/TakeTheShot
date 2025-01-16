@@ -340,25 +340,19 @@ void ABlasterCharacter::RemoveMappingContext() const
 }
 
 // 角色被消除
-void ABlasterCharacter::Elim()
+void ABlasterCharacter::Elim(bool bPlayerLeftGame)
 {
-	// 销毁武器
+	// 丢弃或销毁武器
 	DropOrDestrouWeapons();
 	// 多播淘汰
-	MulticastElim();
-
-	GetWorldTimerManager().SetTimer
-	(
-		ElimTime,
-		this,
-		&ABlasterCharacter::ElimTimeFinished,
-		ElimDelayRegenerate
-	);
+	MulticastElim(bPlayerLeftGame);
 }
 
 // 当角色被消除时，此函数将执行一系列相关操作
-void ABlasterCharacter::MulticastElim_Implementation()
+void ABlasterCharacter::MulticastElim_Implementation(bool bPlayerLeftGame)
 {
+	bLeftGame = bPlayerLeftGame;
+
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDWeaponAmmo(0);
@@ -408,16 +402,46 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	{
 		ShowSniperScopeWidget(false);
 	}
+
+	// 设置一个定时器，在指定延迟后调用ElimTimeFinished函数
+	GetWorldTimerManager().SetTimer
+	(
+		ElimTime,
+		this,
+		&ABlasterCharacter::ElimTimeFinished,
+		ElimDelayRegenerate
+	);
 }
 
 // 当消除时间结束时调用
 void ABlasterCharacter::ElimTimeFinished()
 {
 	// 尝试获取游戏模式并进行类型检查，确保它是ABlasterGameMode的实例
-	if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+	ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+	if (BlasterGameMode && !bLeftGame)
 	{
 		// 请求重生，传递当前角色和控制器的信息
 		BlasterGameMode->RequestRespawn(this, Controller);
+		return;
+	}
+	if (bLeftGame && IsLocallyControlled())
+	{
+		OnLeftGame.Broadcast();
+	}
+}
+
+// 离开游戏
+void ABlasterCharacter::ServerLeaveGame_Implementation()
+{
+	// 尝试获取游戏模式并进行类型检查，确保它是ABlasterGameMode的实例
+	if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+	{
+		BlasterPlayerState = BlasterPlayerState == nullptr ? GetPlayerState<ABlasterPlayerState>() : BlasterPlayerState;
+		if (BlasterPlayerState)
+		{
+			// 请求离开游戏
+			BlasterGameMode->PlayerLeftGame(BlasterPlayerState);
+		}
 	}
 }
 

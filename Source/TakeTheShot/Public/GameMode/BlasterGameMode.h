@@ -8,6 +8,7 @@
 
 class ABlasterCharacter;
 class ABlasterPlayerController;
+class ABlasterPlayerState;
 
 namespace MatchState
 {
@@ -49,6 +50,9 @@ public:
 	 * @param EliminatedController 被消除角色的控制器对象指针。
 	 */
 	virtual void RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController);
+
+	// 玩家离开游戏
+	void PlayerLeftGame(ABlasterPlayerState* PlayerLeaving);
 
 	// 热身时间
 	UPROPERTY(EditDefaultsOnly)

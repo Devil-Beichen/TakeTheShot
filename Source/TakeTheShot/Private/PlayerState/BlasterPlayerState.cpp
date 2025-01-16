@@ -22,7 +22,7 @@ void ABlasterPlayerState::AddToScore(const float ScoreAmount)
 // 设置分数
 void ABlasterPlayerState::MySetScore()
 {
-	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(GetPawn()->Controller) : Controller;
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(GetOwningController()) : Controller;
 
 	if (Controller)
 	{
@@ -51,7 +51,7 @@ void ABlasterPlayerState::AddTotDefeats(const int32 DefeatsAmount)
 void ABlasterPlayerState::SetDefeats()
 {
 	// 检查并初始化控制器指针
-	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(GetPawn()->Controller) : Controller;
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(GetOwningController()) : Controller;
 
 	// 如果控制器有效，则更新HUD上的失败次数
 	if (Controller)
