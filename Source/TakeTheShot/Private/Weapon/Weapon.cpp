@@ -75,6 +75,7 @@ void AWeapon::EnableCustomDepth(const bool bEnable)
 	}
 }
 
+// Ping值过高
 void AWeapon::OnPingTooHigh(bool bPingTooHigh)
 {
 	bUseServerSideRewind = !bPingTooHigh;
@@ -260,15 +261,7 @@ void AWeapon::OnEquipped()
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Ignore);
 	}
-	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
-	if (BlasterOwnerCharacter && bUseServerSideRewind)
-	{
-		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
-		if (BlasterOwnerController && HasAuthority() && !BlasterOwnerController->HighPingDelegate.IsBound())
-		{
-			BlasterOwnerController->HighPingDelegate.AddDynamic(this, &AWeapon::OnPingTooHigh);
-		}
-	}
+	AddPingDelegate();
 }
 
 // 装备副武器
@@ -290,6 +283,8 @@ void AWeapon::OnEquippedSecondary()
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Ignore);
 	}
+
+	RemovePingDelegate();
 }
 
 // 丢弃武器
@@ -303,22 +298,23 @@ void AWeapon::Dropped()
 	BlasterOwnerController = nullptr;
 }
 
-// 武器丢弃
-void AWeapon::OnDropped()
+// 添加Ping的代理
+void AWeapon::AddPingDelegate()
 {
-	if (HasAuthority())
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter && bUseServerSideRewind)
 	{
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+		if (BlasterOwnerController && HasAuthority() && !BlasterOwnerController->HighPingDelegate.IsBound())
+		{
+			BlasterOwnerController->HighPingDelegate.AddDynamic(this, &AWeapon::OnPingTooHigh);
+		}
 	}
-	
-	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	WeaponMesh->SetSimulatePhysics(true);
-	WeaponMesh->SetEnableGravity(true);
-	WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Block);
-	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_INTERITEM);
+}
 
+// 移除延迟检测的委托
+void AWeapon::RemovePingDelegate()
+{
 	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
 	if (BlasterOwnerCharacter)
 	{
@@ -328,6 +324,25 @@ void AWeapon::OnDropped()
 			BlasterOwnerController->HighPingDelegate.RemoveDynamic(this, &AWeapon::OnPingTooHigh);
 		}
 	}
+}
+
+// 武器丢弃
+void AWeapon::OnDropped()
+{
+	if (HasAuthority())
+	{
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	WeaponMesh->SetSimulatePhysics(true);
+	WeaponMesh->SetEnableGravity(true);
+	WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Block);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_INTERITEM);
+
+	RemovePingDelegate();
 }
 
 // 射击

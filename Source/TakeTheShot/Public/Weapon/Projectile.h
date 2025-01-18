@@ -25,7 +25,7 @@ public:
 	* 与服务器倒带一起使用（延迟补偿）
 	*/
 	// 延迟补偿
-	bool bUseServerSidRewind = false;
+	bool bUseServerSideRewind = false;
 	// 追踪开始点
 	FVector_NetQuantize TraceStart;
 	// 初始速度

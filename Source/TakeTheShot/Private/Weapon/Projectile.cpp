@@ -123,7 +123,7 @@ void AProjectile::ExplodeDamage()
 		{
 			if (ABlasterPlayerController* OwnerController = Cast<ABlasterPlayerController>(OwnerCharacter->Controller))
 			{
-				if (OwnerCharacter->HasAuthority() && !bUseServerSidRewind)
+				if (OwnerCharacter->HasAuthority() && !bUseServerSideRewind)
 				{
 					UGameplayStatics::ApplyRadialDamageWithFalloff(
 						this, // 世界上下文
@@ -140,7 +140,7 @@ void AProjectile::ExplodeDamage()
 					);
 					return;
 				}
-				if (bUseServerSidRewind && OwnerCharacter->IsLocallyControlled())
+				if (bUseServerSideRewind && OwnerCharacter->IsLocallyControlled())
 				{
 					// 被击中的角色
 					TArray<ABlasterCharacter*> ActualHitCharacters;

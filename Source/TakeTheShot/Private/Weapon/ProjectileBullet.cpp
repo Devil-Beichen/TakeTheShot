@@ -28,7 +28,7 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherAc
 		// 检查并获取OwnerController，确保OwnerCharacter有控制器
 		if (ABlasterPlayerController* OwnerController = Cast<ABlasterPlayerController>(OwnerCharacter->Controller))
 		{
-			if (OwnerCharacter->HasAuthority() && !bUseServerSidRewind)
+			if (OwnerCharacter->HasAuthority() && !bUseServerSideRewind)
 			{
 				// 对OtherActor造成伤害，伤害值为Damage，施加伤害的控制器为OwnerController，使用UDamageType类型的静态类
 				UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerController, this, UDamageType::StaticClass());
@@ -36,7 +36,7 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherAc
 				return;
 			}
 			ABlasterCharacter* HitCharacter = Cast<ABlasterCharacter>(OtherActor);
-			if (bUseServerSidRewind && OwnerCharacter->GetLagComponent() && OwnerCharacter->IsLocallyControlled() && HitCharacter)
+			if (bUseServerSideRewind && OwnerCharacter->GetLagComponent() && OwnerCharacter->IsLocallyControlled() && HitCharacter)
 			{
 				OwnerCharacter->GetLagComponent()->ProjectileServerScoreRequest(
 					HitCharacter,

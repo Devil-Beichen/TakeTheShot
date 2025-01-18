@@ -194,6 +194,7 @@ protected:
 
 	// 武器状态设置
 	virtual void OnWeaponStateSet();
+
 	// 武器装备
 	virtual void OnEquipped();
 
@@ -202,6 +203,12 @@ protected:
 
 	// 武器丢弃
 	virtual void OnDropped();
+
+	// 添加Ping代理
+	void AddPingDelegate();
+
+	// 移除Ping代理
+	void RemovePingDelegate();
 
 	/**
 	 * 当角色的碰撞球体与另一个演员的碰撞体发生重叠时，此函数将被调用。
