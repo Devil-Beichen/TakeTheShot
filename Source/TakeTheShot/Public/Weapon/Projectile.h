@@ -124,6 +124,7 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	float DestroyTime = 3.f;
 
+public:
 	// 命中特效
 	UPROPERTY(EditDefaultsOnly, Category="Projectile")
 	UParticleSystem* ImpactParticles;

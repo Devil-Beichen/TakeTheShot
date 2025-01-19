@@ -69,6 +69,19 @@ void AProjectileWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 					SpawnedProjectile->bUseServerSideRewind = false;
 					SpawnedProjectile->Damage = Damage;
 				}
+				if (!ServerSideRewindProjectileClass) return;
+				if (!InstigatorPawn->HasAuthority())
+				{
+					SpawnedProjectile = World->SpawnActor<AProjectile>(ServerSideRewindProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
+					// 设置不用服务器回溯
+					SpawnedProjectile->bUseServerSideRewind = false;
+					if (SpawnedProjectile->InitialSpeed < 20000)
+					{
+						SpawnedProjectile->ImpactParticles = nullptr;
+						SpawnedProjectile->ImpactSound = nullptr;
+						SpawnedProjectile->Destroy();
+					}
+				}
 			}
 			else // 使用服务器回溯(延迟补偿)
 			{

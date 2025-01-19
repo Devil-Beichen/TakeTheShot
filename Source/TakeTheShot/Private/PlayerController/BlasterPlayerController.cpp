@@ -264,7 +264,7 @@ void ABlasterPlayerController::CheckPing(float DeltaSeconds)
 // 服务器报告Ping状态
 void ABlasterPlayerController::ServerReportPingStatus_Implementation(bool bHightPing)
 {
-	// HighPingDelegate.Broadcast(bHightPing);
+	HighPingDelegate.Broadcast(bHightPing);
 }
 
 // 高延迟警告
