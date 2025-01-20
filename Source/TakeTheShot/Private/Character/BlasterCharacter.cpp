@@ -546,7 +546,7 @@ void ABlasterCharacter::Shell()
 
 void ABlasterCharacter::PlayHitReactMontage()
 {
-	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)return;
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr || Combat->CombatState != ECombatState::ECS_Unoccupied)return;
 
 	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
 	{

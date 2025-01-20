@@ -515,9 +515,10 @@ void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
 		// 更新弹药数量
 		UpdateCarriedAmmo();
 	}
-	if (EquippedWeapon && EquippedWeapon->IsAmmoEmpty() && EquippedWeapon->GetWeaponType() == WeaponType)
+	// 检查当前装备的武器类型
+	if (EquippedWeapon->GetWeaponType() == WeaponType)
 	{
-		Reload();
+		ReloadEmptyWeapon();
 	}
 }
 
