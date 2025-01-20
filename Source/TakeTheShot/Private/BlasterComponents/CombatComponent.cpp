@@ -332,8 +332,6 @@ void UCombatComponent::SwapAttachWeapon()
 	UpdateCarriedAmmo();
 	// 播放装备武器的音效
 	PlayEquipWeaponSound(EquippedWeapon);
-	// 重新装填空武器
-	ReloadEmptyWeapon();
 	// 设置副武器状态
 	SecondaryWeaponStatus();
 }
