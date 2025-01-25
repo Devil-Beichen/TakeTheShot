@@ -20,6 +20,8 @@ class UAnimMontage;
 class ABlasterPlayerController;
 class USoundCue;
 class UBoxComponent;
+class UNiagaraSystem;
+class UNiagaraComponent;
 
 // 退出游戏多播
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
@@ -102,10 +104,16 @@ public:
 	// 重写角色移动通知
 	virtual void OnRep_ReplicatedMovement() override;
 
-	// 只在服务器上执行的淘汰
+	/**
+	 * 只在服务器上执行的淘汰
+	 * @param bPlayerLeftGame	是否玩家退出游戏 
+	 */
 	void Elim(bool bPlayerLeftGame);
 
-	// 多播淘汰
+	/**
+	 * 多播淘汰
+	 * @param bPlayerLeftGame	是否玩家退出游戏 
+	 */
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastElim(bool bPlayerLeftGame);
 
@@ -637,6 +645,14 @@ public:
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void ServerLeaveGame();
 
+	// 多播取得领先
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastGainedTheLead();
+
+	// 多播失去领先
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastLostTheLead();
+
 private:
 	/**
 	 *  溶解效果
@@ -694,6 +710,14 @@ private:
 	// 玩家状态
 	UPROPERTY()
 	class ABlasterPlayerState* BlasterPlayerState = nullptr;
+
+	// 皇冠 Niagara 粒子系统
+	UPROPERTY(EditDefaultsOnly)
+	class UNiagaraSystem* CrownSystem;
+
+	// 皇冠 Niagara 组件
+	UPROPERTY(VisibleDefaultsOnly)
+	UNiagaraComponent* CrownComponent;
 
 	/**
 	 * 手榴弹

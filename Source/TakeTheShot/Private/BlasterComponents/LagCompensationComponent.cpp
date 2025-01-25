@@ -508,7 +508,7 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FF
 	PathParams.TraceChannel = ECC_HitBox;
 	PathParams.ActorsToIgnore.Add(GetOwner());
 	PathParams.DrawDebugTime = 5.f;
-	PathParams.DrawDebugType = EDrawDebugTrace::ForDuration;
+	PathParams.DrawDebugType = EDrawDebugTrace::None;
 	PathParams.bTraceWithCollision = true;
 	ABlasterCharacter* BlasterCharacter = nullptr;
 

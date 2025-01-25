@@ -103,8 +103,40 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, 
 
 	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && BlasterGameState)
 	{
+		// 获取当前拥有分数的玩家列表
+		TArray<ABlasterPlayerState*> PlayersCurrentlyInTheLead;
+
+		// 遍历当前拥有分数的玩家列表
+		for (auto& LeadPlayer : BlasterGameState->TopScoringPlayers)
+		{
+			PlayersCurrentlyInTheLead.Add(LeadPlayer);
+		}
+
+		// 为攻击者玩家状态增加分数
 		AttackerPlayerState->AddToScore(1.f);
+		// 更新游戏状态中的最高分数
 		BlasterGameState->UpdateTopScore(AttackerPlayerState);
+
+		// 如果当前拥有分数的玩家列表中包含当前攻击者玩家状态，则更新领先
+		if (BlasterGameState->TopScoringPlayers.Contains(AttackerPlayerState))
+		{
+			if (ABlasterCharacter* Loser = Cast<ABlasterCharacter>(AttackerPlayerState->GetPawn()))
+			{
+				Loser->MulticastGainedTheLead();
+			}
+		}
+
+		// 如果当前拥有分数的玩家列表中不包含当前攻击者玩家状态，则更新失去领先
+		for (auto& LeadPlayer : PlayersCurrentlyInTheLead)
+		{
+			if (!BlasterGameState->TopScoringPlayers.Contains(LeadPlayer))
+			{
+				if (ABlasterCharacter* Loser = Cast<ABlasterCharacter>(LeadPlayer->GetPawn()))
+				{
+					Loser->MulticastLostTheLead();
+				}
+			}
+		}
 	}
 	// 受害者玩家状态
 	if (VictimPlayerState)
@@ -112,6 +144,7 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, 
 		VictimPlayerState->AddTotDefeats();
 	}
 
+	// 如果被消除的角色对象存在
 	if (EliminatedCharacter)
 	{
 		EliminatedCharacter->Elim(false);

@@ -5,6 +5,8 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "TakeTheShot.h"
 #include "BlasterComponents/CombatComponent.h"
 #include "BlasterComponents/BuffComponent.h"
@@ -16,6 +18,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameMode/BlasterGameMode.h"
+#include "GameState/BlasterGameState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
@@ -339,16 +342,25 @@ void ABlasterCharacter::RemoveMappingContext() const
 	}
 }
 
-// 角色被消除
+/**
+* 只在服务器上执行的淘汰
+* @param bPlayerLeftGame	是否玩家退出游戏 
+*/
 void ABlasterCharacter::Elim(bool bPlayerLeftGame)
 {
 	// 丢弃或销毁武器
 	DropOrDestrouWeapons();
 	// 多播淘汰
 	MulticastElim(bPlayerLeftGame);
+
+	// 多播失去领先
+	MulticastLostTheLead();
 }
 
-// 当角色被消除时，此函数将执行一系列相关操作
+/**
+* 多播淘汰
+* @param bPlayerLeftGame	是否玩家退出游戏 
+*/
 void ABlasterCharacter::MulticastElim_Implementation(bool bPlayerLeftGame)
 {
 	bLeftGame = bPlayerLeftGame;
@@ -427,6 +439,46 @@ void ABlasterCharacter::ElimTimeFinished()
 	if (bLeftGame && IsLocallyControlled())
 	{
 		OnLeftGame.Broadcast();
+	}
+}
+
+// 多播获得领先
+// 当玩家获得领先时调用此函数，以视觉效果指示领先状态
+void ABlasterCharacter::MulticastGainedTheLead_Implementation()
+{
+	// 检查冠冕系统是否已初始化
+	if (CrownSystem == nullptr) return;
+
+	// 如果冠冕组件尚未创建，则进行创建
+	if (CrownComponent == nullptr)
+	{
+		// 附着冠冕系统到角色的胶囊组件上，位置略高于角色头部
+		CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttached
+		(
+			CrownSystem,
+			GetCapsuleComponent(),
+			FName(),
+			GetActorLocation() + FVector(0.f, 0.f, 110.f),
+			GetActorRotation(),
+			EAttachLocation::Type::KeepWorldPosition,
+			false
+		);
+	}
+
+	// 如果冠冕组件已成功创建，则激活它
+	if (CrownComponent)
+	{
+		CrownComponent->Activate();
+	}
+}
+
+
+// 多播失去领先
+void ABlasterCharacter::MulticastLostTheLead_Implementation()
+{
+	if (CrownComponent)
+	{
+		CrownComponent->DestroyComponent();
 	}
 }
 
@@ -1149,6 +1201,15 @@ void ABlasterCharacter::PollInit()
 			BlasterPlayerState->AddToScore(0.f);
 			// 初始化死亡次数
 			BlasterPlayerState->AddTotDefeats(0);
+
+			// 如果游戏状态里面最高得分玩家有自己，就多播领先
+			if (const ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this)))
+			{
+				if (BlasterGameState->TopScoringPlayers.Contains(BlasterPlayerState))
+				{
+					MulticastGainedTheLead();
+				}
+			}
 		}
 	}
 }
