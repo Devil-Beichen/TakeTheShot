@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "HUD/Announcement.h"
 #include "HUD/CharacterOverlay.h"
+#include "HUD/ElimAnnouncement.h"
 
 void ABlasterHUD::DrawHUD()
 {
@@ -133,5 +134,23 @@ void ABlasterHUD::AddAnnouncement()
 		// 创建UCharacterOverlay对象，并将其添加到玩家控制器的视口中
 		Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
 		Announcement->AddToViewport();
+	}
+}
+
+/**
+* 添加淘汰公告板
+* @param Attacker	击杀者
+* @param Victim		被击杀者
+*/
+void ABlasterHUD::AddElimAnnouncement(FString Attacker, FString Victim)
+{
+	OwningPlayer = OwningPlayer == nullptr ? Cast<APlayerController>(GetOwningPlayerController()) : OwningPlayer;
+	if (OwningPlayer && ElimAnnouncementClass)
+	{
+		if (UElimAnnouncement* ElimeAnnouncementWidget = CreateWidget<UElimAnnouncement>(OwningPlayer, ElimAnnouncementClass))
+		{
+			ElimeAnnouncementWidget->SetElimAnnouncementText(Attacker, Victim);
+			ElimeAnnouncementWidget->AddToViewport();
+		}
 	}
 }

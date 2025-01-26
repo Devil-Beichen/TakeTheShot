@@ -89,10 +89,25 @@ public:
 	// 添加通知
 	void AddAnnouncement();
 
+	// 显示淘汰公告板的类
+	UPROPERTY(EditDefaultsOnly, Category= "Announcement")
+	TSubclassOf<class UElimAnnouncement> ElimAnnouncementClass;
+
+	/**
+	 * 添加淘汰公告板
+	 * @param Attacker	击杀者
+	 * @param Victim	被击杀者
+	 */
+	void AddElimAnnouncement(FString Attacker, FString Victim);
+
 protected:
 	virtual void BeginPlay() override;
 
 private:
+	// 玩家控制器
+	UPROPERTY()
+	class APlayerController* OwningPlayer = nullptr;
+
 	// HUD的资源包
 	FHUDPackage HUDPackage;
 

@@ -91,6 +91,9 @@ void ABlasterGameMode::Tick(float DeltaSeconds)
 // 玩家被淘汰
 void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController)
 {
+	if (AttackerController == nullptr || AttackerController->PlayerState == nullptr) return;
+	if (VictimController == nullptr || VictimController->PlayerState == nullptr) return;
+
 	// 根据AttackerController是否存在，转换并获取相应的ABlasterPlayerState对象
 	// 如果AttackerController为nullptr，则AttackerPlayerState为nullptr
 	ABlasterPlayerState* AttackerPlayerState = AttackerController ? Cast<ABlasterPlayerState>(AttackerController->PlayerState) : nullptr;
@@ -148,6 +151,15 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, 
 	if (EliminatedCharacter)
 	{
 		EliminatedCharacter->Elim(false);
+	}
+
+	// 遍历所有玩家控制器
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(*It))
+		{
+			BlasterPlayer->BroadcastElim(AttackerPlayerState, VictimPlayerState); // 广播被淘汰公告
+		}
 	}
 }
 

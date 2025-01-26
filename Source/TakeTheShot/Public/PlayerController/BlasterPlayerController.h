@@ -86,6 +86,13 @@ public:
 
 	FHighPingDelegate HighPingDelegate;
 
+	/**
+	 * 广播玩家被淘汰
+	 * @param Attacker		攻击者的状态
+	 * @param Victim		被淘汰的玩家的状态
+	 */
+	void BroadcastElim(APlayerState* Attacker, APlayerState* Victim);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -163,6 +170,14 @@ protected:
 
 	// 停止显示高延迟
 	void StopHighPingWarning();
+
+	/**
+	 * 客户端显示淘汰公告
+	 * @param Attacker		攻击者的状态 
+	 * @param Victim		被淘汰的玩家的状态
+	 */
+	UFUNCTION(Client, Reliable)
+	void ClientElimAnnouncement(APlayerState* Attacker, APlayerState* Victim);
 
 private:
 	// HUD

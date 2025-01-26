@@ -255,7 +255,7 @@ void ULagCompensationComponent::ServerExplosion_Implementation(const TArray<ABla
 				{
 					ActualHitCharacters.AddUnique(TempCharacter);
 
-					for (auto& BoxPaor : TempCharacter->HitCollisionBoxes)
+					/*for (auto& BoxPaor : TempCharacter->HitCollisionBoxes)
 					{
 						if (UBoxComponent* Box = Cast<UBoxComponent>(BoxPaor.Value))
 						{
@@ -268,7 +268,7 @@ void ULagCompensationComponent::ServerExplosion_Implementation(const TArray<ABla
 								false,
 								5.f);
 						}
-					}
+					}*/
 				}
 			}
 		}
