@@ -127,6 +127,21 @@ private:
 	UPROPERTY(EditAnywhere, Category="Crosshairs")
 	float CrosshairSpreadMax = 16.0f;
 
+	// 显示淘汰公告板时间
+	UPROPERTY(EditDefaultsOnly)
+	float ElimAnnouncementTime = 1.5f;
+
+	/**
+	 *  淘汰公告板时间结束
+	 * @param MsgToRemove	被移除的淘汰公告板
+	 */
+	UFUNCTION()
+	void ElimAnnouncementTimeFinished(UElimAnnouncement* MsgToRemove);
+
+	// 淘汰公告板消息
+	UPROPERTY()
+	TArray<UElimAnnouncement*> ElimMessages;
+
 public:
 	// 设置HUD的资源包
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }

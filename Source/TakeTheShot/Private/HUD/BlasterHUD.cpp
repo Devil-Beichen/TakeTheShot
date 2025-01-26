@@ -4,6 +4,9 @@
 #include "HUD/BlasterHUD.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Components/HorizontalBox.h"
 #include "HUD/Announcement.h"
 #include "HUD/CharacterOverlay.h"
 #include "HUD/ElimAnnouncement.h"
@@ -151,6 +154,61 @@ void ABlasterHUD::AddElimAnnouncement(FString Attacker, FString Victim)
 		{
 			ElimeAnnouncementWidget->SetElimAnnouncementText(Attacker, Victim);
 			ElimeAnnouncementWidget->AddToViewport();
+
+			// 遍历ElimMessages数组，调整每个消息的位置
+			for (auto& Msg : ElimMessages)
+			{
+				// 检查消息对象和其公告框是否存在
+				if (Msg && Msg->AnnouncementBox)
+				{
+					// 将消息的插槽转换为Canvas插槽
+					if (UCanvasPanelSlot* CanvasSloy = UWidgetLayoutLibrary::SlotAsCanvasSlot(Msg->AnnouncementBox))
+					{
+						// 获取当前插槽的位置
+						FVector2D Position = CanvasSloy->GetPosition();
+						// 计算新的位置，仅在Y轴上移动，移动距离为自身的高度
+						FVector2D NewPosition(
+							CanvasSloy->GetPosition().X,
+							Position.Y - CanvasSloy->GetSize().Y
+						);
+
+						// 设置插槽的新位置
+						CanvasSloy->SetPosition(NewPosition);
+					}
+				}
+			}
+
+			ElimMessages.Add(ElimeAnnouncementWidget);
+
+			// 声明一个定时器句柄，用于后续管理定时器
+			FTimerHandle ElimMsgTime;
+
+			// 声明一个定时器委托，用于在定时器触发时调用指定函数
+			FTimerDelegate ElimMsgDelegate;
+
+			// 绑定一个UFunction到定时器委托中
+			// 这里绑定了"ElimAnnouncementTimeFinished"函数，当定时器结束时，将调用此函数(可以传入参数)
+			ElimMsgDelegate.BindUFunction(this, FName("ElimAnnouncementTimeFinished"), ElimeAnnouncementWidget);
+
+			// 使用世界定时器管理器设置一个定时器
+			// ElimMsgTime: 定时器句柄，用于后续管理和取消定时器
+			// ElimMsgDelegate: 定时器触发时调用的委托
+			// ElimAnnouncementTime: 定时器触发前的延迟时间
+			// false: 表示定时器只触发一次
+			GetWorldTimerManager().SetTimer(
+				ElimMsgTime,
+				ElimMsgDelegate,
+				ElimAnnouncementTime,
+				false);
 		}
+	}
+}
+
+// 淘汰公告板时间结束
+void ABlasterHUD::ElimAnnouncementTimeFinished(UElimAnnouncement* MsgToRemove)
+{
+	if (MsgToRemove)
+	{
+		MsgToRemove->RemoveFromParent();
 	}
 }
