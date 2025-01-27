@@ -46,6 +46,8 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 		TArray<ABlasterCharacter*> HitCharacters = TArray<ABlasterCharacter*>();
 		// 创建一个哈希表，用于存储命中的目标和命中的次数
 		TMap<ABlasterCharacter*, uint32> HitMap;
+		// 创建一个哈希表，用于存储命中目标的头部和命中的次数
+		TMap<ABlasterCharacter*, uint32> HeadShotHitMap;
 		// 循环遍历每个目标点
 		for (FVector_NetQuantize HitTarget : HitTargets)
 		{
@@ -56,19 +58,20 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 			// 如果线迹测试击中了某个物体
 			if (FireHit.bBlockingHit)
 			{
-				ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
-
-				if (BlasterCharacter)
+				// 如果击中的演员是ABlasterCharacter类型
+				if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor()))
 				{
 					HitCharacters.AddUnique(BlasterCharacter);
-
-					if (HitMap.Contains(BlasterCharacter))
+					// 判断是否击中头部
+					if (/*const bool bHeadShot = */FireHit.BoneName.ToString() == FString("head"))
 					{
-						HitMap[BlasterCharacter]++;
+						// 如果是头部射击，增加HeadShotHitMap中对应角色的计数
+						HeadShotHitMap.FindOrAdd(BlasterCharacter)++;
 					}
 					else
 					{
-						HitMap.Emplace(BlasterCharacter, 1);
+						// 如果不是头部射击，增加HitMap中对应角色的计数
+						HitMap.FindOrAdd(BlasterCharacter)++;
 					}
 				}
 				// 如果有设置撞击粒子效果
@@ -95,17 +98,43 @@ void AHitScanWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 			}
 		}
 
-		// 遍历哈希表，对每个目标应用伤害
-		for (auto& HitPair : HitMap)
+		// 创建一个哈希表，用于存储每个目标对应的伤害
+		TMap<ABlasterCharacter*, float> DamageMap;
+		if (!HitMap.IsEmpty()) // 如果有设置普通射击的哈希表
 		{
-			bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
+			// 遍历哈希表，对每个目标应用伤害
+			for (auto& HitPair : HitMap)
+			{
+				if (HitPair.Key)
+				{
+					DamageMap.FindOrAdd(HitPair.Key) += HitPair.Value * Damage;
+				}
+			}
+		}
+		if (!HeadShotHitMap.IsEmpty()) // 如果有设置头部射击的哈希表
+		{
+			// 遍历哈希表，对每个目标应用头部伤害
+			for (auto& HeadShotHitPair : HeadShotHitMap)
+			{
+				if (HeadShotHitPair.Key)
+				{
+					DamageMap.FindOrAdd(HeadShotHitPair.Key) += HeadShotHitPair.Value * HeadShotDamage;
+				}
+			}
+		}
+
+		// 应用伤害给每个目标
+		bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
+
+		for (auto& DamagePair : DamageMap)
+		{
 			// 如果拥有此武器的Pawn拥有 Authority 且 控制器有效 且 命中的目标有效
-			if (HitPair.Key && HasAuthority() && bCauseAuthDamage)
+			if (HasAuthority() && InstigatorController && bCauseAuthDamage)
 			{
 				// 应用伤害给击中的对象
 				UGameplayStatics::ApplyDamage(
-					HitPair.Key,
-					Damage * HitPair.Value,
+					DamagePair.Key,
+					DamagePair.Value,
 					InstigatorController,
 					this,
 					UDamageType::StaticClass()
@@ -172,6 +201,10 @@ void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector_Net
 		if (OutHit.bBlockingHit)
 		{
 			BeamEnd = OutHit.ImpactPoint;
+		}
+		else
+		{
+			OutHit.ImpactPoint = End;
 		}
 
 		// 绘制命中点

@@ -59,9 +59,11 @@ struct FServerSideRewindResult
 	GENERATED_BODY()
 
 	// 击中头部
-	TMap<ABlasterCharacter*, uint32> HeadShots;
+	UPROPERTY()
+	TMap<ABlasterCharacter*, uint32> HeadShots = TMap<ABlasterCharacter*, uint32>();
 	// 击中身体
-	TMap<ABlasterCharacter*, uint32> BodyShots;
+	UPROPERTY()
+	TMap<ABlasterCharacter*, uint32> BodyShots = TMap<ABlasterCharacter*, uint32>();
 };
 
 /**

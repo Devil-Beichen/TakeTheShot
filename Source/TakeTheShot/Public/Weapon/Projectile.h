@@ -35,9 +35,12 @@ public:
 	UPROPERTY(EditAnywhere)
 	float InitialSpeed = 15000;
 
-	// 伤害值
+	// 伤害值（只适用于火箭弹和手榴弹）
 	UPROPERTY(EditAnywhere)
 	float Damage = 10.f;
+	// 头部伤害值
+	UPROPERTY(EditAnywhere)
+	float HeadShotDamage = 40.f;
 
 	// 爆炸检测的碰撞类型
 	UPROPERTY(EditAnywhere)

@@ -68,6 +68,7 @@ void AProjectileWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 					// 设置不用服务器回溯
 					SpawnedProjectile->bUseServerSideRewind = false;
 					SpawnedProjectile->Damage = Damage;
+					SpawnedProjectile->HeadShotDamage = HeadShotDamage;
 				}
 				if (!ServerSideRewindProjectileClass) return;
 				if (!InstigatorPawn->HasAuthority())
@@ -92,9 +93,10 @@ void AProjectileWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 					{
 						if (!ServerSideRewindProjectileClass) return;
 						SpawnedProjectile = World->SpawnActor<AProjectile>(ServerSideRewindProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
-						// 设置不用服务器回溯
+						// 设置使用服务器回溯
 						SpawnedProjectile->bUseServerSideRewind = true;
 						SpawnedProjectile->Damage = Damage;
+						SpawnedProjectile->HeadShotDamage = HeadShotDamage;
 						SpawnedProjectile->TraceStart = SocketTransform.GetLocation();
 						SpawnedProjectile->InitialVelocity = SpawnedProjectile->GetActorForwardVector() * SpawnedProjectile->InitialSpeed;
 						UE_LOG(LogTemp, Warning, TEXT("在服务器生成！！！"));

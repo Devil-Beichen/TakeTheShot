@@ -173,6 +173,10 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float Damage = 20.f;
 
+	// 头部伤害
+	UPROPERTY(EditDefaultsOnly)
+	float HeadShotDamage = 40.f;
+
 	// 使用服务器回溯(延迟补偿)
 	UPROPERTY(Replicated, EditAnywhere)
 	bool bUseServerSideRewind = false;
@@ -336,4 +340,6 @@ public:
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 	// 获取伤害
 	FORCEINLINE float GetDamage() const { return Damage; }
+	// 获取头部伤害
+	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
 };

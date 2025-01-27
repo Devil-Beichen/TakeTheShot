@@ -133,11 +133,13 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(const TArray<A
 
 		if (Confirm.HeadShots.Contains(HitCharacter))
 		{
-			float HeadShotDamage = Confirm.HeadShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
+			// 头部伤害
+			float HeadShotDamage = Confirm.HeadShots[HitCharacter] * Character->GetEquippedWeapon()->GetHeadShotDamage();
 			TotalDamage += HeadShotDamage;
 		}
 		if (Confirm.BodyShots.Contains(HitCharacter))
 		{
+			// 身体伤害
 			float BodyShotDamage = Confirm.BodyShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
 			TotalDamage += BodyShotDamage;
 		}
@@ -164,7 +166,7 @@ void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(ABla
 
 		if (Confirm.HeadShots.Contains(HitCharacter))
 		{
-			float HeadShotDamage = Confirm.HeadShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
+			float HeadShotDamage = Confirm.HeadShots[HitCharacter] * Character->GetEquippedWeapon()->GetHeadShotDamage();
 			TotalDamage += HeadShotDamage;
 		}
 		if (Confirm.BodyShots.Contains(HitCharacter))
@@ -175,7 +177,7 @@ void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(ABla
 
 		UGameplayStatics::ApplyDamage(
 			HitCharacter,
-			Character->GetEquippedWeapon()->GetDamage(),
+			TotalDamage,
 			Character->Controller,
 			Character->GetEquippedWeapon(),
 			UDamageType::StaticClass()
@@ -315,7 +317,7 @@ void ULagCompensationComponent::ServerExplosion_Implementation(const TArray<ABla
  * 
  * @return 返回射击结果
  * 
- * 此函数通过服务器端回放机制，确认散弹枪射击的命中情况
+ * 此函数通过服务器端回放机制，确认射击的命中情况
  * 它会遍历每个被击中的角色，并获取其在击中时刻的帧信息
  * 最后，根据这些帧信息和射击参数，确认射击是否命中
  */
@@ -332,23 +334,36 @@ FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(const TArray
 	return ConfirmHit(FramePackages, TraceStart, HitLocations);
 }
 
-// 确认命中
+// 服务器端回溯结果结构
 FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArray<FFramePackage>& Framepackages, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations)
 {
+	// 获取当前世界对象
 	UWorld* World = GetWorld();
+	// 如果世界对象为空，则返回空的服务器端回溯结果
 	if (World == nullptr) return FServerSideRewindResult();
+
+	// 遍历所有帧包，检查角色对象是否为空
 	for (auto& Frame : Framepackages)
 	{
+		// 如果角色对象为空，则返回空的服务器端回溯结果
 		if (Frame.Character == nullptr) return FServerSideRewindResult();
 	}
 
-	FServerSideRewindResult ShotgunResult;
+	// 存储射线击中的结果
+	FServerSideRewindResult HitScanResult;
 
+	// 需要检测的数组
+	TArray<FVector_NetQuantize> CheckHitLocations = HitLocations;
+	// 使用过的数组
+	TArray<FVector_NetQuantize> UsedHitLocations;
+
+	// 处理当前帧的数据
 	TArray<FFramePackage> CurrentFrames;
 	for (auto& Frame : Framepackages)
 	{
 		FFramePackage CurrentFrame;
 		CurrentFrame.Character = Frame.Character;
+		// 缓存碰撞盒的位置
 		CacheBoxPositions(Frame.Character, CurrentFrame);
 
 		// 移动碰撞盒到指定的位置
@@ -360,22 +375,23 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArray<FFram
 		CurrentFrames.Add(CurrentFrame);
 	}
 
-	// 检测是否有击中头部
-	for (auto& HitLocation : HitLocations)
+	// 启用头部碰撞
+	for (auto& Frame : Framepackages)
 	{
-		// 启用头部碰撞
-		for (auto& Frame : Framepackages)
-		{
-			UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
-			HeadBox->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-			HeadBox->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
-		}
+		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
+		HeadBox->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+		HeadBox->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
+	}
 
-		ABlasterCharacter* BlasterCharacter = nullptr;
+	// 初始化BlasterCharacter指针
+	ABlasterCharacter* BlasterCharacter = nullptr;
 
-		// 存储确认击中的结果
-		FHitResult ConfirmHitResult;
+	// 存储确认击中的结果
+	FHitResult ConfirmHitResult;
 
+	// 检测是否有击中头部
+	for (auto& HitLocation : CheckHitLocations)
+	{
 		// 计算追踪结束的位置
 		const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
 
@@ -387,69 +403,76 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArray<FFram
 			ECC_HitBox
 		);
 
+		// 如果线迹检测到阻塞命中
 		if (ConfirmHitResult.bBlockingHit)
 		{
+			// 如果命中组件有效，则进行调试绘制
 			if (ConfirmHitResult.Component.IsValid())
 			{
 				DebugBox(ConfirmHitResult.Component);
 			}
 
+			// 将命中结果转换为BlasterCharacter
 			BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
 			if (BlasterCharacter)
 			{
-				if (ShotgunResult.HeadShots.Contains(BlasterCharacter))
-				{
-					ShotgunResult.HeadShots[BlasterCharacter]++;
-				}
-				else
-				{
-					ShotgunResult.HeadShots.Emplace(BlasterCharacter, 1);
-				}
+				// 确认击中头部次数
+				HitScanResult.HeadShots.FindOrAdd(BlasterCharacter)++;
+				// 添加到已使用的击中位置
+				UsedHitLocations.Add(HitLocation);
 			}
 		}
-		else
-		{
-			for (auto& Frame : Framepackages)
-			{
-				for (auto& HitBoxPair : Frame.Character->HitCollisionBoxes)
-				{
-					// 启用其他碰撞盒的碰撞检测
-					if (HitBoxPair.Value != nullptr)
-					{
-						HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-						HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
-					}
-				}
-				// 禁用用头部碰撞
-				UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
-				HeadBox->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
-			}
+	}
 
-			// 尝试进行线迹检测
-			World->LineTraceSingleByChannel(
-				ConfirmHitResult,
-				TraceStart,
-				TraceEnd,
-				ECC_HitBox
-			);
-			if (ConfirmHitResult.bBlockingHit)
+	// 重置所有碰撞盒和角色网格的碰撞设置
+	for (auto& Frame : Framepackages)
+	{
+		for (auto& HitBoxPair : Frame.Character->HitCollisionBoxes)
+		{
+			// 启用其他碰撞盒的碰撞检测
+			if (HitBoxPair.Value != nullptr)
 			{
-				if (ConfirmHitResult.Component.IsValid())
-				{
-					DebugBox(ConfirmHitResult.Component, FColor::Blue);
-				}
-				BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
-				if (BlasterCharacter)
-				{
-					if (ShotgunResult.BodyShots.Contains(BlasterCharacter))
-					{
-						ShotgunResult.BodyShots[BlasterCharacter]++;
-					}
-					else
-					{
-						ShotgunResult.BodyShots.Emplace(BlasterCharacter, 1);
-					}
-				}
+				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
+			}
+		}
+		// 禁用用头部碰撞
+		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
+		HeadBox->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+	}
+
+	// 移除已经使用的击中位置
+	for (auto& Location : UsedHitLocations)
+	{
+		CheckHitLocations.Remove(Location);
+	}
+
+	// 检测是否有击身体
+	for (auto& HitLocation : CheckHitLocations)
+	{
+		// 计算追踪结束的位置
+		const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
+		// 尝试进行线迹检测
+		World->LineTraceSingleByChannel(
+			ConfirmHitResult,
+			TraceStart,
+			TraceEnd,
+			ECC_HitBox
+		);
+		// 如果线迹检测到阻塞命中
+		if (ConfirmHitResult.bBlockingHit)
+		{
+			// 如果命中组件有效，则进行调试绘制
+			if (ConfirmHitResult.Component.IsValid())
+			{
+				DebugBox(ConfirmHitResult.Component, FColor::Blue);
+			}
+			// 将命中结果转换为BlasterCharacter
+			BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
+			if (BlasterCharacter)
+			{
+				// 确认击中身体次数
+				HitScanResult.BodyShots.FindOrAdd(BlasterCharacter)++;
 			}
 		}
 	}
@@ -457,22 +480,31 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const TArray<FFram
 	// 重置所有碰撞盒和角色网格的碰撞设置
 	for (auto& Frame : CurrentFrames)
 	{
+		// 重置碰撞盒位置
 		ResetHitBoxes(Frame.Character, Frame);
+		// 启用角色网格的碰撞检测
 		EnableCharacterMeshCollision(Frame.Character, ECollisionEnabled::QueryAndPhysics);
 	}
+
+	// 统计击中头部和身体的次数
 	int head = 0;
-	for (auto& Head : ShotgunResult.HeadShots)
+	for (auto& Head : HitScanResult.HeadShots)
 	{
 		head += Head.Value;
 	}
 	int body = 0;
-	for (auto& Body : ShotgunResult.BodyShots)
+	for (auto& Body : HitScanResult.BodyShots)
 	{
 		body += Body.Value;
 	}
+
+	// 输出日志信息
 	UE_LOG(LogTemp, Warning, TEXT("击中头%d，击中身体%d"), head, body);
-	return ShotgunResult;
+
+	// 返回击中结果
+	return HitScanResult;
 }
+
 
 // 子弹获取服务器端回溯结果
 FServerSideRewindResult ULagCompensationComponent::ProjectileServerSideRewind(ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime)
@@ -485,7 +517,8 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileServerSideRewind(AB
 // 子弹确认命中
 FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FFramePackage& Package, ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime)
 {
-	FServerSideRewindResult ShotgunResult;
+	// 子弹命中结果
+	FServerSideRewindResult ProjectResult;
 
 	FFramePackage CurrentFrame;
 	CacheBoxPositions(HitCharacter, CurrentFrame);
@@ -514,7 +547,7 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FF
 
 	// 预测结果
 	FPredictProjectilePathResult PathResult;
-	UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
+	UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult); // 预测追踪路径
 
 	if (PathResult.HitResult.bBlockingHit)
 	{
@@ -523,21 +556,16 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FF
 			DebugBox(PathResult.HitResult.Component);
 		}
 
+		// 确认击中
 		BlasterCharacter = Cast<ABlasterCharacter>(PathResult.HitResult.GetActor());
 		if (BlasterCharacter)
 		{
-			if (ShotgunResult.HeadShots.Contains(BlasterCharacter))
-			{
-				ShotgunResult.HeadShots[BlasterCharacter]++;
-			}
-			else
-			{
-				ShotgunResult.HeadShots.Emplace(BlasterCharacter, 1);
-			}
+			ProjectResult.HeadShots.FindOrAdd(BlasterCharacter)++;
 		}
 	}
 	else
 	{
+		// 重置所有碰撞盒和角色网格的碰撞设置
 		for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
 		{
 			// 启用其他碰撞盒的碰撞检测
@@ -550,7 +578,7 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FF
 		// 禁用用头部碰撞
 		HeadBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-		UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
+		UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult); // 预测追踪路径
 		if (PathResult.HitResult.bBlockingHit)
 		{
 			if (PathResult.HitResult.Component.IsValid())
@@ -558,17 +586,13 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FF
 				DebugBox(PathResult.HitResult.Component, FColor::Blue);
 			}
 
+			// 将路径结果中命中的演员转换为BlasterCharacter类型
 			BlasterCharacter = Cast<ABlasterCharacter>(PathResult.HitResult.GetActor());
+			// 如果转换成功，说明击中了一个BlasterCharacter
 			if (BlasterCharacter)
 			{
-				if (ShotgunResult.BodyShots.Contains(BlasterCharacter))
-				{
-					ShotgunResult.BodyShots[BlasterCharacter]++;
-				}
-				else
-				{
-					ShotgunResult.BodyShots.Emplace(BlasterCharacter, 1);
-				}
+				// 在ShotgunResult的HeadShots映射中为该BlasterCharacter增加头部中弹计数
+				ProjectResult.BodyShots.FindOrAdd(BlasterCharacter)++;
 			}
 		}
 	}
@@ -577,18 +601,18 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FF
 	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 
 	int head = 0;
-	for (auto& Head : ShotgunResult.HeadShots)
+	for (auto& Head : ProjectResult.HeadShots)
 	{
 		head += Head.Value;
 	}
 	int body = 0;
-	for (auto& Body : ShotgunResult.BodyShots)
+	for (auto& Body : ProjectResult.BodyShots)
 	{
 		body += Body.Value;
 	}
 	UE_LOG(LogTemp, Warning, TEXT("击中头%d，击中身体%d"), head, body);
 
-	return ShotgunResult;
+	return ProjectResult;
 }
 
 // 获取帧信息

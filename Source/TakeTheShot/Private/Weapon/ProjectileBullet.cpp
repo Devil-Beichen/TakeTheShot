@@ -30,8 +30,10 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherAc
 		{
 			if (OwnerCharacter->HasAuthority() && !bUseServerSideRewind)
 			{
+				// 实际伤害
+				const float DamageToCause = Hit.BoneName.ToString() == FString("head") ? HeadShotDamage : Damage;
 				// 对OtherActor造成伤害，伤害值为Damage，施加伤害的控制器为OwnerController，使用UDamageType类型的静态类
-				UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerController, this, UDamageType::StaticClass());
+				UGameplayStatics::ApplyDamage(OtherActor, DamageToCause, OwnerController, this, UDamageType::StaticClass());
 				Super::OnHit(HitComponent, OtherActor, OtherComp, NormalImpulse, Hit);
 				return;
 			}
