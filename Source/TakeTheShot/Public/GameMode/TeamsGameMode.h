@@ -21,6 +21,9 @@ public:
 	// 玩家退出时
 	virtual void Logout(AController* Exiting) override;
 
+	// 从写计算伤害
+	virtual float CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage) override;
+
 protected:
 	// 匹配开始时
 	virtual void HandleMatchHasStarted() override;

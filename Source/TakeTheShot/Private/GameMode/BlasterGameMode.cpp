@@ -203,3 +203,15 @@ void ABlasterGameMode::PlayerLeftGame(ABlasterPlayerState* PlayerLeaving)
 		CharacterLeaving->Elim(true);
 	}
 }
+
+/**
+* 计算实际受到的伤害
+* @param Attacker		发起攻击的控制器
+* @param Victim		被攻击的控制器
+* @param BaseDamage	基础伤害
+* @return 
+*/
+float ABlasterGameMode::CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage)
+{
+	return BaseDamage;
+}

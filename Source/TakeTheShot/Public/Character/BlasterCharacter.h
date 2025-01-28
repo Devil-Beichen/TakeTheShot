@@ -23,6 +23,7 @@ class USoundCue;
 class UBoxComponent;
 class UNiagaraSystem;
 class UNiagaraComponent;
+class ABlasterGameMode;
 
 // 退出游戏多播
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
@@ -754,6 +755,10 @@ private:
 	// 默认武器
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AWeapon> DefaultWeaponClass;
+
+	// 游戏模式
+	UPROPERTY()
+	ABlasterGameMode* BlasterGameMode = nullptr;
 
 #pragma endregion
 

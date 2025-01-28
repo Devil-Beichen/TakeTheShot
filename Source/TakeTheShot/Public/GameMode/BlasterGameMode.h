@@ -54,6 +54,15 @@ public:
 	// 玩家离开游戏
 	void PlayerLeftGame(ABlasterPlayerState* PlayerLeaving);
 
+	/**
+	 * 计算实际受到的伤害
+	 * @param Attacker		发起攻击的控制器
+	 * @param Victim		被攻击的控制器
+	 * @param BaseDamage	基础伤害
+	 * @return 
+	 */
+	virtual float CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage);
+
 	// 热身时间
 	UPROPERTY(EditDefaultsOnly)
 	float WarmupTime = 10.f;

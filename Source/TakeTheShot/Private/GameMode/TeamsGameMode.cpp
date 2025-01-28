@@ -57,6 +57,21 @@ void ATeamsGameMode::Logout(AController* Exiting)
 	}
 }
 
+// 计算伤害
+float ATeamsGameMode::CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage)
+{
+	// 获取攻击者和 Victim 的玩家状态
+	ABlasterPlayerState* AttackerPState = Attacker->GetPlayerState<ABlasterPlayerState>();
+	ABlasterPlayerState* VictimPState = Victim->GetPlayerState<ABlasterPlayerState>();
+
+	if (AttackerPState == nullptr || VictimPState == nullptr) return BaseDamage;
+	if (AttackerPState == VictimPState) return BaseDamage;
+
+	// 如果攻击者和 Victim 的团队相同，则返回 0，表示伤害为 0
+	if (AttackerPState->GetTeam() == VictimPState->GetTeam()) return 0.f;
+	return BaseDamage;
+}
+
 // 比赛开始时
 void ATeamsGameMode::HandleMatchHasStarted()
 {

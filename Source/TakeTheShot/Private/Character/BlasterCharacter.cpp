@@ -428,8 +428,7 @@ void ABlasterCharacter::MulticastElim_Implementation(bool bPlayerLeftGame)
 // 当消除时间结束时调用
 void ABlasterCharacter::ElimTimeFinished()
 {
-	// 尝试获取游戏模式并进行类型检查，确保它是ABlasterGameMode的实例
-	ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+	// 如果游戏模式存在且玩家没有退出游戏，则请求重生角色
 	if (BlasterGameMode && !bLeftGame)
 	{
 		// 请求重生，传递当前角色和控制器的信息
@@ -486,7 +485,8 @@ void ABlasterCharacter::MulticastLostTheLead_Implementation()
 void ABlasterCharacter::ServerLeaveGame_Implementation()
 {
 	// 尝试获取游戏模式并进行类型检查，确保它是ABlasterGameMode的实例
-	if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+	BlasterGameMode = BlasterGameMode == nullptr ? GetWorld()->GetAuthGameMode<ABlasterGameMode>() : BlasterGameMode;
+	if (BlasterGameMode)
 	{
 		BlasterPlayerState = BlasterPlayerState == nullptr ? GetPlayerState<ABlasterPlayerState>() : BlasterPlayerState;
 		if (BlasterPlayerState)
@@ -692,9 +692,6 @@ void ABlasterCharacter::Destroyed()
 		ElimBotComponent->DestroyComponent();
 	}
 
-	// 获取当前游戏模式并判断是否为ABlasterGameMode类型
-	ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
-
 	// 判断比赛状态是否不在进行中
 	bool bMatchNotInProgress = BlasterGameMode && BlasterGameMode->GetMatchState() != MatchState::InProgress;
 
@@ -716,14 +713,17 @@ void ABlasterCharacter::Destroyed()
 // - DamageCauser: 造成伤害的角色对象
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser)
 {
+	BlasterGameMode = BlasterGameMode == nullptr ? GetWorld()->GetAuthGameMode<ABlasterGameMode>() : BlasterGameMode;
+
 	// 如果已经死亡就返回
-	if (bEliminate == true) return;
+	if (bEliminate || BlasterGameMode == nullptr) return;
 
 	// 添加日志记录，记录每次调用的详细信息
 	UE_LOG(LogTemp, Log, TEXT("%s 受到了 %f点伤害，调用者: %s, 损伤来源: %s"),
 	       *this->GetName(), Damage,
 	       InstigatorController ? *InstigatorController->GetName() : TEXT("None"),
 	       DamageCauser ? *DamageCauser->GetName() : TEXT("None"));
+	Damage = BlasterGameMode->CalculateDamage(InstigatorController, Controller, Damage);
 	// 实际收到的伤害
 	float DamageToHealth = Damage;
 	if (Shield > 0.f)
@@ -753,7 +753,7 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	if (Health == 0.f)
 	{
 		// 获取当前游戏模式并检查是否为ABlasterGameMode类型
-		if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+		if (BlasterGameMode)
 		{
 			// 尝试获取并转换BlasterPlayerController对象
 			BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
@@ -765,8 +765,12 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	}
 	else
 	{
-		// 如果角色没有死亡，则播放受伤反应动画
-		PlayHitReactMontage();
+		// 确实受到了伤害
+		if (Damage != 0.f)
+		{
+			// 如果角色没有死亡，则播放受伤反应动画
+			PlayHitReactMontage();
+		}
 	}
 }
 
@@ -1133,7 +1137,7 @@ void ABlasterCharacter::SpawnDefaultWeapon()
 	if (DefaultWeaponClass && HasAuthority() && !bEliminate)
 	{
 		// 获取当前游戏模式并转换为ABlasterGameMode类型
-		ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+		BlasterGameMode = BlasterGameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : BlasterGameMode;
 		// 获取当前世界对象
 		UWorld* World = GetWorld();
 		// 如果游戏模式和世界对象都有效
