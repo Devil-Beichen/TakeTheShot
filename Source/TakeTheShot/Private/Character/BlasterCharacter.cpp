@@ -456,7 +456,7 @@ void ABlasterCharacter::MulticastGainedTheLead_Implementation()
 		CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttached
 		(
 			CrownSystem,
-			GetCapsuleComponent(),
+			GetMesh(),
 			FName(),
 			GetActorLocation() + FVector(0.f, 0.f, 110.f),
 			GetActorRotation(),
@@ -1025,12 +1025,12 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 		GetMesh()->SetVisibility(true);
 		if (Combat)
 		{
-			// 如果存在装备的武器，则设置其网格模型为不可见。
+			// 如果存在装备的武器，则设置其网格模型为可见。
 			if (Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
 			{
 				Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 			}
-			// 同理，如果存在副武器，也设置其网格模型为不可见。
+			// 同理，如果存在副武器，也设置其网格模型为可见。
 			if (Combat->SecondaryWeapon && Combat->SecondaryWeapon->GetWeaponMesh())
 			{
 				Combat->SecondaryWeapon->GetWeaponMesh()->bOwnerNoSee = false;
