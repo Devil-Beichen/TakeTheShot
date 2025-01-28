@@ -3,6 +3,7 @@
 
 #include "PlayerState/BlasterPlayerState.h"
 
+#include "Character/BlasterCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "PlayerController/BlasterPlayerController.h"
 
@@ -66,4 +67,23 @@ void ABlasterPlayerState::OnRep_Defeats()
 {
 	// 当失败次数复制时，更新HUD显示
 	SetDefeats();
+}
+
+// 设置团队
+void ABlasterPlayerState::SetTeam(ETeam TeamToSet)
+{
+	Team = TeamToSet;
+	if (ABlasterCharacter* BCharacter = Cast<ABlasterCharacter>(GetPawn()))
+	{
+		BCharacter->SetTeamColor(Team);
+	}
+}
+
+// 团队改变
+void ABlasterPlayerState::OnRep_Team()
+{
+	if (ABlasterCharacter* BCharacter = Cast<ABlasterCharacter>(GetPawn()))
+	{
+		BCharacter->SetTeamColor(Team);
+	}
 }

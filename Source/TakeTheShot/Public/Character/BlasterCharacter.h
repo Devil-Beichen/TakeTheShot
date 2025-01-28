@@ -10,6 +10,7 @@
 #include "Interface/InteractWithCrosshairsInterface.h"
 #include "BlasterTypes/TurningInPlace.h"
 #include "BlasterTypes/CombatState.h"
+#include "BlasterTypes/Team.h"
 #include "BlasterCharacter.generated.h"
 
 
@@ -653,6 +654,9 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastLostTheLead();
 
+	// 设置队伍颜色
+	void SetTeamColor(ETeam Team);
+
 private:
 	/**
 	 *  溶解效果
@@ -687,6 +691,23 @@ private:
 
 	// 启动溶解
 	void StartDissolve();
+
+	/**
+	 * 团队颜色
+	 */
+
+
+	// 红队材质
+	UPROPERTY(EditDefaultsOnly, Category="Team Colors")
+	UMaterialInstance* RedMaterial;
+
+	// 蓝队材质
+	UPROPERTY(EditDefaultsOnly, Category="Team Colors")
+	UMaterialInstance* BlueMaterial;
+
+	// 原始材质
+	UPROPERTY(EditDefaultsOnly, Category="Team Colors")
+	UMaterialInstance* OriginalMaterial;
 
 	/**
 	 *  淘汰特效

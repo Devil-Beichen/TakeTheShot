@@ -1201,6 +1201,8 @@ void ABlasterCharacter::PollInit()
 			BlasterPlayerState->AddToScore(0.f);
 			// 初始化死亡次数
 			BlasterPlayerState->AddTotDefeats(0);
+			// 设置队伍颜色
+			SetTeamColor(BlasterPlayerState->GetTeam());
 
 			// 如果游戏状态里面最高得分玩家有自己，就多播领先
 			if (const ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this)))
@@ -1272,6 +1274,34 @@ void ABlasterCharacter::OnRep_Shield(float LastShield)
 	if (Shield < LastShield)
 	{
 		PlayHitReactMontage();
+	}
+}
+
+// 设置队伍颜色
+void ABlasterCharacter::SetTeamColor(ETeam Team)
+{
+	switch (Team)
+	{
+	case ETeam::ET_NoTeam:
+		if (OriginalMaterial)
+		{
+			GetMesh()->SetMaterial(0, OriginalMaterial);
+		}
+		break;
+	case ETeam::ET_RedTeam:
+		if (RedMaterial)
+		{
+			GetMesh()->SetMaterial(0, RedMaterial);
+		}
+		break;
+	case ETeam::ET_BlueTeam:
+		if (BlueMaterial)
+		{
+			GetMesh()->SetMaterial(0, BlueMaterial);
+		}
+		break;
+	case ETeam::ET_MAX:
+		break;
 	}
 }
 

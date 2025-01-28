@@ -57,12 +57,16 @@ private:
 	int32 Defeats = 0;
 
 	// 队伍
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = "OnRep_Team")
 	ETeam Team = ETeam::ET_NoTeam;
+
+	// 队伍发生改变
+	UFUNCTION()
+	void OnRep_Team();
 
 public:
 	// 获取队伍
 	FORCEINLINE ETeam GetTeam() const { return Team; }
 	// 设置队伍
-	FORCEINLINE void SetTeam(ETeam TeamToSet) { Team = TeamToSet; }
+	void SetTeam(ETeam TeamToSet);
 };
