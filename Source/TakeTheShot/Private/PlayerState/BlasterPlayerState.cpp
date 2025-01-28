@@ -10,6 +10,7 @@ void ABlasterPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ABlasterPlayerState, Defeats);
+	DOREPLIFETIME(ABlasterPlayerState, Team);
 }
 
 // 添加分数
@@ -65,4 +66,4 @@ void ABlasterPlayerState::OnRep_Defeats()
 {
 	// 当失败次数复制时，更新HUD显示
 	SetDefeats();
-} 
+}

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "BlasterTypes/Team.h"
 #include "BlasterPlayerState.generated.h"
 
 /**
@@ -54,4 +55,14 @@ private:
 	// 死亡
 	UPROPERTY(ReplicatedUsing = OnRep_Defeats)
 	int32 Defeats = 0;
+
+	// 队伍
+	UPROPERTY(Replicated)
+	ETeam Team = ETeam::ET_NoTeam;
+
+public:
+	// 获取队伍
+	FORCEINLINE ETeam GetTeam() const { return Team; }
+	// 设置队伍
+	FORCEINLINE void SetTeam(ETeam TeamToSet) { Team = TeamToSet; }
 };
