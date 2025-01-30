@@ -5,6 +5,7 @@
 
 #include "GameState/BlasterGameState.h"
 #include "Kismet/GameplayStatics.h"
+#include "PlayerController/BlasterPlayerController.h"
 #include "PlayerState/BlasterPlayerState.h"
 
 ATeamsGameMode::ATeamsGameMode()
@@ -76,6 +77,27 @@ float ATeamsGameMode::CalculateDamage(AController* Attacker, AController* Victim
 	// 如果攻击者和 Victim 的团队相同，则返回 0，表示伤害为 0
 	if (AttackerPState->GetTeam() == VictimPState->GetTeam()) return 0.f;
 	return BaseDamage;
+}
+
+// 玩家被淘汰时
+void ATeamsGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController)
+{
+	Super::PlayerEliminated(EliminatedCharacter, VictimController, AttackerController);
+	// 获取游戏状态
+	ABlasterGameState* BGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
+
+	ABlasterPlayerState* AttackerPlayerState = AttackerController ? Cast<ABlasterPlayerState>(AttackerController->PlayerState) : nullptr;
+	if (BGameState && AttackerPlayerState)
+	{
+		if (AttackerPlayerState->GetTeam() == ETeam::ET_BlueTeam)
+		{
+			BGameState->BlueTeamScores();
+		}
+		else if (AttackerPlayerState->GetTeam() == ETeam::ET_RedTeam)
+		{
+			BGameState->RedTeamScores();
+		}
+	}
 }
 
 // 比赛开始时

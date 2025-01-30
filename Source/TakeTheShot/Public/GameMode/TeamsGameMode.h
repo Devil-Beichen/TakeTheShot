@@ -15,9 +15,8 @@ class TAKETHESHOT_API ATeamsGameMode : public ABlasterGameMode
 	GENERATED_BODY()
 
 public:
-
 	ATeamsGameMode();
-	
+
 	// 玩家加入时
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
@@ -26,6 +25,9 @@ public:
 
 	// 从写计算伤害
 	virtual float CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage) override;
+
+	// 重写玩家被击杀时
+	virtual void PlayerEliminated(ABlasterCharacter* EliminatedCharacter, ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController) override;
 
 protected:
 	// 匹配开始时
