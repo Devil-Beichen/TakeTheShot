@@ -192,6 +192,12 @@ protected:
 	UPROPERTY(Replicated)
 	bool bShowTeamScores = false;
 
+	// 获取队伍信息
+	FString GetInfoText(const TArray<class ABlasterPlayerState*>& Players);
+
+	// 获取队伍信息
+	FString GetTeamsInfoText(class ABlasterGameState* BlasterGameState);
+
 private:
 	// HUD
 	UPROPERTY()
