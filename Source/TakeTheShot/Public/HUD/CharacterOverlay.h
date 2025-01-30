@@ -40,6 +40,18 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* ScoreAmount;
 
+	// 蓝队分数
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* BlueTeamScore;
+
+	// 团队分数分界线
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* ScoreSpacerText;
+
+	// 红队分数
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* RedTeamScore;
+
 	// 死亡次数
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* DefeatsAmount;

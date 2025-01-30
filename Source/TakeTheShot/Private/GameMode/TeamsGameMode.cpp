@@ -7,6 +7,12 @@
 #include "Kismet/GameplayStatics.h"
 #include "PlayerState/BlasterPlayerState.h"
 
+ATeamsGameMode::ATeamsGameMode()
+{
+	// 默认启用团队比赛
+	bTeamsMatch = true;
+}
+
 // 玩家登录时
 void ATeamsGameMode::PostLogin(APlayerController* NewPlayer)
 {

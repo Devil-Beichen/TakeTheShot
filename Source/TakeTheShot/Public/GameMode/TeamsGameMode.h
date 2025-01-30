@@ -15,6 +15,9 @@ class TAKETHESHOT_API ATeamsGameMode : public ABlasterGameMode
 	GENERATED_BODY()
 
 public:
+
+	ATeamsGameMode();
+	
 	// 玩家加入时
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 

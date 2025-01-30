@@ -81,6 +81,9 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float CooldownTime = 10.f;
 
+	// 是否为团队模式
+	bool bTeamsMatch = false;
+
 protected:
 	virtual void BeginPlay() override;
 

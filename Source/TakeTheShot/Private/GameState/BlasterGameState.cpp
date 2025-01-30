@@ -35,6 +35,18 @@ void ABlasterGameState::UpdateTopScore(ABlasterPlayerState* ScoringPlayer)
 	}
 }
 
+// 红队得分
+void ABlasterGameState::RedTeamScores()
+{
+	++RedTeamScore;
+}
+
+// 蓝队得分
+void ABlasterGameState::BlueTeamScores()
+{
+	++BlueTeamScore;
+}
+
 // 红队得分更新
 void ABlasterGameState::OnRep_RedTeamScore()
 {

@@ -82,6 +82,7 @@ void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ABlasterPlayerController, MatchState)
+	DOREPLIFETIME(ABlasterPlayerController, bShowTeamScores)
 }
 
 void ABlasterPlayerController::Tick(float DeltaSeconds)
@@ -540,6 +541,82 @@ void ABlasterPlayerController::SetHUDScore(const float Score)
 	}
 }
 
+// 隐藏队伍分数
+void ABlasterPlayerController::HideTeamScores()
+{
+	// 检查BlasterHUD是否为空，如果为空则重新获取一个
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	// 检查BlasterHUD及其相关元素是否已正确初始化
+	const bool bHUDValid = BlasterHUD &&
+		BlasterHUD->CharacterOverlay &&
+		BlasterHUD->CharacterOverlay->BlueTeamScore &&
+		BlasterHUD->CharacterOverlay->ScoreSpacerText &&
+		BlasterHUD->CharacterOverlay->RedTeamScore;
+	if (bHUDValid)
+	{
+		BlasterHUD->CharacterOverlay->BlueTeamScore->SetText(FText());
+		BlasterHUD->CharacterOverlay->ScoreSpacerText->SetText(FText());
+		BlasterHUD->CharacterOverlay->RedTeamScore->SetText(FText());
+	}
+}
+
+// 初始化队伍分数
+void ABlasterPlayerController::InitTeamScores() // 初始化队伍分数
+{
+	// 检查BlasterHUD是否为空，如果为空则重新获取一个
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	// 检查BlasterHUD及其相关元素是否已正确初始化
+	const bool bHUDValid = BlasterHUD &&
+		BlasterHUD->CharacterOverlay &&
+		BlasterHUD->CharacterOverlay->BlueTeamScore &&
+		BlasterHUD->CharacterOverlay->ScoreSpacerText &&
+		BlasterHUD->CharacterOverlay->RedTeamScore;
+	if (bHUDValid)
+	{
+		FString Zero("0");
+		FString Spacer("|");
+		BlasterHUD->CharacterOverlay->BlueTeamScore->SetText(FText::FromString(Zero));
+		BlasterHUD->CharacterOverlay->ScoreSpacerText->SetText(FText::FromString(Spacer));
+		BlasterHUD->CharacterOverlay->RedTeamScore->SetText(FText::FromString(Zero));
+	}
+}
+
+// 设置HUD红队分数
+void ABlasterPlayerController::SetHUDRedTeamScore(int32 RedScore)
+{
+	// 检查BlasterHUD是否为空，如果为空则重新获取一个
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	// 检查BlasterHUD及其相关元素是否已正确初始化
+	const bool bHUDValid = BlasterHUD &&
+		BlasterHUD->CharacterOverlay &&
+		BlasterHUD->CharacterOverlay->RedTeamScore;
+	if (bHUDValid)
+	{
+		FString ScoreText = FString::Printf(TEXT("%d"), RedScore);
+		BlasterHUD->CharacterOverlay->RedTeamScore->SetText(FText::FromString(ScoreText));
+	}
+}
+
+// 设置HUD蓝队分数
+void ABlasterPlayerController::SetHUDBlueTeamScore(int32 BlueScore)
+{
+	// 检查BlasterHUD是否为空，如果为空则重新获取一个
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	// 检查BlasterHUD及其相关元素是否已正确初始化
+	const bool bHUDValid = BlasterHUD &&
+		BlasterHUD->CharacterOverlay &&
+		BlasterHUD->CharacterOverlay->BlueTeamScore;
+	if (bHUDValid)
+	{
+		FString ScoreText = FString::Printf(TEXT("%d"), BlueScore);
+		BlasterHUD->CharacterOverlay->BlueTeamScore->SetText(FText::FromString(ScoreText));
+	}
+}
+
 // 设置死亡
 void ABlasterPlayerController::SetHUDDefeats(const int32 Defeats)
 {
@@ -681,18 +758,21 @@ void ABlasterPlayerController::SetHUDGrenades(const int32 Grenades)
 	}
 }
 
-void ABlasterPlayerController::OnMatchStateSet(FName State)
+// 设置匹配状态
+void ABlasterPlayerController::OnMatchStateSet(FName State, bool bTeamsMate)
 {
 	MatchState = State;
-
+	bShowTeamScores = bTeamsMate;
 	SetMatchState();
 }
 
+// 回调设置匹配状态
 void ABlasterPlayerController::OnRep_MatchState()
 {
 	SetMatchState();
 }
 
+// 设置匹配状态
 void ABlasterPlayerController::SetMatchState()
 {
 	// 匹配中
@@ -717,6 +797,15 @@ void ABlasterPlayerController::HandleMatchHasStarted()
 		if (BlasterHUD->Announcement)
 		{
 			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
+		}
+		// 显示团队分数
+		if (bShowTeamScores)
+		{
+			InitTeamScores();
+		}
+		else
+		{
+			HideTeamScores();
 		}
 	}
 }

@@ -36,6 +36,11 @@ public:
 	 * 团队
 	 */
 
+	// 红队得分
+	void RedTeamScores();
+	// 蓝队得分
+	void BlueTeamScores();
+
 	// 红队状态
 	TArray<ABlasterPlayerState*> RedTeam;
 	// 蓝队状态

@@ -79,7 +79,7 @@ public:
 	virtual void ReceivedPlayer() override; // 尽快与服务器时间同步
 
 	// 匹配状态改变
-	void OnMatchStateSet(FName State);
+	void OnMatchStateSet(FName State, bool bTeamsMate = false);
 
 	// 到服务器的时间（单程）
 	float SingleTripTime = 0.f;
@@ -92,6 +92,15 @@ public:
 	 * @param Victim		被淘汰的玩家的状态
 	 */
 	void BroadcastElim(APlayerState* Attacker, APlayerState* Victim);
+
+	// 隐藏队伍分数
+	void HideTeamScores();
+	// 初始化队伍分数
+	void InitTeamScores();
+	// 设置HUD的红队分数
+	void SetHUDRedTeamScore(int32 RedScore);
+	// 设置HUD的蓝队分数
+	void SetHUDBlueTeamScore(int32 BlueScore);
 
 protected:
 	virtual void BeginPlay() override;
@@ -178,6 +187,10 @@ protected:
 	 */
 	UFUNCTION(Client, Reliable)
 	void ClientElimAnnouncement(APlayerState* Attacker, APlayerState* Victim);
+
+	// 显示队伍分数
+	UPROPERTY(Replicated)
+	bool bShowTeamScores = false;
 
 private:
 	// HUD
