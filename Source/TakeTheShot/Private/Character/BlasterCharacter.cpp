@@ -820,6 +820,7 @@ void ABlasterCharacter::Look(const FInputActionValue& Value)
 void ABlasterCharacter::Jump_Started()
 {
 	if (bDisableGameplay) return;
+	if (Combat->bHoldingTheFlag) return;
 	// 如果角色处于蹲伏状态，则取消蹲伏；否则执行跳跃动作
 	if (bIsCrouched)
 	{
@@ -842,6 +843,7 @@ void ABlasterCharacter::Jump_Completed()
 void ABlasterCharacter::Crouch_Started()
 {
 	if (bDisableGameplay) return;
+	if (Combat->bHoldingTheFlag) return;
 	// 根据角色当前的状态，决定是取消蹲伏还是开始蹲伏
 	// 如果角色处于蹲伏状态，则取消蹲伏；否则执行蹲伏动作
 	if (bIsCrouched)
@@ -899,6 +901,7 @@ void ABlasterCharacter::Equip_Started()
 {
 	if (bDisableGameplay) return;
 	if (!Combat) return;
+	if (Combat->bHoldingTheFlag) return;
 	if (Combat->CombatState == ECombatState::ECS_Unoccupied)ServerEquipButtonPressed();
 	bool bSwap = Combat->ShouldSwapWeapons() &&
 		IsLocallyControlled() &&
@@ -936,8 +939,10 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 void ABlasterCharacter::Aiming_Started()
 {
 	if (bDisableGameplay) return;
+	if (!Combat) return;
+	if (Combat->bHoldingTheFlag) return;
 	// 检查是否存在Combat组件，是否装备了武器，以及角色是否未在下落状态
-	if (Combat && Combat->EquippedWeapon && !GetCharacterMovement()->IsFalling())
+	if (Combat->EquippedWeapon && !GetCharacterMovement()->IsFalling())
 	{
 		// 设置瞄准状态为true，启用瞄准
 		Combat->SetAiming(true);
@@ -956,11 +961,10 @@ void ABlasterCharacter::Aiming_Completed()
 void ABlasterCharacter::Fire_Started()
 {
 	if (bDisableGameplay) return;
+	if (!Combat)return;
+	if (Combat->bHoldingTheFlag) return;
 
-	if (Combat)
-	{
-		Combat->FireButtonPressed(true);
-	}
+	Combat->FireButtonPressed(true);
 }
 
 void ABlasterCharacter::Fire_Completed()
@@ -977,6 +981,7 @@ void ABlasterCharacter::ReloadButtonPressed()
 	if (bDisableGameplay) return;
 	if (Combat && Combat->EquippedWeapon)
 	{
+		if (Combat->bHoldingTheFlag) return;
 		Combat->Reload();
 	}
 }
@@ -987,6 +992,7 @@ void ABlasterCharacter::ThrowGrenadeStarted()
 	if (bDisableGameplay) return;
 	if (Combat)
 	{
+		if (Combat->bHoldingTheFlag) return;
 		Combat->ThrowGrenade();
 	}
 }
@@ -1229,6 +1235,18 @@ void ABlasterCharacter::PollInit()
 // - DeltaTime: 自上次调用以来的时间（以秒为单位）
 void ABlasterCharacter::RotateInPlace(float DeltaTime)
 {
+	if (Combat && Combat->bHoldingTheFlag)
+	{
+		// 禁用控制器旋转
+		bUseControllerRotationYaw = false;
+		// 禁用角色的移动方向与旋转方向的自动对齐
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		// 设置为未转动状态
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		// 返回，不再执行后续代码
+		return;
+	}
+
 	// 如果游戏玩法被禁用，则直接返回，不执行任何操作
 	if (bDisableGameplay)
 	{

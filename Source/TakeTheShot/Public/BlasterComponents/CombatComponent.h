@@ -64,6 +64,9 @@ public:
 	// 将Actor绑定到的左手上
 	void AttachActorToLeftHand(AActor* ActorToAttach);
 
+	// 将Flag绑定到左手上
+	void AttachFlagToLeftHand(AWeapon* Flag);
+
 	// 将Actor绑定到背包上
 	void AttachActorToBackpack(AActor* ActorToAttach);
 
@@ -382,7 +385,12 @@ private:
 	void UpdateHUDGrenades();
 
 	// 是否持有旗子
+	UPROPERTY(ReplicatedUsing = "OnRep_bHoldingTheFlag")
 	bool bHoldingTheFlag = false;
+
+	// 回调持有旗子
+	UFUNCTION()
+	void OnRep_bHoldingTheFlag();
 
 public:
 	// 获取携带的手雷

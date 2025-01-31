@@ -31,6 +31,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 	DOREPLIFETIME(UCombatComponent, CombatState);
 	DOREPLIFETIME(UCombatComponent, Grenades);
+	DOREPLIFETIME(UCombatComponent, bHoldingTheFlag);
 }
 
 void UCombatComponent::BeginPlay()
@@ -77,36 +78,45 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	if (Character == nullptr || WeaponToEquip == nullptr) return;
 	// 检查当前战斗状态是否为非空闲状态，如果是，则不执行
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
-
 	// 设置武器的所有者(只会在服务端设置)
 	if (Character->HasAuthority())
 	{
 		WeaponToEquip->SetOwner(Character);
 	}
 
-	// 判断副武器是否为空，并且主武器是有效的
-	if (SecondaryWeapon == nullptr && EquippedWeapon)
+	if (WeaponToEquip->GetWeaponType() == EWeaponType::EWT_Flag) // 如果待装备的武器是Flag
 	{
-		// 将待装备的武器设置为副武器
-		SecondaryWeapon = EquippedWeapon;
-		// 副武器的状态
-		SecondaryWeaponStatus();
-
-		// 将待装备的武器设置为当前装备的武器
-		EquippedWeapon = WeaponToEquip;
-		// 设置装备主武器的状态
-		SetEquippedWeaponState();
+		Character->Crouch();
+		bHoldingTheFlag = true;
+		AttachFlagToLeftHand(WeaponToEquip);
+		WeaponToEquip->SetWeaponState(EWeaponState::EWS_Equipped);
 	}
 	else
 	{
-		// 如果当前装备的武器为空，则将待装备的武器设置为当前装备的武器
-		if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr)
+		// 判断副武器是否为空，并且主武器是有效的
+		if (SecondaryWeapon == nullptr && EquippedWeapon)
 		{
-			EquipSecondaryWeapon(WeaponToEquip);
+			// 将待装备的武器设置为副武器
+			SecondaryWeapon = EquippedWeapon;
+			// 副武器的状态
+			SecondaryWeaponStatus();
+
+			// 将待装备的武器设置为当前装备的武器
+			EquippedWeapon = WeaponToEquip;
+			// 设置装备主武器的状态
+			SetEquippedWeaponState();
 		}
 		else
 		{
-			EquipPrimaryWeapon(WeaponToEquip);
+			// 如果当前装备的武器为空，则将待装备的武器设置为当前装备的武器
+			if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr)
+			{
+				EquipSecondaryWeapon(WeaponToEquip);
+			}
+			else
+			{
+				EquipPrimaryWeapon(WeaponToEquip);
+			}
 		}
 	}
 }
@@ -227,6 +237,15 @@ void UCombatComponent::SecondaryWeaponStatus()
 	}
 }
 
+// 当本地的持有Flag状态发生变化时调用此函数
+void UCombatComponent::OnRep_bHoldingTheFlag()
+{
+	if (bHoldingTheFlag && Character && Character->IsLocallyControlled())
+	{
+		Character->Crouch();
+	}
+}
+
 // 将Actor绑定到的右手上
 void UCombatComponent::AttachActorToRightHand(AActor* ActorToAttach)
 {
@@ -235,6 +254,17 @@ void UCombatComponent::AttachActorToRightHand(AActor* ActorToAttach)
 	if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket")))
 	{
 		HandSocket->AttachActor(ActorToAttach, Character->GetMesh());
+	}
+}
+
+// 将指定的武器装备到角色的左手上
+void UCombatComponent::AttachFlagToLeftHand(AWeapon* Flag)
+{
+	if (Character == nullptr || Character->GetMesh() == nullptr || Flag == nullptr) return;
+	// 尝试找到角色右手的插槽，如果找到，则将武器装备到该插槽
+	if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("FlagSocket")))
+	{
+		HandSocket->AttachActor(Flag, Character->GetMesh());
 	}
 }
 
