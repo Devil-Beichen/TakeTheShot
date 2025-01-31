@@ -17,6 +17,16 @@ class TAKETHESHOT_API AFlag : public AWeapon
 public:
 	AFlag();
 
+	// 重写丢弃武器
+	virtual void Dropped() override;
+
+protected:
+	// 重写装备武器
+	virtual void OnEquipped() override;
+
+	// 重写丢弃武器
+	virtual void OnDropped() override;
+
 private:
 	// 旗子
 	UPROPERTY(VisibleDefaultsOnly)

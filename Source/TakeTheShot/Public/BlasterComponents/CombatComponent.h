@@ -83,6 +83,8 @@ public:
 	void EquipPrimaryWeapon(AWeapon* WeaponToEquip);
 	// 装备副武器
 	void EquipSecondaryWeapon(AWeapon* WeaponToEquip);
+	// 装备旗子
+	void EquipFlag(AWeapon* WeaponToEquip);
 
 protected:
 	virtual void BeginPlay() override;
@@ -114,6 +116,12 @@ protected:
 
 	// 副武器状态
 	void SecondaryWeaponStatus();
+
+	// 设置旗子状态
+	void SetFlagState();
+
+	// 旗子状态
+	void FlagState();
 
 	/**
 	 * 根据十字准星的位置进行光线追踪，并更新命中结果。
@@ -385,12 +393,16 @@ private:
 	void UpdateHUDGrenades();
 
 	// 是否持有旗子
-	UPROPERTY(ReplicatedUsing = "OnRep_bHoldingTheFlag")
+	UPROPERTY(Replicated)
 	bool bHoldingTheFlag = false;
+
+	// 持有的旗子
+	UPROPERTY(ReplicatedUsing = "OnRep_TheFlag")
+	AWeapon* TheFlag = nullptr;
 
 	// 回调持有旗子
 	UFUNCTION()
-	void OnRep_bHoldingTheFlag();
+	void OnRep_TheFlag();
 
 public:
 	// 获取携带的手雷

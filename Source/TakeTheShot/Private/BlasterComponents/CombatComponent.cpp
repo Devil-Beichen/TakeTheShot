@@ -26,6 +26,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	// 指定EquippedWeapon属性需要在服务器和客户端之间同步复制
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	DOREPLIFETIME(UCombatComponent, SecondaryWeapon);
+	DOREPLIFETIME(UCombatComponent, TheFlag);
 	// 指定属性需要在服务器和客户端之间同步复制
 	DOREPLIFETIME(UCombatComponent, bAiming);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
@@ -86,10 +87,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	if (WeaponToEquip->GetWeaponType() == EWeaponType::EWT_Flag) // 如果待装备的武器是Flag
 	{
-		Character->Crouch();
-		bHoldingTheFlag = true;
-		AttachFlagToLeftHand(WeaponToEquip);
-		WeaponToEquip->SetWeaponState(EWeaponState::EWS_Equipped);
+		EquipFlag(WeaponToEquip); // 将待装备的武器设置为Flag
 	}
 	else
 	{
@@ -237,9 +235,34 @@ void UCombatComponent::SecondaryWeaponStatus()
 	}
 }
 
-// 当本地的持有Flag状态发生变化时调用此函数
-void UCombatComponent::OnRep_bHoldingTheFlag()
+// 装备旗子
+void UCombatComponent::EquipFlag(AWeapon* WeaponToEquip)
 {
+	if (WeaponToEquip == nullptr)return;
+	TheFlag = WeaponToEquip;
+	SetFlagState();
+}
+
+// 当装备的Flag发生变化时调用此函数
+void UCombatComponent::OnRep_TheFlag()
+{
+	SetFlagState();
+}
+
+// 设置Flag的状态
+void UCombatComponent::SetFlagState()
+{
+	if (Character == nullptr || TheFlag == nullptr) return;
+	// 旗子状态
+	FlagState();
+}
+
+// 旗子状态
+void UCombatComponent::FlagState()
+{
+	bHoldingTheFlag = true;
+	TheFlag->SetWeaponState(EWeaponState::EWS_Equipped);
+	AttachFlagToLeftHand(TheFlag);
 	if (bHoldingTheFlag && Character && Character->IsLocallyControlled())
 	{
 		Character->Crouch();

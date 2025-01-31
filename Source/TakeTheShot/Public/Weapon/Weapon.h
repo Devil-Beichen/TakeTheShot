@@ -87,7 +87,7 @@ public:
 	void TraceEndWithScatter(const FVector& HitTarget, TArray<FVector_NetQuantize>& HitTargets);
 
 	// 丢弃武器
-	void Dropped();
+	virtual void Dropped();
 
 	// 添加子弹
 	void AddAmmo(int AmmoToAdd);

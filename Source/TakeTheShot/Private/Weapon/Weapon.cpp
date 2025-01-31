@@ -287,6 +287,25 @@ void AWeapon::OnEquippedSecondary()
 	RemovePingDelegate();
 }
 
+// 武器丢弃
+void AWeapon::OnDropped()
+{
+	if (HasAuthority())
+	{
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	WeaponMesh->SetSimulatePhysics(true);
+	WeaponMesh->SetEnableGravity(true);
+	WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Block);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_INTERITEM);
+
+	RemovePingDelegate();
+}
+
 // 丢弃武器
 void AWeapon::Dropped()
 {
@@ -324,25 +343,6 @@ void AWeapon::RemovePingDelegate()
 			BlasterOwnerController->HighPingDelegate.RemoveDynamic(this, &AWeapon::OnPingTooHigh);
 		}
 	}
-}
-
-// 武器丢弃
-void AWeapon::OnDropped()
-{
-	if (HasAuthority())
-	{
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	}
-
-	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	WeaponMesh->SetSimulatePhysics(true);
-	WeaponMesh->SetEnableGravity(true);
-	WeaponMesh->SetCollisionResponseToChannels(ECollisionResponse::ECR_Block);
-	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_INTERITEM);
-
-	RemovePingDelegate();
 }
 
 // 射击
