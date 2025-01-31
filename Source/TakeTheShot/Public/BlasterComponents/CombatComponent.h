@@ -381,6 +381,9 @@ private:
 	// 更新HUD上的手雷数量
 	void UpdateHUDGrenades();
 
+	// 是否持有旗子
+	bool bHoldingTheFlag = false;
+
 public:
 	// 获取携带的手雷
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }

@@ -27,6 +27,8 @@ enum class EWeaponType:uint8
 	EWT_SniperRifle UMETA(DisplayName = "Sniper Rifle"),
 	// 榴弹发射器
 	EWT_GrenadeLauncher UMETA(DisplayName = "Grenade Launcher"),
+	// 旗
+	EWT_Flag UMETA(DisplayName = "Flag"),
 	// 默认最大
 	EWT_MAX UMETA(DisplayName = "DefaultMAX"),
 };

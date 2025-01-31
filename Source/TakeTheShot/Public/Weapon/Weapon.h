@@ -310,6 +310,7 @@ private:
 	 */
 	int32 Sequence = 0;
 
+protected:
 	// 武器类型
 	UPROPERTY(EditDefaultsOnly)
 	EWeaponType WeaponType = EWeaponType::EWT_AssaultRifle;
@@ -320,6 +321,9 @@ public:
 
 	// 获取球形组件
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
+
+	// 获取拾取组件
+	FORCEINLINE UWidgetComponent* GetPickupWidget() const { return PickupWidget; }
 
 	// 获取武器模型组件
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }

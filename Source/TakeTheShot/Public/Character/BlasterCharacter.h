@@ -821,4 +821,10 @@ public:
 
 	// 获取延迟补偿组件
 	FORCEINLINE ULagCompensationComponent* GetLagComponent() const { return LagCompensation; }
+	// 获取是否持有旗帜
+	FORCEINLINE bool IsHoldingTheFlag() const
+	{
+		if (Combat)return Combat->bHoldingTheFlag;
+		return false;
+	}
 };

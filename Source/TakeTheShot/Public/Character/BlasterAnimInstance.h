@@ -125,4 +125,8 @@ private:
 	// 存储角色是否需要使用右手偏移信息的信息，表示角色是否需要使用右手偏移信息。
 	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
 	bool bTransformRightHand;
+
+	// 存储角色是否持有旗帜的信息，表示角色是否持有旗帜。
+	UPROPERTY(BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess=true))
+	bool bHoldingTheFlag;
 };

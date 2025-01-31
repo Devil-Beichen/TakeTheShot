@@ -59,6 +59,8 @@ void UBlasterAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 
 	// 检查BlasterCharacter是否被淘汰
 	bEliminate = BlasterCharacter->IsEliminate();
+	// 检查BlasterCharacter是否正在持有旗帜
+	bHoldingTheFlag = BlasterCharacter->IsHoldingTheFlag();
 
 	// 获取角色的基础瞄准旋转
 	const FRotator AinRotation = BlasterCharacter->GetBaseAimRotation();
