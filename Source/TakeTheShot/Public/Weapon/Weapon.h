@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BlasterTypes/Team.h"
 #include "GameFramework/Actor.h"
 #include "Weapon/WeaponTypes.h"
 #include "Weapon.generated.h"
@@ -314,6 +315,10 @@ protected:
 	// 武器类型
 	UPROPERTY(EditDefaultsOnly)
 	EWeaponType WeaponType = EWeaponType::EWT_AssaultRifle;
+
+	// 团队
+	UPROPERTY(EditDefaultsOnly)
+	ETeam Team = ETeam::ET_NoTeam;
 
 public:
 	// 设置武器状态

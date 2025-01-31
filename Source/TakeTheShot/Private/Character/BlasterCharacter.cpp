@@ -1503,3 +1503,11 @@ void ABlasterCharacter::TurnInPlace(const float DeltaTime)
 		}
 	}
 }
+
+// 获取当前角色的队伍
+ETeam ABlasterCharacter::GetTeam()
+{
+	BlasterPlayerState = BlasterPlayerState == nullptr ? GetPlayerState<ABlasterPlayerState>() : BlasterPlayerState;
+	if (BlasterPlayerState == nullptr)return ETeam::ET_NoTeam;
+	return BlasterPlayerState->GetTeam();
+}

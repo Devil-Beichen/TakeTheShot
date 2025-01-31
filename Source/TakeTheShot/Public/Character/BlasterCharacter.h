@@ -827,4 +827,7 @@ public:
 		if (Combat)return Combat->bHoldingTheFlag;
 		return false;
 	}
+
+	// 获取队伍
+	ETeam GetTeam();
 };
