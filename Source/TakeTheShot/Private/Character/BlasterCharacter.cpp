@@ -24,6 +24,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "PlayerController/BlasterPlayerController.h"
+#include "PlayerStart/TeamPlayerStart.h"
 #include "PlayerState/BlasterPlayerState.h"
 #include "Sound/SoundCue.h"
 #include "Weapon/Weapon.h"
@@ -246,6 +247,77 @@ void ABlasterCharacter::Tick(float DeltaTime)
 
 	PollInit();
 }
+
+// 初始化角色的一些属性
+void ABlasterCharacter::PollInit()
+{
+	// 检查BlasterPlayerState是否已经创建
+	if (BlasterPlayerState == nullptr)
+	{
+		// 如果尚未创建，则尝试创建它
+		BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+
+		// 如果BlasterPlayerState成功创建
+		if (BlasterPlayerState)
+		{
+			OnPlayerStateInitialized(); // 玩家状态初始化
+
+			// 如果游戏状态里面最高得分玩家有自己，就多播领先
+			if (const ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this)))
+			{
+				if (BlasterGameState->TopScoringPlayers.Contains(BlasterPlayerState))
+				{
+					MulticastGainedTheLead();
+				}
+			}
+		}
+	}
+}
+
+// 玩家状态初始化
+void ABlasterCharacter::OnPlayerStateInitialized()
+{
+	// 初始化分数为0
+	BlasterPlayerState->AddToScore(0.f);
+	// 初始化死亡次数
+	BlasterPlayerState->AddTotDefeats(0);
+	// 设置队伍颜色
+	SetTeamColor(BlasterPlayerState->GetTeam());
+	SetSpawnPoint();
+}
+
+// 为BlasterCharacter设置重生点
+// 此函数仅在具有权威的情况下执行，确保玩家属于某个团队
+void ABlasterCharacter::SetSpawnPoint()
+{
+	// 检查当前对象是否具有权威，并确保玩家不属于无团队
+	if (HasAuthority() && BlasterPlayerState->GetTeam() != ETeam::ET_NoTeam)
+	{
+		// 获取所有AActor类型的Actor，这些Actor的类与ATeamPlayerStart匹配
+		TArray<AActor*> PlayerStats;
+		UGameplayStatics::GetAllActorsOfClass(this, ATeamPlayerStart::StaticClass(), PlayerStats);
+
+		// 存储与当前玩家团队匹配的ATeamPlayerStart实例
+		TArray<ATeamPlayerStart*> TeamPlayerStarts;
+		for (auto& Start : PlayerStats)
+		{
+			// 将找到的Actor转换为ATeamPlayerStart类型，并检查其团队是否与玩家的团队相同
+			if (ATeamPlayerStart* TeamStart = Cast<ATeamPlayerStart>(Start); TeamStart->Team == BlasterPlayerState->GetTeam())
+			{
+				// 如果团队匹配，则添加到TeamPlayerStarts数组中，避免重复添加
+				TeamPlayerStarts.AddUnique(TeamStart);
+			}
+		}
+
+		// 如果找到了合适的重生点，则随机选择一个重生点，并设置角色的位置和旋转
+		if (!TeamPlayerStarts.IsEmpty())
+		{
+			ATeamPlayerStart* ChosenPlayerStart = TeamPlayerStarts[FMath::RandRange(0, TeamPlayerStarts.Num() - 1)];
+			SetActorLocationAndRotation(ChosenPlayerStart->GetActorLocation(), ChosenPlayerStart->GetActorRotation());
+		}
+	}
+}
+
 
 void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -1195,37 +1267,6 @@ void ABlasterCharacter::DropOrDestrouWeapons()
 		if (Combat->TheFlag)
 		{
 			Combat->TheFlag->Dropped();
-		}
-	}
-}
-
-// 初始化角色的一些属性
-void ABlasterCharacter::PollInit()
-{
-	// 检查BlasterPlayerState是否已经创建
-	if (BlasterPlayerState == nullptr)
-	{
-		// 如果尚未创建，则尝试创建它
-		BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
-
-		// 如果BlasterPlayerState成功创建
-		if (BlasterPlayerState)
-		{
-			// 初始化分数为0
-			BlasterPlayerState->AddToScore(0.f);
-			// 初始化死亡次数
-			BlasterPlayerState->AddTotDefeats(0);
-			// 设置队伍颜色
-			SetTeamColor(BlasterPlayerState->GetTeam());
-
-			// 如果游戏状态里面最高得分玩家有自己，就多播领先
-			if (const ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this)))
-			{
-				if (BlasterGameState->TopScoringPlayers.Contains(BlasterPlayerState))
-				{
-					MulticastGainedTheLead();
-				}
-			}
 		}
 	}
 }

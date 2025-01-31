@@ -179,6 +179,12 @@ public:
 	// 武器交换完成
 	bool bFinishedSwapping = false;
 
+	// 设置生成点
+	void SetSpawnPoint();
+
+	// 玩家状态初始化
+	void OnPlayerStateInitialized();
+
 protected:
 	virtual void BeginPlay() override;
 
