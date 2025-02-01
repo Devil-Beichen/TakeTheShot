@@ -20,7 +20,11 @@ public:
 	// 重写丢弃武器
 	virtual void Dropped() override;
 
+	// 重置旗子
+	void ResetFlag();
+
 protected:
+	virtual void BeginPlay() override;
 	// 重写装备武器
 	virtual void OnEquipped() override;
 
@@ -31,4 +35,11 @@ private:
 	// 旗子
 	UPROPERTY(VisibleDefaultsOnly)
 	UStaticMeshComponent* FlagMesh;
+
+	// 初始位置旋转大小
+	FTransform InitialTransform;
+
+public:
+	// 获初始位置旋转大小
+	FORCEINLINE FTransform GetInitialTransform() const { return InitialTransform; }
 };

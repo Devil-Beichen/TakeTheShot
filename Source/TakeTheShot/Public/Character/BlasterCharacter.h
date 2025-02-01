@@ -836,4 +836,7 @@ public:
 
 	// 获取队伍
 	ETeam GetTeam();
+
+	// 设置是否持有旗帜
+	void SetbHoldingTheFlag(bool bHolding);
 };

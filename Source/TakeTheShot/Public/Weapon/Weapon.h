@@ -351,4 +351,6 @@ public:
 	FORCEINLINE float GetDamage() const { return Damage; }
 	// 获取头部伤害
 	FORCEINLINE float GetHeadShotDamage() const { return HeadShotDamage; }
+	// 获取团队
+	FORCEINLINE ETeam GetTeam() const { return Team; }
 };

@@ -261,15 +261,6 @@ void ABlasterCharacter::PollInit()
 		if (BlasterPlayerState)
 		{
 			OnPlayerStateInitialized(); // 玩家状态初始化
-
-			// 如果游戏状态里面最高得分玩家有自己，就多播领先
-			if (const ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this)))
-			{
-				if (BlasterGameState->TopScoringPlayers.Contains(BlasterPlayerState))
-				{
-					MulticastGainedTheLead();
-				}
-			}
 		}
 	}
 }
@@ -284,6 +275,15 @@ void ABlasterCharacter::OnPlayerStateInitialized()
 	// 设置队伍颜色
 	SetTeamColor(BlasterPlayerState->GetTeam());
 	SetSpawnPoint();
+
+	// 如果游戏状态里面最高得分玩家有自己，就多播领先
+	if (const ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this)))
+	{
+		if (BlasterGameState->TopScoringPlayers.Contains(BlasterPlayerState))
+		{
+			MulticastGainedTheLead();
+		}
+	}
 }
 
 // 为BlasterCharacter设置重生点
@@ -317,7 +317,6 @@ void ABlasterCharacter::SetSpawnPoint()
 		}
 	}
 }
-
 
 void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -529,7 +528,7 @@ void ABlasterCharacter::MulticastGainedTheLead_Implementation()
 			CrownSystem,
 			GetMesh(),
 			FName(),
-			GetActorLocation() + FVector(0.f, 0.f, 110.f),
+			GetMesh()->GetComponentLocation() + FVector(0.f, 0.f, 220.f),
 			GetActorRotation(),
 			EAttachLocation::Type::KeepWorldPosition,
 			false
@@ -1551,4 +1550,13 @@ ETeam ABlasterCharacter::GetTeam()
 	BlasterPlayerState = BlasterPlayerState == nullptr ? GetPlayerState<ABlasterPlayerState>() : BlasterPlayerState;
 	if (BlasterPlayerState == nullptr)return ETeam::ET_NoTeam;
 	return BlasterPlayerState->GetTeam();
+}
+
+// 设置当前角色是否持有旗帜
+void ABlasterCharacter::SetbHoldingTheFlag(bool bHolding)
+{
+	if (Combat)
+	{
+		Combat->bHoldingTheFlag = bHolding;
+	}
 }
