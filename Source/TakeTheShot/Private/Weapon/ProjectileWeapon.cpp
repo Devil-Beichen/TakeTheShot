@@ -76,7 +76,7 @@ void AProjectileWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 					SpawnedProjectile = World->SpawnActor<AProjectile>(ServerSideRewindProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
 					// 设置不用服务器回溯
 					SpawnedProjectile->bUseServerSideRewind = false;
-					if (SpawnedProjectile->InitialSpeed < 20000)
+					if (SpawnedProjectile->InitialSpeed < 20000) // 如果初始速度小于20000，则销毁子弹
 					{
 						SpawnedProjectile->ImpactParticles = nullptr;
 						SpawnedProjectile->ImpactSound = nullptr;
@@ -129,6 +129,12 @@ void AProjectileWeapon::Fire(const TArray<FVector_NetQuantize>& HitTargets)
 						SpawnedProjectile = World->SpawnActor<AProjectile>(ServerSideRewindProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
 						SpawnedProjectile->bUseServerSideRewind = false;
 						UE_LOG(LogTemp, Warning, TEXT("在客户端生成B！！！"));
+						if (SpawnedProjectile->InitialSpeed < 20000) // 如果初始速度小于20000，则销毁子弹
+						{
+							SpawnedProjectile->ImpactParticles = nullptr;
+							SpawnedProjectile->ImpactSound = nullptr;
+							SpawnedProjectile->Destroy();
+						}
 					}
 				}
 			}

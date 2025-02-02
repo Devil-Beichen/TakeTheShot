@@ -555,6 +555,7 @@ void ABlasterCharacter::MulticastLostTheLead_Implementation()
 // 离开游戏
 void ABlasterCharacter::ServerLeaveGame_Implementation()
 {
+	if (bLeftGame)return;
 	// 尝试获取游戏模式并进行类型检查，确保它是ABlasterGameMode的实例
 	BlasterGameMode = BlasterGameMode == nullptr ? GetWorld()->GetAuthGameMode<ABlasterGameMode>() : BlasterGameMode;
 	if (BlasterGameMode)
